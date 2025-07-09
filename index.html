@@ -1,216 +1,34 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sansの部屋</title>
-  <link rel="icon" href="favicon.ico" type="image/x-icon" />
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: black;
-      overflow: hidden;
-      height: 100%;
-      width: 100%;
-      font-family: 'Courier New', monospace;
-      color: #00ffff;
-      text-align: center;
-      box-sizing: border-box;
-    }
-
-    * {
-      box-sizing: inherit;
-    }
-
-    canvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: -1;
-    }
-
-    h1 {
-      font-size: 5vw;
-      margin-top: 5vh;
-      text-shadow: 0 0 1vw #00ffff;
-    }
-
-    .button {
-      display: inline-block;
-      margin: 1vh 2vw;
-      padding: 2vh 4vw;
-      background-color: #111;
-      color: #00ffff;
-      font-size: 2.5vw;
-      border: 0.2vw solid #00ffff;
-      border-radius: 1vw;
-      text-decoration: none;
-      transition: all 0.3s;
-      box-shadow: 0 0 1.5vw rgba(0,255,255,0.5);
-    }
-
-    .button:hover {
-      background-color: #00ffff;
-      color: #000;
-      box-shadow: 0 0 2vw rgba(0,255,255,0.8);
-    }
-
-    button {
-      border: none;
-      border-radius: 0.8vw;
-      background-color: #222;
-      color: #00ffff;
-      cursor: pointer;
-      box-shadow: 0 0 1vw rgba(0,255,255,0.3);
-      font-size: 2vw;
-      padding: 1vh 2vw;
-      margin: 1vh;
-    }
-
-    button:hover {
-      background-color: #00ffff;
-      color: #000;
-    }
-
-    #character-image {
-      display: block;
-      margin: 4vh auto;
-      width: 230px;
-      height: 300px;
-      object-fit: contain;
-      transition: transform 1s linear;
-      image-rendering: pixelated;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta content="IE=edge" http-equiv="X-UA-Compatible">
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <title>Shark net</title>
+  <link href="favicon.ico" rel="icon">
+  <link href="s.css" rel="stylesheet">
 </head>
 <body>
-  <canvas id="space"></canvas>
+  <center>
+    <h1 id="a">SharkTomato net</h1>
+    <img alt="banner" class="Home_banner__WnS5R" src="banner.webp">
+    <p class="subtitle">:)</p>
+  </center>
 
-  <audio id="bgm" autoplay loop>
-    <source id="bgmSource" src="SansBGM.ogg" type="audio/ogg">
-    このブラウザはオーディオをサポートしていません。
-  </audio>
-
-  <button onclick="toggleMute()" style="position: fixed; top: 2vh; right: 18vw; z-index: 1000;">🔇 ミュート</button>
-  <button onclick="switchTrack()" style="position: fixed; top: 2vh; right: 2vw; z-index: 1000;">🎵 曲変更</button>
-
-  <h1>Sansの部屋</h1>
-  <img id="character-image" src="image/sans1.png" alt="Character" />
-
-  <a class="button" href="https://07sharktomato27.github.io/youtube-sans-fight-simu/">Youtube sans fight</a>
-  <a class="button" href="https://example.com/sans-game2">別のSansゲーム</a>
-  <a class="button" href="index.html">← 戻る</a>
+  <a class="button" style="background-color:#7289da" href="https://discord.com/channels/1317697693727850556/1322389194835890226">Shark Discord</a>
+  <a class="button" style="background-color:#00fa31;color:#0000fa" href="https://github.com/07SharkTomato27/haihu">配布</a>
+  <a class="button" style="background-color:#FF2D00;color:#FFF" href="https://www.youtube.com">Youtube</a>
+  <a class="button" style="background-color:#7e520f;color:#31f106" href="https://classic.minecraft.net/">classic minecraft</a>
+  <a class="button" style="background-color:#7e520f;color:#31f106" href="https://swordslasher.com/games/minecraft/game.html">minecraft 1.5.2</a>
+  <a class="button" style="background-color:#7e520f;color:#31f106" href="https://eaglercraft.com/mc/1.8.8/">minecraft 1.8.8</a>
+  <a class="button" style="background-color:#7e520f;color:#31f106" href="https://eaglercraft.com/mc/1.12.2/">minecraft 1.12.2</a>
+  <a class="button" style="background-color:#d7dfd5;color:#5f5f5e" href="https://07sharktomato27.github.io/s-a-n-s/">sans</a>
+  <a class="button" style="background-color:#7e520f;color:#31f106" href="https://07sharktomato27.github.io/Shark-Minecraft/">sharkcraft</a>
 
   <script>
-    const canvas = document.getElementById("space");
-    const ctx = canvas.getContext("2d");
-    let stars = [], meteors = [];
-
-    function initStars() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      stars = [];
-      for (let i = 0; i < 150; i++) {
-        stars.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          r: Math.random() * 1.5 + 0.5,
-          d: Math.random() * 0.5 + 0.2
-        });
-      }
+    function function1() {
+      window.open("info.html");
     }
-
-    function spawnMeteor() {
-      meteors.push({
-        x: Math.random() * canvas.width,
-        y: -20,
-        vx: Math.random() * 2 + 2,
-        vy: Math.random() * 2 + 2,
-        len: Math.random() * 40 + 30
-      });
-    }
-
-    function drawStars() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#ffffff";
-      for (let s of stars) {
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, 2 * Math.PI);
-        ctx.fill();
-        s.y += s.d;
-        if (s.y > canvas.height) {
-          s.y = 0;
-          s.x = Math.random() * canvas.width;
-        }
-      }
-
-      ctx.strokeStyle = "#88ccff";
-      ctx.lineWidth = 2;
-      for (let i = meteors.length - 1; i >= 0; i--) {
-        const m = meteors[i];
-        ctx.beginPath();
-        ctx.moveTo(m.x, m.y);
-        ctx.lineTo(m.x - m.len, m.y - m.len);
-        ctx.stroke();
-        m.x += m.vx;
-        m.y += m.vy;
-        if (m.y > canvas.height || m.x > canvas.width) {
-          meteors.splice(i, 1);
-        }
-      }
-
-      if (Math.random() < 0.03) spawnMeteor();
-
-      requestAnimationFrame(drawStars);
-    }
-
-    window.addEventListener("resize", initStars);
-
-    initStars();
-    drawStars();
-
-    const audio = document.getElementById("bgm");
-    const source = document.getElementById("bgmSource");
-    const muteButton = document.querySelector("button[onclick='toggleMute()']");
-    const characterImage = document.getElementById("character-image");
-
-    const tracks = [
-      { name: "SansBGM.ogg", image: "image/sans1.png" },
-      { name: "megalovania.ogg", image: "image/sans.gif" },
-      { name: "hopes_and_dreams.ogg", image: "image/asriel.png" }
-    ];
-    let currentTrack = 0;
-    let rotation = 0;
-    let rotationSpeed = (Math.random() - 0.5) * 2;
-
-    function toggleMute() {
-      audio.muted = !audio.muted;
-      muteButton.textContent = audio.muted ? "🔊 ミュート解除" : "🔇 ミュート";
-    }
-
-    function switchTrack() {
-      currentTrack = (currentTrack + 1) % tracks.length;
-      source.src = tracks[currentTrack].name;
-      characterImage.src = tracks[currentTrack].image;
-      audio.load();
-      audio.play();
-      setRandomRotation();
-    }
-
-    function setRandomRotation() {
-      rotation = 0;
-      rotationSpeed = (Math.random() - 0.5) * 2;
-    }
-
-    function animateCharacter() {
-      rotation += rotationSpeed;
-      characterImage.style.transform = `rotate(${rotation}deg)`;
-      requestAnimationFrame(animateCharacter);
-    }
-
-    setRandomRotation();
-    animateCharacter();
   </script>
 </body>
 </html>
