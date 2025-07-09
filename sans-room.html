@@ -27,7 +27,11 @@
       position: fixed;
       top: 0;
       left: 0;
-      z-index: -1;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+      background-color: transparent;
     }
 
     h1 {
@@ -127,9 +131,9 @@
       meteors.push({
         x: Math.random() * canvas.width,
         y: -20,
-        vx: Math.random() * 2 + 2,
-        vy: Math.random() * 2 + 2,
-        len: Math.random() * 40 + 30
+        vx: Math.random() * 3 + 3,
+        vy: Math.random() * 3 + 3,
+        len: Math.random() * 80 + 60
       });
     }
 
@@ -147,8 +151,8 @@
         }
       }
 
-      ctx.strokeStyle = "#88ccff";
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 3;
       for (let i = meteors.length - 1; i >= 0; i--) {
         const m = meteors[i];
         ctx.beginPath();
@@ -162,7 +166,7 @@
         }
       }
 
-      if (Math.random() < 0.03) spawnMeteor();
+      if (Math.random() < 0.2) spawnMeteor();
 
       requestAnimationFrame(drawStars);
     }
