@@ -6,14 +6,22 @@
   <title>Sansの部屋</title>
   <link rel="icon" href="favicon.ico" type="image/x-icon">
   <style>
-    body {
+    html, body {
       margin: 0;
       padding: 0;
-      background: radial-gradient(ellipse at center, #0d0d0d 0%, #000000 100%);
-      color: #00ffff;
+      background: black;
+      overflow: hidden;
+      height: 100%;
       font-family: 'Courier New', monospace;
+      color: #00ffff;
       text-align: center;
-      overflow-x: hidden;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: -1;
     }
 
     h1 {
@@ -55,22 +63,30 @@
       background-color: #00ffff;
       color: #000;
     }
+
+    #character-image {
+      display: block;
+      margin: 40px auto;
+      max-width: 80%;
+      height: auto;
+      transition: transform 1s linear;
+    }
   </style>
 </head>
 <body>
-  <!-- BGM 複数対応 -->
+  <canvas id="space"></canvas>
+
   <audio id="bgm" autoplay loop>
     <source id="bgmSource" src="SansBGM.ogg" type="audio/ogg">
     このブラウザはオーディオをサポートしていません。
   </audio>
 
-  <!-- ミュートボタン -->
   <button onclick="toggleMute()" style="position: fixed; top: 20px; right: 160px; z-index: 1000; padding: 10px 20px; font-size: 16px;">🔇 ミュート</button>
-
-  <!-- 曲切り替えボタン -->
   <button onclick="switchTrack()" style="position: fixed; top: 20px; right: 20px; z-index: 1000; padding: 10px 20px; font-size: 16px;">🎵 曲変更</button>
 
   <h1>Sansの部屋</h1>
+  <img id="character-image" src="image/sans1.png" alt="Sans">
+
   <a class="button" href="https://07sharktomato27.github.io/youtube-sans-fight-simu/">Youtube sans fight</a>
   <a class="button" href="https://example.com/sans-game2">別のSansゲーム</a>
   <a class="button" href="index.html">← 戻る</a>
@@ -79,13 +95,89 @@
     const audio = document.getElementById("bgm");
     const source = document.getElementById("bgmSource");
     const muteButton = document.querySelector("button[onclick='toggleMute()']");
+    const characterImage = document.getElementById("character-image");
+    const canvas = document.getElementById("space");
+    const ctx = canvas.getContext("2d");
+
+    let stars = [], meteors = [];
+
+    function initStars() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      for (let i = 0; i < 150; i++) {
+        stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          r: Math.random() * 1.5,
+          d: Math.random() * 0.5 + 0.2
+        });
+      }
+    }
+
+    function spawnMeteor() {
+      meteors.push({
+        x: Math.random() * canvas.width,
+        y: -20,
+        vx: Math.random() * 2 + 2,
+        vy: Math.random() * 2 + 2,
+        len: Math.random() * 40 + 30
+      });
+    }
+
+    function drawStars() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // stars
+      ctx.fillStyle = "#ffffff";
+      for (let s of stars) {
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, 2 * Math.PI);
+        ctx.fill();
+        s.y += s.d;
+        if (s.y > canvas.height) {
+          s.y = 0;
+          s.x = Math.random() * canvas.width;
+        }
+      }
+
+      // meteors
+      ctx.strokeStyle = "#88ccff";
+      ctx.lineWidth = 2;
+      for (let i = meteors.length - 1; i >= 0; i--) {
+        const m = meteors[i];
+        ctx.beginPath();
+        ctx.moveTo(m.x, m.y);
+        ctx.lineTo(m.x - m.len, m.y - m.len);
+        ctx.stroke();
+        m.x += m.vx;
+        m.y += m.vy;
+        if (m.y > canvas.height || m.x > canvas.width) {
+          meteors.splice(i, 1);
+        }
+      }
+
+      if (Math.random() < 0.03) spawnMeteor();
+
+      requestAnimationFrame(drawStars);
+    }
+
+    window.addEventListener('resize', () => {
+      stars = [];
+      meteors = [];
+      initStars();
+    });
+
+    initStars();
+    drawStars();
 
     const tracks = [
-      { name: "SansBGM.ogg", label: "SansBGM" },
-      { name: "megalovania.ogg", label: "Megalovania" },
-      { name: "hopes_and_dreams.ogg", label: "Hopes and Dreams" }
+      { name: "SansBGM.ogg", label: "SansBGM", image: "image/sans1.png" },
+      { name: "megalovania.ogg", label: "Megalovania", image: "image/sans.gif" },
+      { name: "hopes_and_dreams.ogg", label: "Hopes and Dreams", image: "" }
     ];
     let currentTrack = 0;
+    let rotation = 0;
+    let rotationSpeed = (Math.random() - 0.5) * 2;
 
     function toggleMute() {
       audio.muted = !audio.muted;
@@ -95,9 +187,25 @@
     function switchTrack() {
       currentTrack = (currentTrack + 1) % tracks.length;
       source.src = tracks[currentTrack].name;
+      characterImage.src = tracks[currentTrack].image || "";
       audio.load();
       audio.play();
+      setRandomRotation();
     }
+
+    function setRandomRotation() {
+      rotation = 0;
+      rotationSpeed = (Math.random() - 0.5) * 2;
+    }
+
+    function animateCharacter() {
+      rotation += rotationSpeed;
+      characterImage.style.transform = `rotate(${rotation}deg)`;
+      requestAnimationFrame(animateCharacter);
+    }
+
+    setRandomRotation();
+    animateCharacter();
   </script>
 </body>
 </html>
