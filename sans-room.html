@@ -6,13 +6,16 @@
   <title>Sansの部屋</title>
   <link rel="icon" href="favicon.ico" type="image/x-icon" />
   <style>
-    html, body {
+    html {
+      height: 100%;
+    }
+
+    body {
       margin: 0;
       padding: 0;
       background: black;
-      overflow: hidden;
-      height: 100%;
-      width: 100%;
+      overflow-y: auto;
+      min-height: 100vh;
       font-family: 'Courier New', monospace;
       color: #00ffff;
       text-align: center;
@@ -88,6 +91,10 @@
       opacity: 1;
       filter: drop-shadow(0 0 10px rgba(255,255,255,0.15));
     }
+
+    .button-container {
+      margin-top: 4vh;
+    }
   </style>
 </head>
 <body>
@@ -104,9 +111,11 @@
   <h1>Sansの部屋</h1>
   <img id="character-image" src="image/sans1.png" alt="Character" />
 
-  <a class="button" href="https://07sharktomato27.github.io/youtube-sans-fight-simu/">Youtube sans fight</a>
-  <a class="button" href="https://example.com/sans-game2">別のSansゲーム</a>
-  <a class="button" href="index.html">← 戻る</a>
+  <div class="button-container">
+    <a class="button" href="https://07sharktomato27.github.io/youtube-sans-fight-simu/">Youtube sans fight</a>
+    <a class="button" href="https://example.com/sans-game2">別のSansゲーム</a>
+    <a class="button" href="index.html">← 戻る</a>
+  </div>
 
   <script>
     const canvas = document.getElementById("space");
