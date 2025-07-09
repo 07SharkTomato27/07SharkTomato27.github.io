@@ -1,43 +1,24 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>Sansの部屋</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      background-color: #000;
-      color: #fff;
-      font-family: sans-serif;
-      text-align: center;
-    }
-
-    h1 {
-      margin-top: 40px;
-      font-size: 48px;
-    }
-
-    .button {
-      display: inline-block;
-      margin: 20px;
-      padding: 20px 40px;
-      background-color: #1e90ff;
-      color: #fff;
-      font-size: 24px;
-      border-radius: 10px;
-      text-decoration: none;
-      transition: 0.2s;
-    }
-
-    .button:hover {
-      background-color: #3ea0ff;
-    }
-  </style>
-</head>
 <body>
+  <!-- BGM -->
+  <audio id="bgm" autoplay loop>
+    <source src="SansBGM.ogg" type="audio/ogg">
+    このブラウザはオーディオをサポートしていません。
+  </audio>
+
+  <!-- ミュートボタン -->
+  <button onclick="toggleMute()" style="position: fixed; top: 20px; right: 20px; z-index: 1000; padding: 10px 20px; font-size: 16px;">🔇 ミュート</button>
+
   <h1>Sansの部屋</h1>
-  <a class="button" href="https://07sharktomato27.github.io/youtube-sans-fight-simu/">Youtube Sans</a>
+  <a class="button" href="https://07sharktomato27.github.io/youtube-sans-fight-simu/">Youtube sans fight</a>
   <a class="button" href="https://example.com/sans-game2">別のSansゲーム</a>
   <a class="button" href="index.html">← 戻る</a>
+
+  <script>
+    const audio = document.getElementById("bgm");
+    const button = document.querySelector("button");
+    function toggleMute() {
+      audio.muted = !audio.muted;
+      button.textContent = audio.muted ? "🔊 ミュート解除" : "🔇 ミュート";
+    }
+  </script>
 </body>
-</html>
