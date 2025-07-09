@@ -1,24 +1,43 @@
 <body>
-  <!-- BGM -->
+  <!-- BGM 複数対応 -->
   <audio id="bgm" autoplay loop>
-    <source src="SansBGM.ogg" type="audio/ogg">
+    <source id="bgmSource" src="SansBGM.ogg" type="audio/ogg">
     このブラウザはオーディオをサポートしていません。
   </audio>
 
   <!-- ミュートボタン -->
-  <button onclick="toggleMute()" style="position: fixed; top: 20px; right: 20px; z-index: 1000; padding: 10px 20px; font-size: 16px;">🔇 ミュート</button>
+  <button onclick="toggleMute()" style="position: fixed; top: 20px; right: 160px; z-index: 1000; padding: 10px 20px; font-size: 16px;">🔇 ミュート</button>
+
+  <!-- 曲切り替えボタン -->
+  <button onclick="switchTrack()" style="position: fixed; top: 20px; right: 20px; z-index: 1000; padding: 10px 20px; font-size: 16px;">🎵 曲変更</button>
 
   <h1>Sansの部屋</h1>
   <a class="button" href="https://07sharktomato27.github.io/youtube-sans-fight-simu/">Youtube sans fight</a>
-  <a class="button" href="https://1742137113.github.io/haogesans/">haogesans</a>
-  <a class="button" href="index.html">戻る</a>
+  <a class="button" href="https://example.com/sans-game2">別のSansゲーム</a>
+  <a class="button" href="index.html">← 戻る</a>
 
   <script>
     const audio = document.getElementById("bgm");
-    const button = document.querySelector("button");
+    const source = document.getElementById("bgmSource");
+    const muteButton = document.querySelector("button[onclick='toggleMute()']");
+
+    const tracks = [
+      { name: "SansBGM.ogg", label: "SansBGM" },
+      { name: "megalovania.ogg", label: "Megalovania" },
+      { name: "hopes_and_dreams.ogg", label: "Hopes and Dreams" }
+    ];
+    let currentTrack = 0;
+
     function toggleMute() {
       audio.muted = !audio.muted;
-      button.textContent = audio.muted ? "🔊 ミュート解除" : "🔇 ミュート";
+      muteButton.textContent = audio.muted ? "🔊 ミュート解除" : "🔇 ミュート";
+    }
+
+    function switchTrack() {
+      currentTrack = (currentTrack + 1) % tracks.length;
+      source.src = tracks[currentTrack].name;
+      audio.load();
+      audio.play();
     }
   </script>
 </body>
