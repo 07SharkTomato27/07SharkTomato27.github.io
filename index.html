@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sansの部屋</title>
-  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
   <style>
     html, body {
       margin: 0;
@@ -96,30 +96,26 @@
   <button onclick="switchTrack()" style="position: fixed; top: 2vh; right: 2vw; z-index: 1000;">🎵 曲変更</button>
 
   <h1>Sansの部屋</h1>
-  <img id="character-image" src="image/sans1.png" alt="Character">
+  <img id="character-image" src="image/sans1.png" alt="Character" />
 
   <a class="button" href="https://07sharktomato27.github.io/youtube-sans-fight-simu/">Youtube sans fight</a>
   <a class="button" href="https://example.com/sans-game2">別のSansゲーム</a>
   <a class="button" href="index.html">← 戻る</a>
 
   <script>
-    const audio = document.getElementById("bgm");
-    const source = document.getElementById("bgmSource");
-    const muteButton = document.querySelector("button[onclick='toggleMute()']");
-    const characterImage = document.getElementById("character-image");
     const canvas = document.getElementById("space");
     const ctx = canvas.getContext("2d");
-
     let stars = [], meteors = [];
 
     function initStars() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      stars = [];
       for (let i = 0; i < 150; i++) {
         stars.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          r: Math.random() * 1.5,
+          r: Math.random() * 1.5 + 0.5,
           d: Math.random() * 0.5 + 0.2
         });
       }
@@ -137,7 +133,6 @@
 
     function drawStars() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
       ctx.fillStyle = "#ffffff";
       for (let s of stars) {
         ctx.beginPath();
@@ -170,19 +165,20 @@
       requestAnimationFrame(drawStars);
     }
 
-    window.addEventListener('resize', () => {
-      stars = [];
-      meteors = [];
-      initStars();
-    });
+    window.addEventListener("resize", initStars);
 
     initStars();
     drawStars();
 
+    const audio = document.getElementById("bgm");
+    const source = document.getElementById("bgmSource");
+    const muteButton = document.querySelector("button[onclick='toggleMute()']");
+    const characterImage = document.getElementById("character-image");
+
     const tracks = [
-      { name: "SansBGM.ogg", label: "SansBGM", image: "image/sans1.png" },
-      { name: "megalovania.ogg", label: "Megalovania", image: "image/sans.gif" },
-      { name: "hopes_and_dreams.ogg", label: "Hopes and Dreams", image: "image/asriel.png" }
+      { name: "SansBGM.ogg", image: "image/sans1.png" },
+      { name: "megalovania.ogg", image: "image/sans.gif" },
+      { name: "hopes_and_dreams.ogg", image: "image/asriel.png" }
     ];
     let currentTrack = 0;
     let rotation = 0;
@@ -196,7 +192,7 @@
     function switchTrack() {
       currentTrack = (currentTrack + 1) % tracks.length;
       source.src = tracks[currentTrack].name;
-      characterImage.src = tracks[currentTrack].image || "";
+      characterImage.src = tracks[currentTrack].image;
       audio.load();
       audio.play();
       setRandomRotation();
