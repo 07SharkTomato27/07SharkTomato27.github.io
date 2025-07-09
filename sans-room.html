@@ -1,3 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sansの部屋</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(ellipse at center, #0d0d0d 0%, #000000 100%);
+      color: #00ffff;
+      font-family: 'Courier New', monospace;
+      text-align: center;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      font-size: 64px;
+      margin-top: 100px;
+      text-shadow: 0 0 20px #00ffff;
+    }
+
+    .button {
+      display: inline-block;
+      margin: 20px;
+      padding: 20px 40px;
+      background-color: #111;
+      color: #00ffff;
+      font-size: 24px;
+      border: 2px solid #00ffff;
+      border-radius: 12px;
+      text-decoration: none;
+      transition: all 0.3s;
+      box-shadow: 0 0 15px rgba(0,255,255,0.5);
+    }
+
+    .button:hover {
+      background-color: #00ffff;
+      color: #000;
+      box-shadow: 0 0 25px rgba(0,255,255,0.8);
+    }
+
+    button {
+      border: none;
+      border-radius: 8px;
+      background-color: #222;
+      color: #00ffff;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0,255,255,0.3);
+    }
+
+    button:hover {
+      background-color: #00ffff;
+      color: #000;
+    }
+  </style>
+</head>
 <body>
   <!-- BGM 複数対応 -->
   <audio id="bgm" autoplay loop>
@@ -41,3 +99,4 @@
     }
   </script>
 </body>
+</html>
