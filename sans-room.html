@@ -79,8 +79,10 @@
       width: 230px;
       height: 300px;
       object-fit: contain;
-      transition: transform 1s linear;
+      transition: transform 1s linear, opacity 0.5s ease-in-out, filter 0.3s ease-in-out;
       image-rendering: pixelated;
+      opacity: 1;
+      filter: drop-shadow(0 0 10px rgba(255,255,255,0.15));
     }
   </style>
 </head>
@@ -166,7 +168,6 @@
     }
 
     window.addEventListener("resize", initStars);
-
     initStars();
     drawStars();
 
@@ -190,12 +191,20 @@
     }
 
     function switchTrack() {
-      currentTrack = (currentTrack + 1) % tracks.length;
-      source.src = tracks[currentTrack].name;
-      characterImage.src = tracks[currentTrack].image;
-      audio.load();
-      audio.play();
-      setRandomRotation();
+      characterImage.style.opacity = 0;
+      characterImage.style.transform = "scale(0.5)";
+
+      setTimeout(() => {
+        currentTrack = (currentTrack + 1) % tracks.length;
+        source.src = tracks[currentTrack].name;
+        characterImage.src = tracks[currentTrack].image;
+        audio.load();
+        audio.play();
+        setRandomRotation();
+
+        characterImage.style.opacity = 1;
+        characterImage.style.transform = "scale(1) rotate(" + rotation + "deg)";
+      }, 300);
     }
 
     function setRandomRotation() {
