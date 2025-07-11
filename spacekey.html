@@ -128,7 +128,7 @@
   <div class="upgrade">
     <button id="upgrade1" onclick="buyUpgrade(1)" style="background-image: url('image/spaceclicker/icon1.png');" data-tooltip="+1 自動クリック\nコスト: 10"></button>
     <button id="upgrade2" onclick="buyUpgrade(2)" style="background-image: url('image/spaceclicker/icon2.png');" data-tooltip="自動クリック速度上昇\nコスト: 50"></button>
-    <button id="mathGame" onclick="startMathGame()" style="background-image: url('image/spaceclicker/icon3.png');" data-tooltip="算数に挑戦\nコスト: 555"></button>
+    <button id="mathGame" onclick="buyUpgrade(3)" style="background-image: url('image/spaceclicker/icon3.png');" data-tooltip="算数に挑戦\nコスト: 555"></button>
   </div>
 
   <div id="achievementBox"></div>
@@ -137,7 +137,82 @@
   <audio id="click-sound" src="media/click.mp3" preload="auto"></audio>
 
   <script>
-    // ...JS unchanged, assumed intact for brevity...
+    let score = parseInt(localStorage.getItem("score")) || 0;
+    let autoClick = 0;
+    let clickSpeed = 1000;
+    let mathUnlocked = false;
+
+    const counter = document.getElementById("counter");
+    const clickBtn = document.getElementById("click-btn");
+    const sound = document.getElementById("click-sound");
+
+    function updateDisplay() {
+      counter.textContent = "スコア: " + score;
+      if (score >= 10) document.getElementById("upgrade1").classList.add("show");
+      if (score >= 50) document.getElementById("upgrade2").classList.add("show");
+      if (score >= 555) document.getElementById("mathGame").classList.add("show");
+    }
+
+    function save() {
+      localStorage.setItem("score", score);
+    }
+
+    clickBtn.addEventListener("click", () => {
+      score++;
+      sound.currentTime = 0;
+      sound.play();
+      updateDisplay();
+      save();
+    });
+
+    function buyUpgrade(id) {
+      if (id === 1 && score >= 10) {
+        score -= 10;
+        autoClick++;
+      } else if (id === 2 && score >= 50) {
+        score -= 50;
+        clickSpeed = Math.max(100, clickSpeed - 200);
+      } else if (id === 3 && score >= 555 && !mathUnlocked) {
+        score -= 555;
+        mathUnlocked = true;
+        startMathGame();
+      }
+      updateDisplay();
+      save();
+    }
+
+    function resetGame() {
+      localStorage.clear();
+      location.reload();
+    }
+
+    function autoClicker() {
+      if (autoClick > 0) {
+        score += autoClick;
+        updateDisplay();
+        save();
+      }
+      setTimeout(autoClicker, clickSpeed);
+    }
+
+    function startMathGame() {
+      if (!mathUnlocked) return;
+      const a = Math.floor(Math.random() * 20);
+      const b = Math.floor(Math.random() * 20);
+      const answer = prompt(`${a} + ${b} = ?`);
+      if (parseInt(answer) === a + b) {
+        score += 50;
+        alert("正解！ +50");
+      } else {
+        score -= 30;
+        alert("不正解！ -30");
+      }
+      updateDisplay();
+      save();
+    }
+
+    updateDisplay();
+    autoClicker();
   </script>
 </body>
 </html>
