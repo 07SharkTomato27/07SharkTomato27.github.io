@@ -7,25 +7,18 @@
   <link rel="icon" href="favicon.ico" type="image/x-icon" />
   <style>
     html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: auto;
-  font-family: 'Courier New', monospace;
-  background-color: black;
-  color: #00ffff;
-  text-align: center;
-  box-sizing: border-box;
-  transition: background 2s ease;
-  min-height: 500vh;
-}
-
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: auto;
+      font-family: 'Courier New', monospace;
+      background-color: black;
+      color: #00ffff;
+      text-align: center;
+      box-sizing: border-box;
+      transition: background 2s ease;
     }
-
-    * {
-      box-sizing: inherit;
-    }
-
+    * { box-sizing: inherit; }
     canvas {
       position: fixed;
       top: 0;
@@ -36,7 +29,6 @@
       z-index: 0;
       background-color: transparent;
     }
-
     h1 {
       font-size: 5vw;
       margin-top: 5vh;
@@ -44,7 +36,6 @@
       z-index: 1;
       position: relative;
     }
-
     .button {
       display: inline-block;
       margin: 1vh 2vw;
@@ -58,13 +49,11 @@
       transition: all 0.3s ease;
       box-shadow: 0 0 1.5vw rgba(0,255,255,0.6);
     }
-
     .button:hover {
       background: #00ffff;
       color: #000;
       box-shadow: 0 0 3vw rgba(0,255,255,1);
     }
-
     button {
       border: none;
       border-radius: 0.8vw;
@@ -78,12 +67,10 @@
       z-index: 1000;
       position: relative;
     }
-
     button:hover {
       background-color: #00ffff;
       color: #000;
     }
-
     #character-image {
       display: block;
       margin: 4vh auto;
@@ -97,7 +84,6 @@
       z-index: 1;
       position: relative;
     }
-
     .button-container {
       margin-top: 4vh;
       z-index: 1;
@@ -120,20 +106,19 @@
   <img id="character-image" src="image/sans1.png" alt="Character" />
 
   <div class="button-container">
-  <a class="button" href="https://07sharktomato27.github.io/youtube-sans-fight-simu/" target="_blank" rel="noopener noreferrer">Youtube sans fight</a>
-  <a class="button" href="https://1742137113.github.io/haogesans/" target="_blank" rel="noopener noreferrer">haogesans</a>
-  <a class="button" href="https://jcw87.github.io/c2-sans-fight/" target="_blank" rel="noopener noreferrer">Jcw87 sans</a>
-  <a class="button" href="https://meekuzo.github.io/Jotaro-Sans-Simulator/" target="_blank" rel="noopener noreferrer">Jotarosans</a>
-  <a class="button" href="https://omegafredo.github.io/worst-time-simulator/" target="_blank" rel="noopener noreferrer">worst time</a>
-  <a class="button" href="https://caijiqaq.github.io/UNDERSWAP-SANS-FIGHT/index.html" target="_blank" rel="noopener noreferrer">swap sans</a>
-  <a class="button" href="index.html" target="_blank" rel="noopener noreferrer">← 戻る</a>
-</div>
-
+    <a class="button" href="https://07sharktomato27.github.io/youtube-sans-fight-simu/" target="_blank" rel="noopener noreferrer">Youtube sans fight</a>
+    <a class="button" href="https://1742137113.github.io/haogesans/" target="_blank" rel="noopener noreferrer">haogesans</a>
+    <a class="button" href="https://jcw87.github.io/c2-sans-fight/" target="_blank" rel="noopener noreferrer">Jcw87 sans</a>
+    <a class="button" href="https://meekuzo.github.io/Jotaro-Sans-Simulator/" target="_blank" rel="noopener noreferrer">Jotarosans</a>
+    <a class="button" href="https://omegafredo.github.io/worst-time-simulator/" target="_blank" rel="noopener noreferrer">worst time</a>
+    <a class="button" href="https://caijiqaq.github.io/UNDERSWAP-SANS-FIGHT/index.html" target="_blank" rel="noopener noreferrer">swap sans</a>
+    <a class="button" href="index.html">← 戻る</a>
+  </div>
 
   <script>
     const canvas = document.getElementById("space");
     const ctx = canvas.getContext("2d");
-    let stars = [], meteors = [];
+    let stars = [], meteors = [], bigStars = [];
 
     const audio = document.getElementById("bgm");
     const source = document.getElementById("bgmSource");
@@ -178,6 +163,50 @@
       });
     }
 
+    function spawnBigStar() {
+      if (tracks[currentTrack].name !== "hopes_and_dreams.ogg") return;
+      bigStars.push({
+        x: Math.random() * canvas.width,
+        y: -50,
+        size: 30 + Math.random() * 20,
+        speed: 0.5 + Math.random() * 0.5,
+        rotation: Math.random() * 2 * Math.PI,
+        rotationSpeed: (Math.random() - 0.5) * 0.02
+      });
+    }
+
+    function drawBigStars() {
+      for (let i = bigStars.length - 1; i >= 0; i--) {
+        const b = bigStars[i];
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        ctx.rotate(b.rotation);
+        ctx.beginPath();
+        const spikes = 5;
+        const outerRadius = b.size;
+        const innerRadius = b.size * 0.5;
+        for (let j = 0; j < spikes * 2; j++) {
+          const angle = (Math.PI / spikes) * j;
+          const radius = j % 2 === 0 ? outerRadius : innerRadius;
+          const x = Math.cos(angle) * radius;
+          const y = Math.sin(angle) * radius;
+          if (j === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = "cyan";
+        ctx.shadowColor = "cyan";
+        ctx.shadowBlur = 15;
+        ctx.fill();
+        ctx.restore();
+        b.y += b.speed;
+        b.rotation += b.rotationSpeed;
+        if (b.y > canvas.height + 50) {
+          bigStars.splice(i, 1);
+        }
+      }
+    }
+
     function drawStars() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       for (let s of stars) {
@@ -185,14 +214,7 @@
         ctx.translate(s.x, s.y);
         if (tracks[currentTrack].name === "hopes_and_dreams.ogg") {
           ctx.beginPath();
-          for (let i = 0; i < 5; i++) {
-            const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
-            const x = Math.cos(angle) * s.r * 2;
-            const y = Math.sin(angle) * s.r * 2;
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-          }
-          ctx.closePath();
+          ctx.arc(0, 0, s.r, 0, 2 * Math.PI);
           ctx.fillStyle = "white";
           ctx.fill();
         } else {
@@ -226,6 +248,9 @@
       }
 
       if (Math.random() < 0.03) spawnMeteor();
+      if (tracks[currentTrack].name === "hopes_and_dreams.ogg" && Math.random() < 0.02) spawnBigStar();
+      drawBigStars();
+
       requestAnimationFrame(drawStars);
     }
 
@@ -237,7 +262,6 @@
     function switchTrack() {
       characterImage.style.opacity = 0;
       characterImage.style.transform = "scale(0.5)";
-
       setTimeout(() => {
         currentTrack = (currentTrack + 1) % tracks.length;
         source.src = tracks[currentTrack].name;
@@ -276,5 +300,8 @@
     muteButton.onclick = toggleMute;
     trackButton.onclick = switchTrack;
   </script>
+
+  <!-- 無限スクロール用のダミー高さ -->
+  <div style="height: 5000px;"></div>
 </body>
 </html>
