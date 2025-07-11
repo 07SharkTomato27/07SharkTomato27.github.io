@@ -135,6 +135,7 @@
     let currentTrack = 0;
     let rotation = 0;
     let rotationSpeed = (Math.random() - 0.5) * 2;
+    let hue = 0;
 
     function initStars() {
       canvas.width = window.innerWidth;
@@ -254,6 +255,23 @@
       requestAnimationFrame(drawStars);
     }
 
+    function animateBackground() {
+      if (tracks[currentTrack].name === "hopes_and_dreams.ogg") {
+        hue = (hue + 0.5) % 360;
+        body.style.background = `linear-gradient(45deg, 
+          hsl(${hue}, 100%, 50%), 
+          hsl(${(hue + 60) % 360}, 100%, 50%), 
+          hsl(${(hue + 120) % 360}, 100%, 50%), 
+          hsl(${(hue + 180) % 360}, 100%, 50%), 
+          hsl(${(hue + 240) % 360}, 100%, 50%), 
+          hsl(${(hue + 300) % 360}, 100%, 50%)
+        )`;
+      } else {
+        body.style.background = "black";
+      }
+      requestAnimationFrame(animateBackground);
+    }
+
     function toggleMute() {
       audio.muted = !audio.muted;
       muteButton.textContent = audio.muted ? "🔊 ミュート解除" : "🔇 ミュート";
@@ -269,12 +287,6 @@
         audio.load();
         audio.play();
         setRandomRotation();
-
-        if (tracks[currentTrack].name === "hopes_and_dreams.ogg") {
-          body.style.background = "linear-gradient(45deg, red, orange, yellow, green, cyan, blue, violet)";
-        } else {
-          body.style.background = "black";
-        }
 
         characterImage.style.opacity = 1;
         characterImage.style.transform = "scale(1) rotate(" + rotation + "deg)";
@@ -299,6 +311,7 @@
     animateCharacter();
     muteButton.onclick = toggleMute;
     trackButton.onclick = switchTrack;
+    animateBackground();
   </script>
 
   <!-- 無限スクロール用のダミー高さ -->
