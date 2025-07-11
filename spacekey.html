@@ -119,6 +119,24 @@
     #resetBtn:hover {
       background-color: #ff2222;
     }
+
+    #math-question {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 10px 20px;
+      border-radius: 8px;
+      display: none;
+    }
+
+    #math-question input {
+      margin-left: 10px;
+      padding: 5px;
+      font-size: 1em;
+      border-radius: 5px;
+      border: none;
+    }
   </style>
 </head>
 <body>
@@ -130,32 +148,62 @@
     <button id="upgrade1" onclick="buyUpgrade(1)" style="background-image: url('image/spaceclicker/icon1.png');" data-tooltip="+1 自動クリック\nコスト: 10"></button>
     <button id="upgrade2" onclick="buyUpgrade(2)" style="background-image: url('image/spaceclicker/icon2.png');" data-tooltip="自動クリック速度上昇\nコスト: 50"></button>
     <button id="mathGame" onclick="buyUpgrade(3)" style="background-image: url('image/spaceclicker/icon3.png');" data-tooltip="算数に挑戦\nコスト: 555"></button>
+    <button id="upgrade4" onclick="buyUpgrade(4)" style="background-image: url('image/spaceclicker/icon4.png');" data-tooltip="天才になる\n正解時 +30\nコスト: 1000"></button>
   </div>
 
   <div id="achievementBox"></div>
+  <div id="math-question"></div>
   <button id="resetBtn" onclick="resetGame()">リセット</button>
 
   <audio id="click-sound" src="media/click.mp3" preload="auto"></audio>
 
   <script>
     let score = parseInt(localStorage.getItem("score")) || 0;
-    let autoClick = 0;
-    let clickSpeed = 1000;
-    let mathUnlocked = false;
+    let autoClick = parseInt(localStorage.getItem("autoClick")) || 0;
+    let clickSpeed = parseInt(localStorage.getItem("clickSpeed")) || 1000;
+    let mathUnlocked = localStorage.getItem("mathUnlocked") === "true";
+    let mathBonus = parseInt(localStorage.getItem("mathBonus")) || 50;
+
+    let upgradePrices = {
+      1: parseInt(localStorage.getItem("price1")) || 10,
+      2: parseInt(localStorage.getItem("price2")) || 50,
+      3: 555,
+      4: parseInt(localStorage.getItem("price4")) || 1000
+    };
 
     const counter = document.getElementById("counter");
     const clickBtn = document.getElementById("click-btn");
     const sound = document.getElementById("click-sound");
+    const mathQuestion = document.getElementById("math-question");
+    const achievementBox = document.getElementById("achievementBox");
+
+    function showAchievement(text) {
+      achievementBox.textContent = text;
+      achievementBox.style.display = "block";
+      setTimeout(() => achievementBox.style.display = "none", 3000);
+    }
 
     function updateDisplay() {
       counter.textContent = "スコア: " + score;
-      if (score >= 10) document.getElementById("upgrade1").classList.add("show");
-      if (score >= 50) document.getElementById("upgrade2").classList.add("show");
-      if (score >= 555) document.getElementById("mathGame").classList.add("show");
+      if (score >= upgradePrices[1]) document.getElementById("upgrade1").classList.add("show");
+      if (score >= upgradePrices[2]) document.getElementById("upgrade2").classList.add("show");
+      if ((score >= upgradePrices[3] && !mathUnlocked) || mathUnlocked) document.getElementById("mathGame").classList.add("show");
+      if (score >= upgradePrices[4]) document.getElementById("upgrade4").classList.add("show");
+
+      document.getElementById("upgrade1").setAttribute("data-tooltip", `+1 自動クリック\nコスト: ${upgradePrices[1]}`);
+      document.getElementById("upgrade2").setAttribute("data-tooltip", `自動クリック速度上昇\nコスト: ${upgradePrices[2]}`);
+      document.getElementById("upgrade4").setAttribute("data-tooltip", `天才になる\n正解時 +30\nコスト: ${upgradePrices[4]}`);
     }
 
     function save() {
       localStorage.setItem("score", score);
+      localStorage.setItem("autoClick", autoClick);
+      localStorage.setItem("clickSpeed", clickSpeed);
+      localStorage.setItem("mathUnlocked", mathUnlocked);
+      localStorage.setItem("mathBonus", mathBonus);
+      localStorage.setItem("price1", upgradePrices[1]);
+      localStorage.setItem("price2", upgradePrices[2]);
+      localStorage.setItem("price4", upgradePrices[4]);
     }
 
     clickBtn.addEventListener("click", () => {
@@ -167,23 +215,41 @@
     });
 
     function buyUpgrade(id) {
-      if (id === 1 && score >= 10) {
-        score -= 10;
+      if (id === 1 && score >= upgradePrices[1]) {
+        score -= upgradePrices[1];
         autoClick++;
-      } else if (id === 2 && score >= 50) {
-        score -= 50;
+        upgradePrices[1] = Math.ceil(upgradePrices[1] * 1.5);
+      } else if (id === 2 && score >= upgradePrices[2]) {
+        score -= upgradePrices[2];
         clickSpeed = Math.max(100, clickSpeed - 200);
-      } else if (id === 3 && score >= 555 && !mathUnlocked) {
-        score -= 555;
-        mathUnlocked = true;
-        startMathGame();
+        upgradePrices[2] = Math.ceil(upgradePrices[2] * 1.6);
+      } else if (id === 3) {
+        if (!mathUnlocked && score >= upgradePrices[3]) {
+          score -= upgradePrices[3];
+          mathUnlocked = true;
+        }
+        if (mathUnlocked) {
+          document.getElementById("mathGame").style.display = "none";
+          showMathQuestion();
+        }
+      } else if (id === 4 && score >= upgradePrices[4]) {
+        score -= upgradePrices[4];
+        mathBonus += 30;
+        upgradePrices[4] = Math.ceil(upgradePrices[4] * 1.8);
+        showAchievement("実績解除: 天才");
       }
       updateDisplay();
       save();
     }
 
     function resetGame() {
-      localStorage.clear();
+      score = 0;
+      autoClick = 0;
+      clickSpeed = 1000;
+      mathUnlocked = false;
+      mathBonus = 50;
+      upgradePrices = { 1: 10, 2: 50, 3: 555, 4: 1000 };
+      save();
       location.reload();
     }
 
@@ -196,20 +262,30 @@
       setTimeout(autoClicker, clickSpeed);
     }
 
-    function startMathGame() {
-      if (!mathUnlocked) return;
+    function showMathQuestion() {
       const a = Math.floor(Math.random() * 20);
       const b = Math.floor(Math.random() * 20);
-      const answer = prompt(`${a} + ${b} = ?`);
-      if (parseInt(answer) === a + b) {
-        score += 50;
-        alert("正解！ +50");
+      mathQuestion.style.display = "block";
+      mathQuestion.innerHTML = `${a} + ${b} = <input id='math-answer' type='number'> <button onclick='submitAnswer(${a + b})'>答える</button>`;
+      document.getElementById("math-answer").focus();
+      document.getElementById("math-answer").addEventListener("keydown", function(e) {
+        if (e.key === "Enter") submitAnswer(a + b);
+      });
+    }
+
+    function submitAnswer(correct) {
+      const input = document.getElementById("math-answer");
+      const answer = parseInt(input.value);
+      if (answer === correct) {
+        score += mathBonus;
+        alert(`正解！ +${mathBonus}`);
       } else {
         score -= 30;
         alert("不正解！ -30");
       }
       updateDisplay();
       save();
+      showMathQuestion();
     }
 
     updateDisplay();
