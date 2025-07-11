@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>スペースキークリッカー</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: linear-gradient(to right, #1e3c72, #2a5298);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Happiryuika', sans-serif;
+      color: white;
+    }
+
+    h1 {
+      font-size: 3em;
+      text-shadow: 0 0 10px #fff;
+    }
+
+    #click-btn {
+      font-size: 2em;
+      padding: 20px 40px;
+      margin-top: 30px;
+      border: none;
+      border-radius: 12px;
+      background: #00ffff;
+      color: #000;
+      cursor: pointer;
+      box-shadow: 0 0 15px #00ffff;
+      transition: transform 0.1s;
+    }
+
+    #click-btn:active {
+      transform: scale(0.95);
+    }
+
+    #counter {
+      margin-top: 20px;
+      font-size: 2em;
+      text-shadow: 0 0 5px #fff;
+    }
+
+    .upgrade {
+      margin-top: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .upgrade button {
+      margin: 10px;
+      padding: 12px 24px;
+      font-size: 1em;
+      background-color: #fff;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: none;
+    }
+
+    .upgrade button.show {
+      display: inline-block;
+    }
+
+    .upgrade button:hover {
+      background-color: #0ff;
+      color: black;
+    }
+  </style>
+</head>
+<body>
+  <h1>スペースキークリッカー</h1>
+  <button id="click-btn">クリック!</button>
+  <div id="counter">スコア: 0</div>
+
+  <div class="upgrade">
+    <button id="upgrade1" onclick="buyUpgrade(1)">+1 自動クリック (10)</button>
+    <button id="upgrade2" onclick="buyUpgrade(2)">+2 自動クリック (50)</button>
+  </div>
+
+  <audio id="click-sound" src="click.mp3" preload="auto"></audio>
+
+  <script>
+    let score = parseInt(localStorage.getItem("score")) || 0;
+    let autoClick = parseInt(localStorage.getItem("autoClick")) || 0;
+    let upgradeCosts = [10, 50];
+
+    const scoreDisplay = document.getElementById("counter");
+    const clickBtn = document.getElementById("click-btn");
+    const upgrade1Btn = document.getElementById("upgrade1");
+    const upgrade2Btn = document.getElementById("upgrade2");
+    const clickSound = document.getElementById("click-sound");
+
+    function updateDisplay() {
+      scoreDisplay.textContent = `スコア: ${score}`;
+      localStorage.setItem("score", score);
+      localStorage.setItem("autoClick", autoClick);
+      if (score >= upgradeCosts[0]) upgrade1Btn.classList.add("show");
+      if (score >= upgradeCosts[1]) upgrade2Btn.classList.add("show");
+    }
+
+    clickBtn.addEventListener("click", () => {
+      score++;
+      clickSound.currentTime = 0;
+      clickSound.play();
+      updateDisplay();
+    });
+
+    function buyUpgrade(level) {
+      const cost = upgradeCosts[level - 1];
+      if (score >= cost) {
+        score -= cost;
+        autoClick += level;
+        upgradeCosts[level - 1] = Math.floor(cost * 1.5);
+        document.getElementById("upgrade" + level).textContent = `+${level} 自動クリック (${upgradeCosts[level - 1]})`;
+        updateDisplay();
+      }
+    }
+
+    setInterval(() => {
+      score += autoClick;
+      updateDisplay();
+    }, 1000);
+
+    updateDisplay();
+  </script>
+</body>
+</html>
