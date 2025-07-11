@@ -2,40 +2,82 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>UndertaleAU</title>
-  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <link rel="icon" href="favicon.ico" />
   <style>
     html, body {
       height: 100%;
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
       overflow: auto;
-      font-family: 'Courier New', monospace;
       background-color: black;
       color: #00ffff;
+      font-family: 'Courier New', monospace;
       text-align: center;
-      box-sizing: border-box;
       transition: background 2s ease;
     }
-    * { box-sizing: inherit; }
+    * { box-sizing: border-box; }
+
     canvas {
       position: fixed;
-      top: 0;
-      left: 0;
+      top: 0; left: 0;
       width: 100vw;
       height: 100vh;
       pointer-events: none;
       z-index: 0;
-      background-color: transparent;
+      background: transparent;
     }
-    h1 {
-      font-size: 5vw;
-      margin-top: 5vh;
-      text-shadow: 0 0 2vw #00ffff;
+
+    /* ここがポイント！fixedを外して普通にページ内右上配置 */
+    #button-container {
+      width: 100%;
+      text-align: right;
+      padding: 1vh 2vw;
+      box-sizing: border-box;
+      margin-top: 1vh;
+      position: relative; /* fixed外す */
+      z-index: 1000;
+    }
+
+    button {
+      position: static; /* fixedじゃない */
+      margin-left: 1vw;
+      border: none;
+      border-radius: 0.8vw;
+      background-color: rgba(0,0,0,0.6);
+      color: #00ffff;
+      font-size: 2vw;
+      padding: 1vh 2vw;
+      box-shadow: 0 0 1vw rgba(0,255,255,0.4);
+      cursor: pointer;
+      transition: opacity 0.5s ease, visibility 0.5s ease, background-color 0.3s ease, color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #00ffff;
+      color: black;
+    }
+
+    #character-image {
+      display: block;
+      margin: 4vh auto;
+      width: 230px;
+      height: 300px;
+      object-fit: contain;
+      transition: transform 1s linear, opacity 0.5s ease-in-out, filter 0.3s ease-in-out;
+      image-rendering: pixelated;
+      opacity: 1;
+      filter: drop-shadow(0 0 10px rgba(255,255,255,0.3));
       z-index: 1;
       position: relative;
     }
+
+    .button-container {
+      margin-top: 4vh;
+      z-index: 1;
+      position: relative;
+    }
+
     .button {
       display: inline-block;
       margin: 1vh 2vw;
@@ -54,53 +96,21 @@
       color: #000;
       box-shadow: 0 0 3vw rgba(0,255,255,1);
     }
-    button {
-      border: none;
-      border-radius: 0.8vw;
-      background-color: rgba(0, 0, 0, 0.6);
-      color: #00ffff;
-      cursor: pointer;
-      box-shadow: 0 0 1vw rgba(0,255,255,0.4);
-      font-size: 2vw;
-      padding: 1vh 2vw;
-      margin: 1vh;
-      z-index: 1000;
-      position: relative;
-    }
-    button:hover {
-      background-color: #00ffff;
-      color: #000;
-    }
-    #character-image {
-      display: block;
-      margin: 4vh auto;
-      width: 230px;
-      height: 300px;
-      object-fit: contain;
-      transition: transform 1s linear, opacity 0.5s ease-in-out, filter 0.3s ease-in-out;
-      image-rendering: pixelated;
-      opacity: 1;
-      filter: drop-shadow(0 0 10px rgba(255,255,255,0.3));
-      z-index: 1;
-      position: relative;
-    }
-    .button-container {
-      margin-top: 4vh;
-      z-index: 1;
-      position: relative;
-    }
   </style>
 </head>
 <body>
   <canvas id="space"></canvas>
 
   <audio id="bgm" autoplay loop>
-    <source id="bgmSource" src="SansBGM.ogg" type="audio/ogg">
+    <source id="bgmSource" src="SansBGM.ogg" type="audio/ogg" />
     このブラウザはオーディオをサポートしていません。
   </audio>
 
-  <button id="muteBtn" style="position: fixed; top: 2vh; right: 18vw;">🔇 ミュート</button>
-  <button id="trackBtn" style="position: fixed; top: 2vh; right: 2vw;">🎵 曲変更</button>
+  <!-- ここにボタンをページ内右上に配置 -->
+  <div id="button-container">
+    <button id="muteBtn">🔇 ミュート</button>
+    <button id="trackBtn">🎵 曲変更</button>
+  </div>
 
   <h1>UndertaleAU</h1>
   <img id="character-image" src="image/sans1.png" alt="Character" />
@@ -122,8 +132,8 @@
 
     const audio = document.getElementById("bgm");
     const source = document.getElementById("bgmSource");
-    const muteButton = document.getElementById("muteBtn");
-    const trackButton = document.getElementById("trackBtn");
+    const muteBtn = document.getElementById("muteBtn");
+    const trackBtn = document.getElementById("trackBtn");
     const characterImage = document.getElementById("character-image");
     const body = document.body;
 
@@ -274,7 +284,7 @@
 
     function toggleMute() {
       audio.muted = !audio.muted;
-      muteButton.textContent = audio.muted ? "🔊 ミュート解除" : "🔇 ミュート";
+      muteBtn.textContent = audio.muted ? "🔊 ミュート解除" : "🔇 ミュート";
     }
 
     function switchTrack() {
@@ -304,17 +314,39 @@
       requestAnimationFrame(animateCharacter);
     }
 
+    // スクロールでボタンを消す処理（opacityでフェードアウト）
+    window.addEventListener("scroll", () => {
+      const scrollY = window.scrollY || window.pageYOffset;
+      if(scrollY > 10){
+        muteBtn.style.opacity = "0";
+        trackBtn.style.opacity = "0";
+        muteBtn.style.pointerEvents = "none";
+        trackBtn.style.pointerEvents = "none";
+        muteBtn.style.visibility = "hidden";
+        trackBtn.style.visibility = "hidden";
+      } else {
+        muteBtn.style.opacity = "1";
+        trackBtn.style.opacity = "1";
+        muteBtn.style.pointerEvents = "auto";
+        trackBtn.style.pointerEvents = "auto";
+        muteBtn.style.visibility = "visible";
+        trackBtn.style.visibility = "visible";
+      }
+    });
+
     window.addEventListener("resize", initStars);
+
     initStars();
     drawStars();
     setRandomRotation();
     animateCharacter();
-    muteButton.onclick = toggleMute;
-    trackButton.onclick = switchTrack;
     animateBackground();
+
+    muteBtn.onclick = toggleMute;
+    trackBtn.onclick = switchTrack;
   </script>
 
-  <!-- 無限スクロール用のダミー高さ -->
-  <div style="height: 5000px;"></div>
+  <!-- 高さ確保で無限スクロール感 -->
+  <div style="height: 10000px;"></div>
 </body>
 </html>
