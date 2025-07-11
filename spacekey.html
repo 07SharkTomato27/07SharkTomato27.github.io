@@ -83,9 +83,10 @@
   <div class="upgrade">
     <button id="upgrade1" onclick="buyUpgrade(1)">+1 自動クリック (10)</button>
     <button id="upgrade2" onclick="buyUpgrade(2)">+2 自動クリック (50)</button>
+    <button id="mathGame" onclick="startMathGame()">算数に挑戦 (555)</button>
   </div>
 
-  <audio id="click-sound" src="click.mp3" preload="auto"></audio>
+  <audio id="click-sound" src="media/click.mp3" preload="auto"></audio>
 
   <script>
     let score = parseInt(localStorage.getItem("score")) || 0;
@@ -96,6 +97,7 @@
     const clickBtn = document.getElementById("click-btn");
     const upgrade1Btn = document.getElementById("upgrade1");
     const upgrade2Btn = document.getElementById("upgrade2");
+    const mathBtn = document.getElementById("mathGame");
     const clickSound = document.getElementById("click-sound");
 
     function updateDisplay() {
@@ -104,6 +106,7 @@
       localStorage.setItem("autoClick", autoClick);
       if (score >= upgradeCosts[0]) upgrade1Btn.classList.add("show");
       if (score >= upgradeCosts[1]) upgrade2Btn.classList.add("show");
+      if (score >= 555) mathBtn.classList.add("show");
     }
 
     clickBtn.addEventListener("click", () => {
@@ -121,6 +124,21 @@
         upgradeCosts[level - 1] = Math.floor(cost * 1.5);
         document.getElementById("upgrade" + level).textContent = `+${level} 自動クリック (${upgradeCosts[level - 1]})`;
         updateDisplay();
+      }
+    }
+
+    function startMathGame() {
+      if (score < 555) return;
+      const a = Math.floor(Math.random() * 20) + 1;
+      const b = Math.floor(Math.random() * 20) + 1;
+      const answer = a + b;
+      const userAnswer = prompt(`${a} + ${b} = ?`);
+      if (parseInt(userAnswer) === answer) {
+        alert("正解! +50");
+        score += 50;
+        updateDisplay();
+      } else {
+        alert("不正解");
       }
     }
 
