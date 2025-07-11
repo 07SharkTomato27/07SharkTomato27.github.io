@@ -15,6 +15,7 @@
       justify-content: center;
       font-family: 'Happiryuika', sans-serif;
       color: white;
+      overflow: hidden;
     }
 
     h1 {
@@ -32,11 +33,12 @@
       color: #000;
       cursor: pointer;
       box-shadow: 0 0 15px #00ffff;
-      transition: transform 0.1s;
+      transition: transform 0.1s, background-color 0.2s, box-shadow 0.3s;
     }
 
     #click-btn:active {
       transform: scale(0.95);
+      box-shadow: 0 0 30px #00ffff;
     }
 
     #counter {
@@ -73,6 +75,37 @@
       background-color: #0ff;
       color: black;
     }
+
+    #achievementBox {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: rgba(255, 255, 255, 0.9);
+      color: black;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #fff;
+      display: none;
+      font-size: 1em;
+    }
+
+    #resetBtn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 10px 20px;
+      font-size: 1em;
+      background-color: #ff4444;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 10px #ff4444;
+    }
+
+    #resetBtn:hover {
+      background-color: #ff2222;
+    }
   </style>
 </head>
 <body>
@@ -86,12 +119,18 @@
     <button id="mathGame" onclick="startMathGame()">算数に挑戦 (555)</button>
   </div>
 
+  <div id="achievementBox"></div>
+  <button id="resetBtn" onclick="resetGame()">リセット</button>
+
   <audio id="click-sound" src="media/click.mp3" preload="auto"></audio>
 
   <script>
     let score = parseInt(localStorage.getItem("score")) || 0;
     let autoClick = parseInt(localStorage.getItem("autoClick")) || 0;
+    let mathUnlocked = localStorage.getItem("mathUnlocked") === "true";
     let upgradeCosts = [10, 50];
+    let multiplier = parseInt(localStorage.getItem("multiplier")) || 1;
+    let achievements = JSON.parse(localStorage.getItem("achievements")) || {};
 
     const scoreDisplay = document.getElementById("counter");
     const clickBtn = document.getElementById("click-btn");
@@ -99,20 +138,57 @@
     const upgrade2Btn = document.getElementById("upgrade2");
     const mathBtn = document.getElementById("mathGame");
     const clickSound = document.getElementById("click-sound");
+    const achievementBox = document.getElementById("achievementBox");
+
+    const mathBox = document.createElement("div");
+    mathBox.style.position = "fixed";
+    mathBox.style.left = "20px";
+    mathBox.style.bottom = "20px";
+    mathBox.style.background = "rgba(255,255,255,0.2)";
+    mathBox.style.padding = "10px";
+    mathBox.style.borderRadius = "8px";
+    mathBox.style.display = "none";
+    mathBox.style.fontSize = "1.2em";
+    document.body.appendChild(mathBox);
+
+    let currentMath = null;
 
     function updateDisplay() {
       scoreDisplay.textContent = `スコア: ${score}`;
       localStorage.setItem("score", score);
       localStorage.setItem("autoClick", autoClick);
+      localStorage.setItem("mathUnlocked", mathUnlocked);
+      localStorage.setItem("multiplier", multiplier);
+      localStorage.setItem("achievements", JSON.stringify(achievements));
+
       if (score >= upgradeCosts[0]) upgrade1Btn.classList.add("show");
       if (score >= upgradeCosts[1]) upgrade2Btn.classList.add("show");
-      if (score >= 555) mathBtn.classList.add("show");
+      if (score >= 555 && !mathUnlocked) mathBtn.classList.add("show");
+
+      checkAchievements();
+    }
+
+    function showAchievement(text) {
+      if (achievements[text]) return;
+      achievements[text] = true;
+      achievementBox.textContent = `実績解除: ${text}`;
+      achievementBox.style.display = "block";
+      setTimeout(() => achievementBox.style.display = "none", 4000);
+    }
+
+    function checkAchievements() {
+      if (score >= 100 && !achievements["100スコア達成"])
+        showAchievement("100スコア達成");
+      if (multiplier >= 10 && !achievements["クリック力強化"])
+        showAchievement("クリック力強化");
     }
 
     clickBtn.addEventListener("click", () => {
-      score++;
+      score += multiplier;
       clickSound.currentTime = 0;
       clickSound.play();
+      clickBtn.style.transform = "scale(1.1)";
+      setTimeout(() => clickBtn.style.transform = "scale(1)", 100);
       updateDisplay();
     });
 
@@ -121,6 +197,7 @@
       if (score >= cost) {
         score -= cost;
         autoClick += level;
+        multiplier += level;
         upgradeCosts[level - 1] = Math.floor(cost * 1.5);
         document.getElementById("upgrade" + level).textContent = `+${level} 自動クリック (${upgradeCosts[level - 1]})`;
         updateDisplay();
@@ -128,17 +205,49 @@
     }
 
     function startMathGame() {
-      if (score < 555) return;
-      const a = Math.floor(Math.random() * 20) + 1;
-      const b = Math.floor(Math.random() * 20) + 1;
-      const answer = a + b;
-      const userAnswer = prompt(`${a} + ${b} = ?`);
-      if (parseInt(userAnswer) === answer) {
-        alert("正解! +50");
+      if (score < 555 || mathUnlocked) return;
+      score -= 555;
+      mathUnlocked = true;
+      mathBtn.style.display = "none";
+      mathBox.style.display = "block";
+      askMathQuestion();
+      updateDisplay();
+    }
+
+    function askMathQuestion() {
+      const a = Math.floor(Math.random() * 50) + 1;
+      const b = Math.floor(Math.random() * 50) + 1;
+      const correct = a + b;
+      currentMath = correct;
+      mathBox.innerHTML = `${a} + ${b} = <input id="mathInput" type="number" style="width:60px;font-size:1em;"> <button onclick="checkAnswer()">答える</button>`;
+    }
+
+    window.checkAnswer = function () {
+      const input = document.getElementById("mathInput");
+      const userAnswer = parseInt(input.value);
+      if (isNaN(userAnswer)) return;
+      if (userAnswer === currentMath) {
         score += 50;
-        updateDisplay();
+        showAchievement("算数マスター");
+        alert("正解！+50");
       } else {
-        alert("不正解");
+        score -= 30;
+        alert("不正解… -30");
+      }
+      updateDisplay();
+      askMathQuestion();
+    }
+
+    function resetGame() {
+      if (confirm("本当にリセットしますか？")) {
+        localStorage.clear();
+        score = 0;
+        autoClick = 0;
+        mathUnlocked = false;
+        multiplier = 1;
+        achievements = {};
+        updateDisplay();
+        location.reload();
       }
     }
 
@@ -146,6 +255,11 @@
       score += autoClick;
       updateDisplay();
     }, 1000);
+
+    if (mathUnlocked) {
+      mathBox.style.display = "block";
+      askMathQuestion();
+    }
 
     updateDisplay();
   </script>
