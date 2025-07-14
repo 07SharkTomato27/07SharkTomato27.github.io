@@ -147,19 +147,20 @@
       border: none;
     }
 
-    /* トーOス用画像を絶対配置で動かす */
-    #thooas {
-      position: fixed;
-      width: 100px;
-      height: 50px;
-      background-image: url('image/thooas.png');
-      background-size: contain;
-      background-repeat: no-repeat;
-      top: 100px;
-      left: 100px;
-      pointer-events: none;
-      z-index: 25;
-      user-select: none;
+   /* トーOス用画像を絶対配置で動かす */
+#thooas {
+  position: fixed;
+  width: 100px;
+  height: 50px;
+  background-image: url('image/spaceclicker/thooas.png'); /* ここを修正 */
+  background-size: contain;
+  background-repeat: no-repeat;
+  top: 100px;
+  left: 100px;
+  pointer-events: none;
+  z-index: 25;
+  user-select: none;
+}
     }
   </style>
 </head>
@@ -174,7 +175,8 @@
     <button id="mathGame" onclick="buyUpgrade(3)" style="background-image: url('image/spaceclicker/icon3.png');" data-tooltip="算数に挑戦\nコスト: 555"></button>
     <button id="upgrade4" onclick="buyUpgrade(4)" style="background-image: url('image/spaceclicker/icon4.png');" data-tooltip="天才になる\n正解時 +30\nコスト: 1000"></button>
     <button id="gradientUpgrade" onclick="buyUpgrade(5)" style="background-image: url('image/icon5.png');" data-tooltip="背景をグラデーションに\nコスト: 30"></button>
-    <button id="thooasUpgrade" onclick="buyUpgrade(6)" style="background-image: url('image/thooas.png');" data-tooltip="トーOスを召喚\nコスト: 3"></button>
+    <button id="thooasUpgrade" onclick="buyUpgrade(6)" style="background-image: url('image/spaceclicker/thooas.png');" data-tooltip="トーOスを召喚\nコスト: 3"></button>
+
   </div>
 
   <div id="achievementBox"></div>
