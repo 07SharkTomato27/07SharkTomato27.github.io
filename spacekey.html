@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <meta charset="UTF-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
   <title>スペースキークリッカー</title>
-  <link rel="icon" type="image/x-icon" href="image/spaceclicker/favicon2.ico">
+  <link rel="icon" type="image/x-icon" href="image/spaceclicker/favicon2.ico" />
   <style>
     body {
       margin: 0;
@@ -17,6 +17,7 @@
       font-family: 'Happiryuika', sans-serif;
       color: white;
       overflow: hidden;
+      position: relative;
     }
 
     h1 {
@@ -35,6 +36,7 @@
       cursor: pointer;
       box-shadow: 0 0 15px #00ffff;
       transition: transform 0.1s, background-color 0.2s, box-shadow 0.3s;
+      z-index: 10;
     }
 
     #click-btn:active {
@@ -46,6 +48,7 @@
       margin-top: 20px;
       font-size: 2em;
       text-shadow: 0 0 5px #fff;
+      z-index: 10;
     }
 
     .upgrade {
@@ -54,6 +57,7 @@
       gap: 20px;
       justify-content: center;
       flex-wrap: wrap;
+      z-index: 10;
     }
 
     .upgrade button {
@@ -85,8 +89,10 @@
       padding: 5px 10px;
       border-radius: 5px;
       white-space: pre;
-      z-index: 10;
+      z-index: 20;
       font-size: 0.8em;
+      pointer-events: none;
+      user-select: none;
     }
 
     #achievementBox {
@@ -100,6 +106,7 @@
       box-shadow: 0 0 10px #fff;
       display: none;
       font-size: 1em;
+      z-index: 30;
     }
 
     #resetBtn {
@@ -114,6 +121,7 @@
       border-radius: 8px;
       cursor: pointer;
       box-shadow: 0 0 10px #ff4444;
+      z-index: 10;
     }
 
     #resetBtn:hover {
@@ -128,6 +136,7 @@
       padding: 10px 20px;
       border-radius: 8px;
       display: none;
+      z-index: 30;
     }
 
     #math-question input {
@@ -136,6 +145,21 @@
       font-size: 1em;
       border-radius: 5px;
       border: none;
+    }
+
+    /* トーOス用画像を絶対配置で動かす */
+    #thooas {
+      position: fixed;
+      width: 100px;
+      height: 50px;
+      background-image: url('image/thooas.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      top: 100px;
+      left: 100px;
+      pointer-events: none;
+      z-index: 25;
+      user-select: none;
     }
   </style>
 </head>
@@ -149,147 +173,187 @@
     <button id="upgrade2" onclick="buyUpgrade(2)" style="background-image: url('image/spaceclicker/icon2.png');" data-tooltip="自動クリック速度上昇\nコスト: 50"></button>
     <button id="mathGame" onclick="buyUpgrade(3)" style="background-image: url('image/spaceclicker/icon3.png');" data-tooltip="算数に挑戦\nコスト: 555"></button>
     <button id="upgrade4" onclick="buyUpgrade(4)" style="background-image: url('image/spaceclicker/icon4.png');" data-tooltip="天才になる\n正解時 +30\nコスト: 1000"></button>
+    <button id="gradientUpgrade" onclick="buyUpgrade(5)" style="background-image: url('image/icon5.png');" data-tooltip="背景をグラデーションに\nコスト: 30"></button>
+    <button id="thooasUpgrade" onclick="buyUpgrade(6)" style="background-image: url('image/thooas.png');" data-tooltip="トーOスを召喚\nコスト: 3"></button>
   </div>
 
   <div id="achievementBox"></div>
   <div id="math-question"></div>
   <button id="resetBtn" onclick="resetGame()">リセット</button>
 
+  <div id="thooas" style="display:none;"></div>
+
   <audio id="click-sound" src="media/click.mp3" preload="auto"></audio>
+  <audio id="thooas-sound" src="media/thooas.mp3" preload="auto"></audio>
 
-  <script>
-    let score = parseInt(localStorage.getItem("score")) || 0;
-    let autoClick = parseInt(localStorage.getItem("autoClick")) || 0;
-    let clickSpeed = parseInt(localStorage.getItem("clickSpeed")) || 1000;
-    let mathUnlocked = localStorage.getItem("mathUnlocked") === "true";
-    let mathBonus = parseInt(localStorage.getItem("mathBonus")) || 50;
+<script>
+  let score = 0;
+  const counter = document.getElementById('counter');
+  const clickBtn = document.getElementById('click-btn');
+  const clickSound = document.getElementById('click-sound');
+  const thooasSound = document.getElementById('thooas-sound');
 
-    let upgradePrices = {
-      1: parseInt(localStorage.getItem("price1")) || 10,
-      2: parseInt(localStorage.getItem("price2")) || 50,
-      3: 555,
-      4: parseInt(localStorage.getItem("price4")) || 1000
-    };
+  const upgrades = {
+    1: {btn: document.getElementById('upgrade1'), price: 10},
+    2: {btn: document.getElementById('upgrade2'), price: 50},
+    3: {btn: document.getElementById('mathGame'), price: 555},
+    4: {btn: document.getElementById('upgrade4'), price: 1000},
+    5: {btn: document.getElementById('gradientUpgrade'), price: 30},
+    6: {btn: document.getElementById('thooasUpgrade'), price: 3}
+  };
 
-    const counter = document.getElementById("counter");
-    const clickBtn = document.getElementById("click-btn");
-    const sound = document.getElementById("click-sound");
-    const mathQuestion = document.getElementById("math-question");
-    const achievementBox = document.getElementById("achievementBox");
+  let autoClickInterval = null;
+  let autoClickSpeed = 1000;
+  let mathBonus = 1;
 
-    function showAchievement(text) {
-      achievementBox.textContent = text;
-      achievementBox.style.display = "block";
-      setTimeout(() => achievementBox.style.display = "none", 3000);
-    }
+  // トーOスの位置と速度
+  const thooasElem = document.getElementById('thooas');
+  let thooasX = 100;
+  let thooasY = 100;
+  let thooasVX = 3;
+  let thooasVY = 2;
+  let thooasActive = false;
 
-    function updateDisplay() {
-      counter.textContent = "スコア: " + score;
-      if (score >= upgradePrices[1]) document.getElementById("upgrade1").classList.add("show");
-      if (score >= upgradePrices[2]) document.getElementById("upgrade2").classList.add("show");
-      if ((score >= upgradePrices[3] && !mathUnlocked) || mathUnlocked) document.getElementById("mathGame").classList.add("show");
-      if (score >= upgradePrices[4]) document.getElementById("upgrade4").classList.add("show");
+  function updateUpgrades() {
+    if(score >= upgrades[6].price) upgrades[6].btn.classList.add('show'); else upgrades[6].btn.classList.remove('show');
+    if(score >= upgrades[1].price) upgrades[1].btn.classList.add('show'); else upgrades[1].btn.classList.remove('show');
+    if(score >= upgrades[5].price) upgrades[5].btn.classList.add('show'); else upgrades[5].btn.classList.remove('show');
+    if(score >= upgrades[2].price) upgrades[2].btn.classList.add('show'); else upgrades[2].btn.classList.remove('show');
+    if(score >= upgrades[3].price) upgrades[3].btn.classList.add('show'); else upgrades[3].btn.classList.remove('show');
+    if(score >= upgrades[4].price) upgrades[4].btn.classList.add('show'); else upgrades[4].btn.classList.remove('show');
 
-      document.getElementById("upgrade1").setAttribute("data-tooltip", `+1 自動クリック\nコスト: ${upgradePrices[1]}`);
-      document.getElementById("upgrade2").setAttribute("data-tooltip", `自動クリック速度上昇\nコスト: ${upgradePrices[2]}`);
-      document.getElementById("upgrade4").setAttribute("data-tooltip", `天才になる\n正解時 +30\nコスト: ${upgradePrices[4]}`);
-    }
+    // 更新ツールチップの価格
+    upgrades[1].btn.setAttribute('data-tooltip', `+1 自動クリック\nコスト: ${upgrades[1].price}`);
+    upgrades[2].btn.setAttribute('data-tooltip', `自動クリック速度上昇\nコスト: ${upgrades[2].price}`);
+    upgrades[3].btn.setAttribute('data-tooltip', `算数に挑戦\nコスト: ${upgrades[3].price}`);
+    upgrades[4].btn.setAttribute('data-tooltip', `天才になる\n正解時 +30\nコスト: ${upgrades[4].price}`);
+    upgrades[5].btn.setAttribute('data-tooltip', `背景をグラデーションに\nコスト: ${upgrades[5].price}`);
+    upgrades[6].btn.setAttribute('data-tooltip', `トーOスを召喚\nコスト: ${upgrades[6].price}`);
+  }
 
-    function save() {
-      localStorage.setItem("score", score);
-      localStorage.setItem("autoClick", autoClick);
-      localStorage.setItem("clickSpeed", clickSpeed);
-      localStorage.setItem("mathUnlocked", mathUnlocked);
-      localStorage.setItem("mathBonus", mathBonus);
-      localStorage.setItem("price1", upgradePrices[1]);
-      localStorage.setItem("price2", upgradePrices[2]);
-      localStorage.setItem("price4", upgradePrices[4]);
-    }
+  clickBtn.addEventListener('click', () => {
+    score++;
+    counter.textContent = 'スコア: ' + score;
+    clickSound.currentTime = 0;
+    clickSound.play();
+    updateUpgrades();
+  });
 
-    clickBtn.addEventListener("click", () => {
-      score++;
-      sound.currentTime = 0;
-      sound.play();
-      updateDisplay();
-      save();
-    });
+  function buyUpgrade(id) {
+    if(score < upgrades[id].price) return alert(`スコアが足りません。コスト: ${upgrades[id].price}`);
+    score -= upgrades[id].price;
+    counter.textContent = 'スコア: ' + score;
 
-    function buyUpgrade(id) {
-      if (id === 1 && score >= upgradePrices[1]) {
-        score -= upgradePrices[1];
-        autoClick++;
-        upgradePrices[1] = Math.ceil(upgradePrices[1] * 1.5);
-      } else if (id === 2 && score >= upgradePrices[2]) {
-        score -= upgradePrices[2];
-        clickSpeed = Math.max(100, clickSpeed - 200);
-        upgradePrices[2] = Math.ceil(upgradePrices[2] * 1.6);
-      } else if (id === 3) {
-        if (!mathUnlocked && score >= upgradePrices[3]) {
-          score -= upgradePrices[3];
-          mathUnlocked = true;
+    switch(id) {
+      case 1:
+        if(!autoClickInterval) {
+          autoClickInterval = setInterval(() => {
+            score++;
+            counter.textContent = 'スコア: ' + score;
+            updateUpgrades();
+          }, autoClickSpeed);
         }
-        if (mathUnlocked) {
-          document.getElementById("mathGame").style.display = "none";
-          showMathQuestion();
+        upgrades[id].price = Math.ceil(upgrades[id].price * 1.5);
+        break;
+      case 2:
+        if(autoClickInterval) {
+          clearInterval(autoClickInterval);
+          autoClickSpeed = Math.max(100, autoClickSpeed - 200);
+          autoClickInterval = setInterval(() => {
+            score++;
+            counter.textContent = 'スコア: ' + score;
+            updateUpgrades();
+          }, autoClickSpeed);
+          upgrades[id].price = Math.ceil(upgrades[id].price * 1.6);
         }
-      } else if (id === 4 && score >= upgradePrices[4]) {
-        score -= upgradePrices[4];
-        mathBonus += 30;
-        upgradePrices[4] = Math.ceil(upgradePrices[4] * 1.8);
-        showAchievement("実績解除: 天才");
-      }
-      updateDisplay();
-      save();
+        break;
+      case 3:
+        const num1 = Math.floor(Math.random() * 10);
+        const num2 = Math.floor(Math.random() * 10);
+        const answer = prompt(`${num1} + ${num2} = ?`);
+        if (parseInt(answer) === num1 + num2) {
+          score += 20 * mathBonus;
+          alert('正解!');
+        } else {
+          alert('不正解...');
+        }
+        upgrades[id].price = Math.ceil(upgrades[id].price * 1.7);
+        break;
+      case 4:
+        mathBonus = 2;
+        alert('天才モード発動! 算数ゲームの報酬が倍になります。');
+        upgrades[id].price = Math.ceil(upgrades[id].price * 1.8);
+        break;
+      case 5:
+        document.body.style.background = 'linear-gradient(to right, #00f, #0ff)';
+        upgrades[id].price = Math.ceil(upgrades[id].price * 1.3);
+        break;
+      case 6:
+        if (!thooasActive) {
+          thooasElem.style.display = 'block';
+          thooasActive = true;
+          requestAnimationFrame(moveThooas);
+        }
+        upgrades[id].price = Math.ceil(upgrades[id].price * 1.4);
+        break;
     }
 
-    function resetGame() {
-      score = 0;
-      autoClick = 0;
-      clickSpeed = 1000;
-      mathUnlocked = false;
-      mathBonus = 50;
-      upgradePrices = { 1: 10, 2: 50, 3: 555, 4: 1000 };
-      save();
-      location.reload();
+    updateUpgrades();
+  }
+
+  // トーOスの動き・バウンド判定
+  function moveThooas() {
+    if (!thooasActive) return;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const width = thooasElem.offsetWidth;
+    const height = thooasElem.offsetHeight;
+
+    thooasX += thooasVX;
+    thooasY += thooasVY;
+
+    let bounced = false;
+    if (thooasX <= 0) {
+      thooasX = 0;
+      thooasVX = -thooasVX;
+      bounced = true;
+    } else if (thooasX + width >= vw) {
+      thooasX = vw - width;
+      thooasVX = -thooasVX;
+      bounced = true;
     }
 
-    function autoClicker() {
-      if (autoClick > 0) {
-        score += autoClick;
-        updateDisplay();
-        save();
-      }
-      setTimeout(autoClicker, clickSpeed);
+    if (thooasY <= 0) {
+      thooasY = 0;
+      thooasVY = -thooasVY;
+      bounced = true;
+    } else if (thooasY + height >= vh) {
+      thooasY = vh - height;
+      thooasVY = -thooasVY;
+      bounced = true;
     }
 
-    function showMathQuestion() {
-      const a = Math.floor(Math.random() * 20);
-      const b = Math.floor(Math.random() * 20);
-      mathQuestion.style.display = "block";
-      mathQuestion.innerHTML = `${a} + ${b} = <input id='math-answer' type='number'> <button onclick='submitAnswer(${a + b})'>答える</button>`;
-      document.getElementById("math-answer").focus();
-      document.getElementById("math-answer").addEventListener("keydown", function(e) {
-        if (e.key === "Enter") submitAnswer(a + b);
-      });
+    thooasElem.style.left = thooasX + 'px';
+    thooasElem.style.top = thooasY + 'px';
+
+    if (bounced) {
+      score += 2;
+      counter.textContent = 'スコア: ' + score;
+      upgrades[6].price += 2; // バウンドしたらコスト+2
+      upgrades[6].btn.setAttribute('data-tooltip', `トーOスを召喚\nコスト: ${upgrades[6].price}`);
+      thooasSound.currentTime = 0;
+      thooasSound.play();
+      updateUpgrades();
     }
 
-    function submitAnswer(correct) {
-      const input = document.getElementById("math-answer");
-      const answer = parseInt(input.value);
-      if (answer === correct) {
-        score += mathBonus;
-        alert(`正解！ +${mathBonus}`);
-      } else {
-        score -= 30;
-        alert("不正解！ -30");
-      }
-      updateDisplay();
-      save();
-      showMathQuestion();
-    }
+    requestAnimationFrame(moveThooas);
+  }
 
-    updateDisplay();
-    autoClicker();
-  </script>
+  function resetGame() {
+    location.reload();
+  }
+
+  updateUpgrades();
+</script>
 </body>
 </html>
