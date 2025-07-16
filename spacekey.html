@@ -9,7 +9,7 @@
     body {
       margin: 0;
       height: 100vh;
-      background: linear-gradient(to right, #1e3c72, #2a5298);
+      background-color: #000814;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -18,6 +18,10 @@
       color: white;
       overflow: hidden;
       position: relative;
+    }
+
+    body.gradient-bg {
+      background: linear-gradient(to right, #1e3c72, #2a5298);
     }
 
     h1 {
@@ -147,21 +151,20 @@
       border: none;
     }
 
-   /* トーOス用画像を絶対配置で動かす */
-#thooas {
-  position: fixed;
-  width: 100px;
-  height: 50px;
-  background-image: url('image/spaceclicker/thooas.png'); /* ここを修正 */
-  background-size: contain;
-  background-repeat: no-repeat;
-  top: 100px;
-  left: 100px;
-  pointer-events: none;
-  z-index: 25;
-  user-select: none;
-}
+    #thooas {
+      position: fixed;
+      width: 100px;
+      height: 50px;
+      background-image: url('image/spaceclicker/thooas.png');
+      background-size: contain;
+      background-repat: no-repeat;
+      top: 100px;
+      left: 100px;
+      pointer-events: none;
+      z-index: 25;
+      user-select: none;
     }
+
   </style>
 </head>
 <body>
@@ -174,188 +177,22 @@
     <button id="upgrade2" onclick="buyUpgrade(2)" style="background-image: url('image/spaceclicker/icon2.png');" data-tooltip="自動クリック速度上昇\nコスト: 50"></button>
     <button id="mathGame" onclick="buyUpgrade(3)" style="background-image: url('image/spaceclicker/icon3.png');" data-tooltip="算数に挑戦\nコスト: 555"></button>
     <button id="upgrade4" onclick="buyUpgrade(4)" style="background-image: url('image/spaceclicker/icon4.png');" data-tooltip="天才になる\n正解時 +30\nコスト: 1000"></button>
-    <button id="gradientUpgrade" onclick="buyUpgrade(5)" style="background-image: url('image/spaceclicker/icon5.png');" data-tooltip="背景をグラデーションに\nコスト: 30"></button>
+    <button id="gradientUpgrade" onclick="buyUpgrade(5)" style="background-image: url('image/icon5.png');" data-tooltip="背景をグラデーションに\nコスト: 30"></button>
     <button id="thooasUpgrade" onclick="buyUpgrade(6)" style="background-image: url('image/spaceclicker/thooas.png');" data-tooltip="トーOスを召喚\nコスト: 3"></button>
-
+    <button id="tenaUpgrade" onclick="buyUpgrade(7)" style="background-image: url('image/spaceclicker/tena.gif');" data-tooltip="テナ召喚\nコスト: 100"></button>
   </div>
 
   <div id="achievementBox"></div>
   <div id="math-question"></div>
   <button id="resetBtn" onclick="resetGame()">リセット</button>
-
-  <div id="thooas" style="display:none;"></div>
+  <div id="thooas-container"></div>
+  <div id="tena-container"></div>
 
   <audio id="click-sound" src="media/click.mp3" preload="auto"></audio>
-  <audio id="thooas-sound" src="media/thooas.mp3" preload="auto"></audio>
+  <audio id="thooas-bounce" src="media/thooas.mp3" preload="auto"></audio>
+  <audio id="thooas-click" src="media/thooas2.mp3" preload="auto"></audio>
+  <audio id="thooas-move" src="media/thooas3.mp3" preload="auto" loop></audio>
 
-<script>
-  let score = 0;
-  const counter = document.getElementById('counter');
-  const clickBtn = document.getElementById('click-btn');
-  const clickSound = document.getElementById('click-sound');
-  const thooasSound = document.getElementById('thooas-sound');
-
-  const upgrades = {
-    1: {btn: document.getElementById('upgrade1'), price: 10},
-    2: {btn: document.getElementById('upgrade2'), price: 50},
-    3: {btn: document.getElementById('mathGame'), price: 555},
-    4: {btn: document.getElementById('upgrade4'), price: 1000},
-    5: {btn: document.getElementById('gradientUpgrade'), price: 30},
-    6: {btn: document.getElementById('thooasUpgrade'), price: 3}
-  };
-
-  let autoClickInterval = null;
-  let autoClickSpeed = 1000;
-  let mathBonus = 1;
-
-  // トーOスの位置と速度
-  const thooasElem = document.getElementById('thooas');
-  let thooasX = 100;
-  let thooasY = 100;
-  let thooasVX = 3;
-  let thooasVY = 2;
-  let thooasActive = false;
-
-  function updateUpgrades() {
-    if(score >= upgrades[6].price) upgrades[6].btn.classList.add('show'); else upgrades[6].btn.classList.remove('show');
-    if(score >= upgrades[1].price) upgrades[1].btn.classList.add('show'); else upgrades[1].btn.classList.remove('show');
-    if(score >= upgrades[5].price) upgrades[5].btn.classList.add('show'); else upgrades[5].btn.classList.remove('show');
-    if(score >= upgrades[2].price) upgrades[2].btn.classList.add('show'); else upgrades[2].btn.classList.remove('show');
-    if(score >= upgrades[3].price) upgrades[3].btn.classList.add('show'); else upgrades[3].btn.classList.remove('show');
-    if(score >= upgrades[4].price) upgrades[4].btn.classList.add('show'); else upgrades[4].btn.classList.remove('show');
-
-    // 更新ツールチップの価格
-    upgrades[1].btn.setAttribute('data-tooltip', `+1 自動クリック\nコスト: ${upgrades[1].price}`);
-    upgrades[2].btn.setAttribute('data-tooltip', `自動クリック速度上昇\nコスト: ${upgrades[2].price}`);
-    upgrades[3].btn.setAttribute('data-tooltip', `算数に挑戦\nコスト: ${upgrades[3].price}`);
-    upgrades[4].btn.setAttribute('data-tooltip', `天才になる\n正解時 +30\nコスト: ${upgrades[4].price}`);
-    upgrades[5].btn.setAttribute('data-tooltip', `背景をグラデーションに\nコスト: ${upgrades[5].price}`);
-    upgrades[6].btn.setAttribute('data-tooltip', `トーOスを召喚\nコスト: ${upgrades[6].price}`);
-  }
-
-  clickBtn.addEventListener('click', () => {
-    score++;
-    counter.textContent = 'スコア: ' + score;
-    clickSound.currentTime = 0;
-    clickSound.play();
-    updateUpgrades();
-  });
-
-  function buyUpgrade(id) {
-    if(score < upgrades[id].price) return alert(`スコアが足りません。コスト: ${upgrades[id].price}`);
-    score -= upgrades[id].price;
-    counter.textContent = 'スコア: ' + score;
-
-    switch(id) {
-      case 1:
-        if(!autoClickInterval) {
-          autoClickInterval = setInterval(() => {
-            score++;
-            counter.textContent = 'スコア: ' + score;
-            updateUpgrades();
-          }, autoClickSpeed);
-        }
-        upgrades[id].price = Math.ceil(upgrades[id].price * 1.5);
-        break;
-      case 2:
-        if(autoClickInterval) {
-          clearInterval(autoClickInterval);
-          autoClickSpeed = Math.max(100, autoClickSpeed - 200);
-          autoClickInterval = setInterval(() => {
-            score++;
-            counter.textContent = 'スコア: ' + score;
-            updateUpgrades();
-          }, autoClickSpeed);
-          upgrades[id].price = Math.ceil(upgrades[id].price * 1.6);
-        }
-        break;
-      case 3:
-        const num1 = Math.floor(Math.random() * 10);
-        const num2 = Math.floor(Math.random() * 10);
-        const answer = prompt(`${num1} + ${num2} = ?`);
-        if (parseInt(answer) === num1 + num2) {
-          score += 20 * mathBonus;
-          alert('正解!');
-        } else {
-          alert('不正解...');
-        }
-        upgrades[id].price = Math.ceil(upgrades[id].price * 1.7);
-        break;
-      case 4:
-        mathBonus = 2;
-        alert('天才モード発動! 算数ゲームの報酬が倍になります。');
-        upgrades[id].price = Math.ceil(upgrades[id].price * 1.8);
-        break;
-      case 5:
-        document.body.style.background = 'linear-gradient(to right, #00f, #0ff)';
-        upgrades[id].price = Math.ceil(upgrades[id].price * 1.3);
-        break;
-      case 6:
-        if (!thooasActive) {
-          thooasElem.style.display = 'block';
-          thooasActive = true;
-          requestAnimationFrame(moveThooas);
-        }
-        upgrades[id].price = Math.ceil(upgrades[id].price * 1.4);
-        break;
-    }
-
-    updateUpgrades();
-  }
-
-  // トーOスの動き・バウンド判定
-  function moveThooas() {
-    if (!thooasActive) return;
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const width = thooasElem.offsetWidth;
-    const height = thooasElem.offsetHeight;
-
-    thooasX += thooasVX;
-    thooasY += thooasVY;
-
-    let bounced = false;
-    if (thooasX <= 0) {
-      thooasX = 0;
-      thooasVX = -thooasVX;
-      bounced = true;
-    } else if (thooasX + width >= vw) {
-      thooasX = vw - width;
-      thooasVX = -thooasVX;
-      bounced = true;
-    }
-
-    if (thooasY <= 0) {
-      thooasY = 0;
-      thooasVY = -thooasVY;
-      bounced = true;
-    } else if (thooasY + height >= vh) {
-      thooasY = vh - height;
-      thooasVY = -thooasVY;
-      bounced = true;
-    }
-
-    thooasElem.style.left = thooasX + 'px';
-    thooasElem.style.top = thooasY + 'px';
-
-    if (bounced) {
-      score += 2;
-      counter.textContent = 'スコア: ' + score;
-      upgrades[6].price += 2; // バウンドしたらコスト+2
-      upgrades[6].btn.setAttribute('data-tooltip', `トーOスを召喚\nコスト: ${upgrades[6].price}`);
-      thooasSound.currentTime = 0;
-      thooasSound.play();
-      updateUpgrades();
-    }
-
-    requestAnimationFrame(moveThooas);
-  }
-
-  function resetGame() {
-    location.reload();
-  }
-
-  updateUpgrades();
-</script>
+  <script src="script.js"></script>
 </body>
 </html>
