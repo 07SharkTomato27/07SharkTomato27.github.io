@@ -95,6 +95,11 @@
       border-radius: 50%;
       object-fit: cover;
     }
+    #settings-panel {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+    }
   </style>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -102,8 +107,8 @@
 <body>
 <div id="login">
   <h2>PASS</h2>
-  <input type="password" id="password" placeholder="パスワード" onkeydown="if(event.key==='Enter'){checkPass()}" />
-  <button onclick="checkPass()">入る</button>
+  <input type="password" id="password" placeholder="パスワード" />
+  <button id="enter-button">入る</button>
 </div>
 
 <div id="app">
@@ -111,21 +116,28 @@
     <div id="channels">
       <h3>SharkChat</h3>
       <div id="user-settings">
-        <input id="username" placeholder="名前を入力" onchange="setUsername()" />
-        <input type="file" id="avatar" accept="image/*" onchange="setAvatar()" />
+        <input id="username" placeholder="名前を入力" />
+        <input type="file" id="avatar" accept="image/*" />
         <img id="avatar-preview" src="" alt="avatar" />
+        <button id="settings-button">⚙</button>
       </div>
-      <div class="channel active" onclick="switchChannel(0)"># 喋る1</div>
-      <div class="channel" onclick="switchChannel(1)"># 速報</div>
-      <div class="channel" onclick="switchChannel(2)"># 喋る2</div>
-      <div class="channel" onclick="switchChannel(3)"># 喋る3</div>
+      <div id="settings-panel">
+        <label>フォント: <input id="font-setting" placeholder="例: sans-serif" /></label>
+        <label>メッセージ色: <input id="text-color-setting" type="color" /></label>
+        <label>色1: <input id="color1-setting" type="color" /></label>
+        <label>色2: <input id="color2-setting" type="color" /></label>
+      </div>
+      <div class="channel active" data-index="0"># 喋る1</div>
+      <div class="channel" data-index="1"># 速報</div>
+      <div class="channel" data-index="2"># 喋る2</div>
+      <div class="channel" data-index="3"># 喋る3</div>
     </div>
     <div id="chat">
       <div id="chat-header"># 喋る1</div>
       <div id="messages"></div>
       <div id="input-box">
-        <input id="msg" placeholder="メッセージを入力" onkeydown="if(event.key==='Enter'){sendMsg()}" />
-        <button onclick="sendMsg()">送信</button>
+        <input id="msg" placeholder="メッセージを入力" />
+        <button id="send-button">送信</button>
       </div>
     </div>
   </div>
@@ -133,7 +145,7 @@
 
 <script>
 const firebaseConfig = {
-  databaseURL: "https://sharkchat-demo.firebaseio.com/"
+  databaseURL: "https://sharkchat-9a0a5-default-rtdb.firebaseio.com/"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
@@ -141,6 +153,18 @@ const db = firebase.database();
 let username = localStorage.getItem("username") || "名無し";
 let avatarURL = localStorage.getItem("avatarURL") || "";
 let currentChannel = 0;
+let currentRef = null; // 追加: 現在監視しているFirebase参照
+
+function applySettings() {
+  const font = localStorage.getItem("font") || "sans-serif";
+  const color1 = localStorage.getItem("color1") || "#1e1e2f";
+  const color2 = localStorage.getItem("color2") || "#3a3a5c";
+  const textColor = localStorage.getItem("textColor") || "white";
+  document.body.style.fontFamily = font;
+  // 背景はチャット画面のみに適用
+  document.getElementById("chat").style.background = `linear-gradient(to bottom right, ${color1}, ${color2})`;
+  document.body.style.color = textColor;
+}
 
 function checkPass() {
   const pass = document.getElementById('password').value;
@@ -149,6 +173,11 @@ function checkPass() {
     document.getElementById('app').style.display = "block";
     document.getElementById('username').value = username;
     if (avatarURL) document.getElementById('avatar-preview').src = avatarURL;
+    document.getElementById("font-setting").value = localStorage.getItem("font") || "";
+    document.getElementById("text-color-setting").value = localStorage.getItem("textColor") || "#ffffff";
+    document.getElementById("color1-setting").value = localStorage.getItem("color1") || "#1e1e2f";
+    document.getElementById("color2-setting").value = localStorage.getItem("color2") || "#3a3a5c";
+    applySettings();
     listenMessages();
   } else {
     alert("間違ったパスワード");
@@ -202,9 +231,11 @@ function deleteMsg(key) {
 }
 
 function listenMessages() {
-  const ref = db.ref("channel" + currentChannel);
-  ref.off();
-  ref.on("value", snap => {
+  if (currentRef) {
+    currentRef.off();
+  }
+  currentRef = db.ref("channel" + currentChannel);
+  currentRef.on("value", snap => {
     const container = document.getElementById('messages');
     const data = snap.val() || {};
     container.innerHTML = Object.entries(data).map(([key, m]) => `
@@ -217,6 +248,45 @@ function listenMessages() {
     container.scrollTop = container.scrollHeight;
   });
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("enter-button").addEventListener("click", checkPass);
+  document.getElementById("username").addEventListener("change", setUsername);
+  document.getElementById("avatar").addEventListener("change", setAvatar);
+  document.getElementById("send-button").addEventListener("click", sendMsg);
+  document.querySelectorAll(".channel").forEach((el) => {
+    el.addEventListener("click", () => {
+      switchChannel(parseInt(el.dataset.index));
+    });
+  });
+  document.getElementById("password").addEventListener("keydown", e => {
+    if (e.key === "Enter") checkPass();
+  });
+  document.getElementById("msg").addEventListener("keydown", e => {
+    if (e.key === "Enter") sendMsg();
+  });
+  document.getElementById("settings-button").addEventListener("click", () => {
+    const panel = document.getElementById("settings-panel");
+    panel.style.display = panel.style.display === "flex" ? "none" : "flex";
+  });
+  document.getElementById("font-setting").addEventListener("change", e => {
+    localStorage.setItem("font", e.target.value);
+    applySettings();
+  });
+  document.getElementById("text-color-setting").addEventListener("change", e => {
+    localStorage.setItem("textColor", e.target.value);
+    applySettings();
+  });
+  document.getElementById("color1-setting").addEventListener("change", e => {
+    localStorage.setItem("color1", e.target.value);
+    applySettings();
+  });
+  document.getElementById("color2-setting").addEventListener("change", e => {
+    localStorage.setItem("color2", e.target.value);
+    applySettings();
+  });
+  applySettings();
+});
 </script>
 </body>
 </html>
