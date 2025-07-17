@@ -195,6 +195,12 @@
   <script>
     document.getElementById("resetBtn").addEventListener("click", () => location.reload());
 
+    document.getElementById("click-btn").addEventListener("click", () => {
+      if (typeof handleClick === 'function') {
+        handleClick();
+      }
+    });
+
     document.querySelectorAll('.upgrade button').forEach(button => {
       button.addEventListener('click', () => {
         const id = parseInt(button.getAttribute('data-id'));
