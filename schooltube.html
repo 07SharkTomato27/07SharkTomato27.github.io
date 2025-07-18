@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>SchoolTube</title>
+  <style>
+    body {
+      background: #111;
+      color: #0ff;
+      font-family: sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    input, textarea, button {
+      margin: 10px;
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 1em;
+      width: 80%;
+      max-width: 600px;
+    }
+    iframe {
+      margin-top: 20px;
+      border: none;
+      width: 560px;
+      height: 315px;
+      box-shadow: 0 0 20px #0ff;
+    }
+  </style>
+</head>
+<body>
+  <h1>YouTube動画 埋め込み</h1>
+  <input type="text" id="youtubeUrl" placeholder="YouTubeのURLをここに貼り付けてください">
+  <br>
+  <button onclick="generateEmbed()">埋め込みを表示</button>
+  <br>
+  <div id="preview"></div>
+
+  <script>
+    function extractVideoId(url) {
+      const match = url.match(/[?&]v=([^&#]*)|youtu\.be\/([^&#]*)|\/embed\/([^&#]*)/);
+      return match ? match[1] || match[2] || match[3] : null;
+    }
+
+    function generateEmbed() {
+      const url = document.getElementById('youtubeUrl').value;
+      const videoId = extractVideoId(url);
+      if (!videoId) {
+        alert('無効なYouTube URLです。');
+        return;
+      }
+
+      const invidiousInstances = [
+        'https://vid.puffyan.us',
+        'https://invidious.snopyta.org',
+        'https://invidious.kavin.rocks',
+        'https://yewtu.be'
+      ];
+
+      const random = Math.floor(Math.random() * invidiousInstances.length);
+      const embedUrl = `${invidiousInstances[random]}/embed/${videoId}`;
+      const iframeCode = `<iframe width="560" height="315" src="${embedUrl}" frameborder="0" allowfullscreen></iframe>`;
+      document.getElementById('preview').innerHTML = iframeCode;
+    }
+  </script>
+</body>
+</html>
