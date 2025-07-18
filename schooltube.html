@@ -11,7 +11,7 @@
       text-align: center;
       padding: 20px;
     }
-    input, textarea, button {
+    input, textarea, button, select {
       margin: 10px;
       padding: 10px;
       border-radius: 10px;
@@ -32,6 +32,11 @@
   <h1>YouTube動画 埋め込み</h1>
   <input type="text" id="youtubeUrl" placeholder="YouTubeのURLをここに貼り付けてください">
   <br>
+  <select id="mode">
+    <option value="invidious">Invidiousで再生</option>
+    <option value="youtube">YouTubeで再生</option>
+  </select>
+  <br>
   <button onclick="generateEmbed()">埋め込みを表示</button>
   <br>
   <div id="preview"></div>
@@ -45,20 +50,27 @@
     function generateEmbed() {
       const url = document.getElementById('youtubeUrl').value;
       const videoId = extractVideoId(url);
+      const mode = document.getElementById('mode').value;
+
       if (!videoId) {
         alert('無効なYouTube URLです。');
         return;
       }
 
-      const invidiousInstances = [
-        'https://vid.puffyan.us',
-        'https://invidious.snopyta.org',
-        'https://invidious.kavin.rocks',
-        'https://yewtu.be'
-      ];
+      let embedUrl = "";
+      if (mode === "youtube") {
+        embedUrl = `https://www.youtube.com/embed/${videoId}`;
+      } else {
+        const invidiousInstances = [
+          'https://vid.puffyan.us',
+          'https://invidious.snopyta.org',
+          'https://invidious.kavin.rocks',
+          'https://yewtu.be'
+        ];
+        const random = Math.floor(Math.random() * invidiousInstances.length);
+        embedUrl = `${invidiousInstances[random]}/embed/${videoId}`;
+      }
 
-      const random = Math.floor(Math.random() * invidiousInstances.length);
-      const embedUrl = `${invidiousInstances[random]}/embed/${videoId}`;
       const iframeCode = `<iframe width="560" height="315" src="${embedUrl}" frameborder="0" allowfullscreen></iframe>`;
       document.getElementById('preview').innerHTML = iframeCode;
     }
