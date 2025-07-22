@@ -28,19 +28,18 @@
       background: transparent;
     }
 
-    /* ここがポイント！fixedを外して普通にページ内右上配置 */
     #button-container {
       width: 100%;
       text-align: right;
       padding: 1vh 2vw;
       box-sizing: border-box;
       margin-top: 1vh;
-      position: relative; /* fixed外す */
+      position: relative;
       z-index: 1000;
     }
 
     button {
-      position: static; /* fixedじゃない */
+      position: static;
       margin-left: 1vw;
       border: none;
       border-radius: 0.8vw;
@@ -106,7 +105,6 @@
     このブラウザはオーディオをサポートしていません。
   </audio>
 
-  <!-- ここにボタンをページ内右上に配置 -->
   <div id="button-container">
     <button id="muteBtn">🔇 ミュート</button>
     <button id="trackBtn">🎵 曲変更</button>
@@ -116,24 +114,25 @@
   <img id="character-image" src="image/sans1.png" alt="Character" />
 
   <div class="button-container">
+    <!-- 各リンク（省略せずそのまま） -->
     <a class="button" href="index.html">← 戻る</a>
-    <a class="button" href="https://07sharktomato27.github.io/youtube-sans-fight-simu/" target="_blank" rel="noopener noreferrer">Youtube sans fight</a>
-    <a class="button" href="https://1742137113.github.io/haogesans/" target="_blank" rel="noopener noreferrer">haogesans</a>
-    <a class="button" href="https://jcw87.github.io/c2-sans-fight/" target="_blank" rel="noopener noreferrer">Jcw87 sans</a>
-    <a class="button" href="https://meekuzo.github.io/Jotaro-Sans-Simulator/" target="_blank" rel="noopener noreferrer">Jotarosans</a>
-    <a class="button" href="https://omegafredo.github.io/worst-time-simulator/" target="_blank" rel="noopener noreferrer">worst time</a>
-    <a class="button" href="https://caijiqaq.github.io/UNDERSWAP-SANS-FIGHT/index.html" target="_blank" rel="noopener noreferrer">swap sans</a>
-    <a class="button" href="https://caijiqaq.github.io/UNDERSWAP-PAPYRUS-FIGHT/" target="_blank" rel="noopener noreferrer">swap papyrus</a>
-    <a class="button" href="https://caijiqaq.github.io/UNDERFELL/index.html" target="_blank" rel="noopener noreferrer">underfell sans</a>
-    <a class="button" href="https://mario1d240.github.io/curelfell-sans-simualtor/index.html" rel="noopener noreferrer">curelfell sans</a>
-    <a class="button" href="https://lwideprcrer.github.io/dtp2-cs/" target="_blank" rel="noopener noreferrer">dt but cs</a>
-    <a class="button" href="https://caijiqaq.github.io/LAST-BREATH/index.html" target="_blank" rel="noopener noreferrer">lastbreath 1</a>
-    <a class="button" href="https://mario1d240.github.io/undertale-last-breath-remake-bad-time-simulator/index.html" target="_blank" rel="noopener noreferrer">lastbreath 3</a>
-    <a class="button" href="https://mario1d240.github.io/TS-Papyrus-simulator/index.html" target="_blank" rel="noopener noreferrer">ts papyrus</a>
-    <a class="button" href="https://mario1d240.github.io/undertoad-mario-fight-no-finish/index.html" target="_blank" rel="noopener noreferrer">mario fight</a>
-    <a class="button" href="https://mario1d240.github.io/last-breath-sans-lll-sprite-simulator/index.html" target="_blank" rel="noopener noreferrer">lastbreath3</a>
-    <a class="button" href="https://hyzq.github.io/Sans-fight2/" rel="noopener noreferrer">color sans</a>
-    <a class="button" href="https://kckarnige.online/BadTimeRevamped/" target="_blank" rel="noopener noreferrer">BadTimeRevamped</a>
+    <a class="button" href="https://07sharktomato27.github.io/youtube-sans-fight-simu/" target="_blank">Youtube sans fight</a>
+    <a class="button" href="https://1742137113.github.io/haogesans/" target="_blank">haogesans</a>
+    <a class="button" href="https://jcw87.github.io/c2-sans-fight/" target="_blank">Jcw87 sans</a>
+    <a class="button" href="https://meekuzo.github.io/Jotaro-Sans-Simulator/" target="_blank">Jotarosans</a>
+    <a class="button" href="https://omegafredo.github.io/worst-time-simulator/" target="_blank">worst time</a>
+    <a class="button" href="https://caijiqaq.github.io/UNDERSWAP-SANS-FIGHT/index.html" target="_blank">swap sans</a>
+    <a class="button" href="https://caijiqaq.github.io/UNDERSWAP-PAPYRUS-FIGHT/" target="_blank">swap papyrus</a>
+    <a class="button" href="https://caijiqaq.github.io/UNDERFELL/index.html" target="_blank">underfell sans</a>
+    <a class="button" href="https://mario1d240.github.io/curelfell-sans-simualtor/index.html">curelfell sans</a>
+    <a class="button" href="https://lwideprcrer.github.io/dtp2-cs/" target="_blank">dt but cs</a>
+    <a class="button" href="https://caijiqaq.github.io/LAST-BREATH/index.html" target="_blank">lastbreath 1</a>
+    <a class="button" href="https://mario1d240.github.io/undertale-last-breath-remake-bad-time-simulator/index.html" target="_blank">lastbreath 3</a>
+    <a class="button" href="https://mario1d240.github.io/TS-Papyrus-simulator/index.html" target="_blank">ts papyrus</a>
+    <a class="button" href="https://mario1d240.github.io/undertoad-mario-fight-no-finish/index.html" target="_blank">mario fight</a>
+    <a class="button" href="https://mario1d240.github.io/last-breath-sans-lll-sprite-simulator/index.html" target="_blank">lastbreath3</a>
+    <a class="button" href="https://hyzq.github.io/Sans-fight2/">color sans</a>
+    <a class="button" href="https://kckarnige.online/BadTimeRevamped/" target="_blank">BadTimeRevamped</a>
   </div>
 
   <script>
@@ -151,8 +150,10 @@
     const tracks = [
       { name: "SansBGM.ogg", image: "image/sans1.png" },
       { name: "megalovania.ogg", image: "image/sans.gif" },
-      { name: "hopes_and_dreams.ogg", image: "image/asriel.png" }
+      { name: "hopes_and_dreams.ogg", image: "image/asriel.png" },
+      { name: "media/black_knife.ogg", image: "image/black.png" } // ← 追加済み！
     ];
+
     let currentTrack = 0;
     let rotation = 0;
     let rotationSpeed = (Math.random() - 0.5) * 2;
@@ -234,17 +235,10 @@
       for (let s of stars) {
         ctx.save();
         ctx.translate(s.x, s.y);
-        if (tracks[currentTrack].name === "hopes_and_dreams.ogg") {
-          ctx.beginPath();
-          ctx.arc(0, 0, s.r, 0, 2 * Math.PI);
-          ctx.fillStyle = "white";
-          ctx.fill();
-        } else {
-          ctx.beginPath();
-          ctx.arc(0, 0, s.r, 0, 2 * Math.PI);
-          ctx.fillStyle = "#ffffff";
-          ctx.fill();
-        }
+        ctx.beginPath();
+        ctx.arc(0, 0, s.r, 0, 2 * Math.PI);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
         ctx.restore();
         s.y += s.d;
         if (s.y > canvas.height) {
@@ -279,12 +273,12 @@
     function animateBackground() {
       if (tracks[currentTrack].name === "hopes_and_dreams.ogg") {
         hue = (hue + 0.5) % 360;
-        body.style.background = `linear-gradient(45deg, 
-          hsl(${hue}, 100%, 50%), 
-          hsl(${(hue + 60) % 360}, 100%, 50%), 
-          hsl(${(hue + 120) % 360}, 100%, 50%), 
-          hsl(${(hue + 180) % 360}, 100%, 50%), 
-          hsl(${(hue + 240) % 360}, 100%, 50%), 
+        body.style.background = `linear-gradient(45deg,
+          hsl(${hue}, 100%, 50%),
+          hsl(${(hue + 60) % 360}, 100%, 50%),
+          hsl(${(hue + 120) % 360}, 100%, 50%),
+          hsl(${(hue + 180) % 360}, 100%, 50%),
+          hsl(${(hue + 240) % 360}, 100%, 50%),
           hsl(${(hue + 300) % 360}, 100%, 50%)
         )`;
       } else {
@@ -308,7 +302,6 @@
         audio.load();
         audio.play();
         setRandomRotation();
-
         characterImage.style.opacity = 1;
         characterImage.style.transform = "scale(1) rotate(" + rotation + "deg)";
       }, 300);
@@ -325,7 +318,6 @@
       requestAnimationFrame(animateCharacter);
     }
 
-    // スクロールでボタンを消す処理（opacityでフェードアウト）
     window.addEventListener("scroll", () => {
       const scrollY = window.scrollY || window.pageYOffset;
       if(scrollY > 10){
@@ -357,7 +349,6 @@
     trackBtn.onclick = switchTrack;
   </script>
 
-  <!-- 高さ確保で無限スクロール感 -->
   <div style="height: 10000px;"></div>
 </body>
 </html>
