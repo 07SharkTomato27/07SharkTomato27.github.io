@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>世界のカブクワ捕獲ゲーム</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: sans-serif;
+      background-image: url('https://upload.wikimedia.org/wikipedia/commons/f/f0/Fushimi_Inari_Taisha_forest_trail.jpg');
+      background-size: cover;
+      background-position: center;
+    }
+    #gameCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    #ui {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 10px;
+      border-radius: 10px;
+    }
+    #shop, #collection {
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 10px;
+      margin-top: 10px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    #collection {
+      display: none;
+    }
+    .bug {
+      position: absolute;
+      cursor: pointer;
+      width: 80px;
+    }
+    .collection-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .collection-item img {
+      width: 50px;
+      margin-right: 10px;
+    }
+    .jelly-image {
+      position: absolute;
+      width: 50px;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <div id="ui">
+    <div>所持金: <span id="money">500</span>円</div>
+    <button onclick="buyJelly()">昆虫ゼリー購入（100円）</button>
+    <button onclick="toggleCollection()">コレクションを表示/非表示</button>
+    <div id="shop"></div>
+    <h3>コレクション</h3>
+    <div id="collection"></div>
+  </div>
+  <audio id="getSound" src="media/get.ogg"></audio>
+  <audio id="sellSound" src="media/uru.ogg"></audio>
+  <audio id="jellySound" src="media/jelly.ogg"></audio>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let money = 500;
+    let jelly = false;
+    let jellyElement = null;
+    let bugs = [];
+    let collection = [];
+
+    const bugList = [
+      { name: "カブトムシ", price: 50, image: "https://upload.wikimedia.org/wikipedia/commons/7/7d/Trypoxylus_dichotomus_insignis_male_top.JPG" },
+      { name: "ノコギリクワガタ", price: 50, image: "https://upload.wikimedia.org/wikipedia/commons/5/5f/Prosopocoilus_inclinatus_male2.jpg" },
+      { name: "ミヤマクワガタ", price: 50, image: "https://upload.wikimedia.org/wikipedia/commons/d/df/Lucanus_maculifemoratus_maculifemoratus_male_top.JPG" },
+      { name: "コクワガタ", price: 50, image: "https://upload.wikimedia.org/wikipedia/commons/3/36/Dorcus_rectus_male_top.jpg" },
+      { name: "パリーフタマタクワガタ", price: 150, image: "https://upload.wikimedia.org/wikipedia/commons/8/88/Dorcus_titanus_palawanicus_male_top.jpg" },
+      { name: "パラワンオオヒラタクワガタ", price: 150, image: "https://upload.wikimedia.org/wikipedia/commons/0/03/Dorcus_titanus_palawanicus_male_bottom.jpg" },
+      { name: "ギラファノコギリクワガタ", price: 150, image: "https://upload.wikimedia.org/wikipedia/commons/0/0d/Prosopocoilus_giraffa_male_top.JPG" },
+      { name: "ゾウカブト", price: 150, image: "https://upload.wikimedia.org/wikipedia/commons/7/71/Megasoma_elephas_male_dos.JPG" },
+      { name: "ヘラクレスオオカブト", price: 150, image: "https://upload.wikimedia.org/wikipedia/commons/1/15/Dynastes_hercules_male_dos.JPG" }
+    ];
+
+    function buyJelly() {
+      if (money >= 100 && !jelly) {
+        money -= 100;
+        jelly = true;
+        document.getElementById("jellySound")?.play();
+
+        if (!jellyElement) {
+          jellyElement = document.createElement("img");
+          jellyElement.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Insect_jelly_001.jpg/120px-Insect_jelly_001.jpg";
+          jellyElement.className = "jelly-image";
+          document.body.appendChild(jellyElement);
+        } else {
+          jellyElement.style.display = "block";
+        }
+
+        updateUI();
+        setTimeout(() => {
+          jelly = false;
+          if (jellyElement) jellyElement.style.display = "none";
+        }, 5 * 60 * 1000);
+      }
+    }
+
+    function updateUI() {
+      document.getElementById("money").textContent = money;
+      updateCollection();
+    }
+
+    function updateCollection() {
+      const collectionDiv = document.getElementById("collection");
+      collectionDiv.innerHTML = "";
+      collection.forEach((bug, index) => {
+        const div = document.createElement("div");
+        div.className = "collection-item";
+        div.innerHTML = `<img src="${bug.image}" alt="${bug.name}"><span>${bug.name}（${bug.price}円）</span> <button onclick="sellBug(${index})">売る</button>`;
+        collectionDiv.appendChild(div);
+      });
+    }
+
+    function sellBug(index) {
+      const sellSound = document.getElementById("sellSound");
+      money += collection[index].price;
+      collection.splice(index, 1);
+      sellSound.play();
+      updateUI();
+    }
+
+    function spawnBug() {
+      if (!jelly || bugs.length >= 10) return;
+      const bug = bugList[Math.floor(Math.random() * bugList.length)];
+      const img = new Image();
+      img.src = bug.image;
+      const x = Math.random() * (canvas.width - 80);
+      const y = Math.random() * (canvas.height - 80);
+      const element = document.createElement("img");
+      element.src = img.src;
+      element.className = "bug";
+      element.style.left = `${x}px`;
+      element.style.top = `${y}px`;
+
+      // 向き設定
+      const jellyX = jellyElement ? jellyElement.getBoundingClientRect().left + 25 : null;
+      if (jellyX && Math.abs(x - jellyX) < 300) {
+        element.style.transform = x < jellyX ? "scaleX(1)" : "scaleX(-1)";
+      } else {
+        element.style.transform = Math.random() < 0.5 ? "scaleX(1)" : "scaleX(-1)";
+      }
+
+      document.body.appendChild(element);
+      element.onclick = () => {
+        document.getElementById("getSound").play();
+        collection.push(bug);
+        element.remove();
+        bugs = bugs.filter(b => b !== element);
+        updateUI();
+      };
+      bugs.push(element);
+      setTimeout(() => {
+        if (bugs.includes(element)) {
+          element.remove();
+          bugs = bugs.filter(b => b !== element);
+        }
+      }, 10000);
+    }
+
+    function toggleCollection() {
+      const collectionDiv = document.getElementById("collection");
+      collectionDiv.style.display = collectionDiv.style.display === 'none' ? 'block' : 'none';
+    }
+
+    setInterval(spawnBug, 1000);
+    updateUI();
+  </script>
+</body>
+</html>
