@@ -1,4 +1,3 @@
-<script>
 let score = 0;
 let autoClickers = 0;
 let autoClickSpeed = 1000;
@@ -168,4 +167,3 @@ function resetGame() {
 }
 
 updateScore();
-</script>
