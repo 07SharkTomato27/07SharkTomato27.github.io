@@ -52,10 +52,24 @@
     <button onclick="saveSettings()">セーブ</button>
     <button onclick="resetSettings()">リセット</button>
   </div>
-  <audio id="getSound" src="media/get.ogg"></audio>
-  <audio id="sellSound" src="media/uru.ogg"></audio>
+  <audio id="getSound" src="media/get.ogg" preload="auto"></audio>
+  <audio id="sellSound" src="media/uru.ogg" preload="auto"></audio>
 
   <script>
+   function playSound(id) {
+   const original = document.getElementById(id);
+   if (!original) return;
+   const clone = original.cloneNode();
+   clone.play().catch(e => console.warn(`${id} 再生エラー:`, e));
+    }
+    
+    function playSound(id) {
+    const original = document.getElementById(id);
+    if (!original) return;
+    const clone = original.cloneNode();
+    clone.play().catch(e => console.warn(`${id} 再生エラー:`, e));
+    }
+
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
     canvas.width = window.innerWidth;
@@ -145,12 +159,12 @@ const bugs = rawBugs.map(bug => ({
     }
 
     function sellBug(index) {
-      const bug = collection[index];
-      money += bug.price;
-      document.getElementById("sellSound").play();
-      collection.splice(index, 1);
-      updateMoney();
-      renderCollection();
+    const bug = collection[index];
+    money += bug.price;
+    playSound("sellSound");
+    collection.splice(index, 1);
+    updateMoney();
+    renderCollection();
     }
 
     function spawnBug() {
@@ -172,19 +186,19 @@ const bugs = rawBugs.map(bug => ({
     }
 
     canvas.addEventListener("click", (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
-      activeBugs = activeBugs.filter(bug => {
-        const halfSize = 50 * bug.scale;
-        if (bug.img && mx >= bug.x - halfSize && mx <= bug.x + halfSize && my >= bug.y - halfSize && my <= bug.y + halfSize) {
-          document.getElementById("getSound").play();
-          collection.push(bug);
-          renderCollection();
-          return false;
-        }
-        return true;
-      });
+  　const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    activeBugs = activeBugs.filter(bug => {
+    const halfSize = 50 * bug.scale;
+    if (bug.img && mx >= bug.x - halfSize && mx <= bug.x + halfSize && my >= bug.y - halfSize && my <= bug.y + halfSize) {
+      playSound("getSound");
+      collection.push(bug);
+      renderCollection();
+      return false;
+    }
+    return true;
+     });
     });
 
     function draw() {
