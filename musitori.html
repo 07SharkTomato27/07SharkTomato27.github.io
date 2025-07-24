@@ -23,7 +23,7 @@
       padding: 10px;
       border-radius: 10px;
     }
-    #collection {
+    #collection, #settings {
       display: none;
       position: absolute;
       top: 80px;
@@ -43,9 +43,15 @@
   <div id="ui">
     <button onclick="buyJelly()">ゼリー購入（100円）</button>
     <button onclick="toggleCollection()">コレクション</button>
+    <button onclick="toggleSettings()">設定</button>
     <p id="money">所持金: 500円</p>
   </div>
   <div id="collection"></div>
+  <div id="settings">
+    <h3>設定</h3>
+    <button onclick="saveSettings()">セーブ</button>
+    <button onclick="resetSettings()">リセット</button>
+  </div>
   <audio id="getSound" src="media/get.ogg"></audio>
   <audio id="sellSound" src="media/uru.ogg"></audio>
 
@@ -55,18 +61,28 @@
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    const bugs = [
-      { name: "ヘラクレスオオカブト", price: 150, image: "image/musi/hercules.png" },
-      { name: "ノコギリクワガタ", price: 50, image: "image/musi/nokogiri.png" },
-      { name: "ミヤマクワガタ", price: 50, image: "image/musi/miyama.png" },
-      { name: "コクワガタ", price: 50, image: "image/musi/kokuwa.png" },
-      { name: "パラワンオオヒラタクワガタ", price: 150, image: "image/musi/parawan.png" },
-      { name: "パリーフタマタクワガタ", price: 150, image: "image/musi/parii.png" },
-      { name: "オオクワガタ", price: 100, image: "image/musi/ookuwa.png" },
-      { name: "コーカサスオオカブト", price: 140, image: "image/musi/kokasasu.png" },
-      { name: "カブトムシ", price: 80, image: "image/musi/kabuto.png" },
-      { name: "アトラスオオカブト", price: 130, image: "image/musi/atlas.png" }
-    ];
+    const REAL_TO_CANVAS_SCALE = 0.75;
+
+const rawBugs = [
+  { name: "ヘラクレスオオカブト", price: 150, image: "image/musi/hercules.png", realSize: 120 },
+  { name: "ノコギリクワガタ", price: 50, image: "image/musi/nokogiri.png", realSize: 55 },
+  { name: "ミヤマクワガタ", price: 50, image: "image/musi/miyama.png", realSize: 50 },
+  { name: "コクワガタ", price: 50, image: "image/musi/kokuwa.png", realSize: 40 },
+  { name: "パラワンオオヒラタクワガタ", price: 150, image: "image/musi/parawan.png", realSize: 95 },
+  { name: "パリーフタマタクワガタ", price: 150, image: "image/musi/parii.png", realSize: 72 },
+  { name: "オオクワガタ", price: 100, image: "image/musi/ookuwa.png", realSize: 70 },
+  { name: "コーカサスオオカブト", price: 140, image: "image/musi/kokasasu.png", realSize: 100 },
+  { name: "カブトムシ", price: 80, image: "image/musi/kabuto.png", realSize: 60 },
+  { name: "アトラスオオカブト", price: 130, image: "image/musi/atlas.png", realSize: 95 },
+  { name: "ラコダールツヤクワガタ", price: 120, image: "image/musi/rakodaaru.png", realSize: 85 },
+  { name: "メタリフェルホソアカクワガタ", price: 110, image: "image/musi/metaferu.png", realSize: 75 },
+  { name: "コガネムシ", price: 20, image: "image/musi/koganemusi.png", realSize: 25 }
+];
+
+const bugs = rawBugs.map(bug => ({
+  ...bug,
+  size: bug.realSize * REAL_TO_CANVAS_SCALE
+}));
 
     let activeBugs = [];
     let jellyActive = false;
@@ -95,6 +111,27 @@
       const col = document.getElementById("collection");
       col.style.display = col.style.display === "none" ? "block" : "none";
       renderCollection();
+    }
+
+    function toggleSettings() {
+      const set = document.getElementById("settings");
+      set.style.display = set.style.display === "none" ? "block" : "none";
+    }
+
+    function saveSettings() {
+      localStorage.setItem("game_money", money);
+      localStorage.setItem("game_collection", JSON.stringify(collection));
+      alert("設定をセーブしました！");
+    }
+
+    function resetSettings() {
+      if (confirm("本当にリセットしますか？")) {
+        money = 500;
+        collection = [];
+        updateMoney();
+        renderCollection();
+        alert("リセットしました！");
+      }
     }
 
     function renderCollection() {
@@ -129,6 +166,7 @@
       img.src = bug.image;
       img.onload = () => {
         bug.img = img;
+        bug.scale = 0.5 + (bug.price / 150);
         activeBugs.push(bug);
       };
     }
@@ -138,7 +176,8 @@
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
       activeBugs = activeBugs.filter(bug => {
-        if (bug.img && mx >= bug.x - 50 && mx <= bug.x + 50 && my >= bug.y - 50 && my <= bug.y + 50) {
+        const halfSize = 50 * bug.scale;
+        if (bug.img && mx >= bug.x - halfSize && mx <= bug.x + halfSize && my >= bug.y - halfSize && my <= bug.y + halfSize) {
           document.getElementById("getSound").play();
           collection.push(bug);
           renderCollection();
@@ -163,7 +202,6 @@
           bug.x += bug.vx;
           bug.y += bug.vy;
 
-          // 画面外に出ないようにバウンド
           if (bug.x < 0 || bug.x > canvas.width) bug.vx *= -1;
           if (bug.y < 0 || bug.y > canvas.height) bug.vy *= -1;
 
@@ -172,6 +210,8 @@
           ctx.save();
           ctx.translate(bug.x, bug.y);
           ctx.rotate(bug.rotation);
+          const scale = bug.scale || 1;
+          ctx.scale(scale, scale);
           ctx.drawImage(bug.img, -bug.img.width / 2, -bug.img.height / 2);
           ctx.restore();
         }
@@ -185,5 +225,5 @@
     draw();
   </script>
 </body>
-  
+
 </html>
