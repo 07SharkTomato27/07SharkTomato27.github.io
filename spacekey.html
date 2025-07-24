@@ -193,6 +193,13 @@
   <audio id="thooas-move" src="media/thooas3.mp3" preload="auto" loop></audio>
 
   <script>
+    const clickSound = document.getElementById("click-sound");
+
+    document.getElementById("click-btn").addEventListener("click", () => {
+     clickSound.currentTime = 0;
+     clickSound.play();
+    });
+
     document.getElementById("resetBtn").addEventListener("click", () => location.reload());
 
     document.getElementById("click-btn").addEventListener("click", () => {
