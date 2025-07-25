@@ -217,7 +217,8 @@ const bugs = rawBugs.map(bug => ({
     jellies: jellies.map(j => ({
       x: j.x,
       y: j.y,
-      timestamp: j.timestamp
+      timestamp: j.timestamp,
+      type: j.type || "normal"
     })),
     activeBugs: activeBugs.map(bug => ({
       name: bug.name,
