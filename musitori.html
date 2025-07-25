@@ -63,13 +63,6 @@
    const clone = original.cloneNode();
    clone.play().catch(e => console.warn(`${id} 再生エラー:`, e));
     }
-    
-    function playSound(id) {
-    const original = document.getElementById(id);
-    if (!original) return;
-    const clone = original.cloneNode();
-    clone.play().catch(e => console.warn(`${id} 再生エラー:`, e));
-    }
 
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
@@ -171,6 +164,7 @@ const bugs = rawBugs.map(bug => ({
     function spawnBug() {
       if (!jellyActive || activeBugs.length >= 10) return;
       const bug = Object.assign({}, bugs[Math.floor(Math.random() * bugs.length)]);
+      bug.rotationSpeed = (Math.random() - 0.5) * 0.02;
       bug.x = Math.random() * canvas.width;
       bug.y = Math.random() * canvas.height;
       bug.rotation = Math.random() * Math.PI * 2;
@@ -187,54 +181,57 @@ const bugs = rawBugs.map(bug => ({
     }
 
     canvas.addEventListener("click", (e) => {
-  　const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-    activeBugs = activeBugs.filter(bug => {
-    const halfSize = 50 * bug.scale;
-    if (bug.img && mx >= bug.x - halfSize && mx <= bug.x + halfSize && my >= bug.y - halfSize && my <= bug.y + halfSize) {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  for (let i = 0; i < activeBugs.length; i++) {
+    const bug = activeBugs[i];
+    const halfSize = 50 * (bug.scale || 1);
+    if (
+      bug.img &&
+      mx >= bug.x - halfSize &&
+      mx <= bug.x + halfSize &&
+      my >= bug.y - halfSize &&
+      my <= bug.y + halfSize
+    ) {
       playSound("getSound");
       collection.push(bug);
+      activeBugs.splice(i, 1);
       renderCollection();
-      return false;
+      break;
     }
-    return true;
-     });
-    });
+  }
+});
 
     function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "rgba(255, 255, 0, 0.5)";
+  jellies.forEach(j => {
+    ctx.beginPath();
+    ctx.arc(j.x, j.y, 15, 0, Math.PI * 2);
+    ctx.fill();
+  });
 
-      ctx.fillStyle = "rgba(255, 255, 0, 0.5)";
-      jellies.forEach(j => {
-        ctx.beginPath();
-        ctx.arc(j.x, j.y, 15, 0, Math.PI * 2);
-        ctx.fill();
-      });
+  activeBugs.forEach(bug => {
+    if (bug.img) {
+      bug.x += bug.vx;
+      bug.y += bug.vy;
+      if (bug.x < 0 || bug.x > canvas.width) bug.vx *= -1;
+      if (bug.y < 0 || bug.y > canvas.height) bug.vy *= -1;
+      bug.rotation += bug.rotationSpeed;
+      ctx.save();
+      ctx.translate(bug.x, bug.y);
+      ctx.rotate(bug.rotation);
+      const scale = bug.scale || 1;
+      ctx.scale(scale, scale);
+      ctx.drawImage(bug.img, -bug.img.width / 2, -bug.img.height / 2);
+      ctx.restore();
+      }
+     });
 
-      activeBugs.forEach(bug => {
-        if (bug.img) {
-          bug.x += bug.vx;
-          bug.y += bug.vy;
-
-          if (bug.x < 0 || bug.x > canvas.width) bug.vx *= -1;
-          if (bug.y < 0 || bug.y > canvas.height) bug.vy *= -1;
-
-          bug.rotation += (Math.random() - 0.5) * 0.1;
-
-          ctx.save();
-          ctx.translate(bug.x, bug.y);
-          ctx.rotate(bug.rotation);
-          const scale = bug.scale || 1;
-          ctx.scale(scale, scale);
-          ctx.drawImage(bug.img, -bug.img.width / 2, -bug.img.height / 2);
-          ctx.restore();
-        }
-      });
-
-      requestAnimationFrame(draw);
+    requestAnimationFrame(draw);
     }
-
     updateMoney();
     setInterval(spawnBug, 10000);
     draw();
