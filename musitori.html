@@ -154,7 +154,7 @@ const bugs = rawBugs.map(bug => ({
       div.innerHTML = "<h3>コレクション</h3>";
       collection.forEach((bug, index) => {
         const el = document.createElement("div");
-        el.innerHTML = `${bug.name} <button onclick="sellBug(${index})">売却</button>`;
+        el.innerHTML = `${bug.name} <button onclick="sellBug(${index})">売る</button>`;
         div.appendChild(el);
       });
     }
