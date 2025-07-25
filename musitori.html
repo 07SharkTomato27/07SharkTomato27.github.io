@@ -50,8 +50,8 @@
   <div id="collection"></div>
   <div id="settings">
     <h3>設定</h3>
-    <button onclick="saveSettings()">セーブ</button>
-    <button onclick="resetSettings()">リセット</button>
+    <button onclick="saveGame()">セーブ</button>
+    <button onclick="resetGame()">リセット</button>
   </div>
   <audio id="getSound" src="media/get.ogg" preload="auto"></audio>
   <audio id="sellSound" src="media/uru.ogg" preload="auto"></audio>
@@ -156,24 +156,25 @@ const bugs = rawBugs.map(bug => ({
     }
 
     function saveGame() {
-  const saveData = {
+    const saveData = {
     collection: collection.map(bug => ({
-      name: bug.name
+    name: bug.name
     })),
     money: money
-  };
-  localStorage.setItem("bugGameSave", JSON.stringify(saveData));
-  alert("セーブ完了！！");
-}
+    };
+    localStorage.setItem("bugGameSave", JSON.stringify(saveData));
+    alert("セーブ完了！！");
+    }
 
-    function resetSettings() {
-      if (confirm("本当にリセットしますか？")) {
-        money = 500;
-        collection = [];
-        updateMoney();
-        renderCollection();
-        alert("リセットキンTV完了");
-      }
+    function resetGame() {
+    if (confirm("本当にリセットしますか？")) {
+    money = 500;
+    collection = [];
+    updateMoney();
+    renderCollection();
+    localStorage.removeItem("bugGameSave");
+    alert("リセットキンTV完了");
+     }
     }
 
     function renderCollection() {
