@@ -181,7 +181,7 @@ const bugs = rawBugs.map(bug => ({
       img.src = bug.image;
       img.onload = () => {
         bug.img = img;
-        bug.scale = 0.5 + (bug.prealSize / 150);
+        bug.scale = 0.5 + (bug.realSize / 150);
         activeBugs.push(bug);
       };
     }
