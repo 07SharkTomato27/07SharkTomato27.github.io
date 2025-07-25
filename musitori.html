@@ -57,6 +57,35 @@
   <audio id="sellSound" src="media/uru.ogg" preload="auto"></audio>
 
   <script>
+  window.addEventListener("load", loadGame);
+  
+    function loadGame() {
+  const saveData = localStorage.getItem("bugGameSave");
+  if (saveData) {
+    const parsed = JSON.parse(saveData);
+
+    collection = parsed.collection.map(savedBug => {
+      const raw = rawBugs.find(b => b.name === savedBug.name);
+      if (raw) {
+        const scale = (raw.realSize / 100) * REAL_TO_CANVAS_SCALE;
+        const img = new Image();
+        img.src = raw.image;
+        return {
+          ...raw,
+          scale: scale,
+          img: img
+        };
+      }
+      return null;
+    }).filter(bug => bug !== null);
+
+    money = parsed.money || 0;
+    updateMoney();
+    renderCollection();
+     }
+    }
+    
+    
    function playSound(id) {
    const original = document.getElementById(id);
    if (!original) return;
@@ -126,11 +155,16 @@ const bugs = rawBugs.map(bug => ({
       set.style.display = set.style.display === "none" ? "block" : "none";
     }
 
-    function saveSettings() {
-      localStorage.setItem("game_money", money);
-      localStorage.setItem("game_collection", JSON.stringify(collection));
-      alert("設定をセーブしました！");
-    }
+    function saveGame() {
+  const saveData = {
+    collection: collection.map(bug => ({
+      name: bug.name
+    })),
+    money: money
+  };
+  localStorage.setItem("bugGameSave", JSON.stringify(saveData));
+  alert("セーブ完了！！");
+}
 
     function resetSettings() {
       if (confirm("本当にリセットしますか？")) {
@@ -138,7 +172,7 @@ const bugs = rawBugs.map(bug => ({
         collection = [];
         updateMoney();
         renderCollection();
-        alert("リセットしました！");
+        alert("リセットキンTV完了");
       }
     }
 
@@ -215,11 +249,19 @@ const bugs = rawBugs.map(bug => ({
 
   activeBugs.forEach(bug => {
     if (bug.img) {
+      bug.vx += (Math.random() - 0.5) * 0.2;
+      bug.vy += (Math.random() - 0.5) * 0.2;
+      const maxSpeed = 1.5;
+      const speed = Math.sqrt(bug.vx * bug.vx + bug.vy * bug.vy);
+      if (speed > maxSpeed) {
+        bug.vx *= maxSpeed / speed;
+        bug.vy *= maxSpeed / speed;
+      }
       bug.x += bug.vx;
       bug.y += bug.vy;
       if (bug.x < 0 || bug.x > canvas.width) bug.vx *= -1;
       if (bug.y < 0 || bug.y > canvas.height) bug.vy *= -1;
-      bug.rotation += bug.rotationSpeed;
+      bug.rotation += (Math.random() - 0.5) * 0.02;
       ctx.save();
       ctx.translate(bug.x, bug.y);
       ctx.rotate(bug.rotation);
