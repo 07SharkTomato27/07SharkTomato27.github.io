@@ -80,6 +80,9 @@
     }).filter(bug => bug !== null);
 
     money = parsed.money || 0;
+    const now = Date.now();
+    jellies = (parsed.jellies || []).filter(j => now - j.timestamp < 300000);
+    jellyActive = jellies.length > 0;
     updateMoney();
     renderCollection();
      }
@@ -161,6 +164,7 @@ const bugs = rawBugs.map(bug => ({
     name: bug.name
     })),
     money: money
+    jellies: jellies.map(j => ({ x: j.x, y: j.y, timestamp: j.timestamp }))
     };
     localStorage.setItem("bugGameSave", JSON.stringify(saveData));
     alert("セーブ完了！！");
