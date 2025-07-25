@@ -43,15 +43,20 @@
   <canvas id="canvas"></canvas>
   <div id="ui">
     <button onclick="buyJelly()">ゼリー購入（100円）</button>
+    <button onclick="toggleShop()">Shop</button>
     <button onclick="toggleCollection()">コレクション</button>
     <button onclick="toggleSettings()">設定</button>
     <p id="money">所持金: 500円</p>
   </div>
   <div id="collection"></div>
   <div id="settings">
+  <div id="shop">
     <h3>設定</h3>
     <button onclick="saveGame()">セーブ</button>
     <button onclick="resetGame()">リセット</button>
+     <h3>ショップ</h3>
+    <button onclick="buyJelly()">ゼリー購入（100円）</button>
+    <button onclick="buyMelonJelly()">高級ゼリーを買う（500円）</button>
   </div>
   <audio id="getSound" src="media/get.ogg" preload="auto"></audio>
   <audio id="sellSound" src="media/uru.ogg" preload="auto"></audio>
@@ -162,9 +167,34 @@ const bugs = rawBugs.map(bug => ({
         if (jellies.length === 0) jellyActive = false;
       }, 5 * 60 * 1000);
     }
+    
+    function buyMelonJelly() {
+  if (money >= 500) {
+    money -= 500;
+    updateMoney();
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    placeJelly(x, y, "melon");
+  }
+}
+    
+    function placeJelly(x, y, type = "normal") {
+    jellyActive = true;
+    const jelly = { x: x, y: y, type: type, timestamp: Date.now() };
+    jellies.push(jelly);
+    setTimeout(() => {
+    jellies = jellies.filter(j => j !== jelly);
+    if (jellies.length === 0) jellyActive = false;
+    }, 5 * 60 * 1000); // 5分で消える
+    }
 
     function updateMoney() {
       document.getElementById("money").innerText = `所持金: ${money}円`;
+    }
+    
+    function toggleShop() {
+      const set = document.getElementById("shop");
+      set.style.display = set.style.display === "none" ? "block" : "none";
     }
 
     function toggleCollection() {
@@ -216,13 +246,34 @@ const bugs = rawBugs.map(bug => ({
     }
 
     function renderCollection() {
-      const div = document.getElementById("collection");
-      div.innerHTML = "<h3>コレクション</h3>";
-      collection.forEach((bug, index) => {
-        const el = document.createElement("div");
-        el.innerHTML = `${bug.name} <button onclick="sellBug(${index})">売る</button>`;
-        div.appendChild(el);
-      });
+    const container = document.getElementById("collection");
+    container.innerHTML = "";
+    collection.forEach((bug, index) => {
+    const div = document.createElement("div");
+    div.className = "bug-card";
+    div.style.border = "1px solid black";
+    div.style.margin = "5px";
+    div.style.padding = "5px";
+    div.style.display = "inline-block";
+    div.style.textAlign = "center";
+    div.style.backgroundColor = "#fff";
+
+    const img = document.createElement("img");
+    img.src = bug.img ? bug.img.src : bug.image;
+    img.style.width = "80px";
+
+    const name = document.createElement("div");
+    name.textContent = bug.name;
+
+    const sellBtn = document.createElement("button");
+    sellBtn.textContent = "売る";
+    sellBtn.onclick = () => sellBug(index);
+
+    div.appendChild(img);
+    div.appendChild(name);
+    div.appendChild(sellBtn);
+    container.appendChild(div);
+    });
     }
 
     function sellBug(index) {
@@ -281,10 +332,16 @@ const bugs = rawBugs.map(bug => ({
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = "rgba(255, 255, 0, 0.5)";
   jellies.forEach(j => {
-    ctx.beginPath();
-    ctx.arc(j.x, j.y, 15, 0, Math.PI * 2);
-    ctx.fill();
+  ctx.beginPath();
+  ctx.arc(j.x, j.y, 15, 0, Math.PI * 2);
+  if (j.type === "melon") {
+    ctx.fillStyle = "rgba(0, 255, 0, 0.5)";
+  } else {
+    ctx.fillStyle = "rgba(255, 255, 0, 0.5)";
+  }
+  ctx.fill();
   });
+
 
   activeBugs.forEach(bug => {
     if (bug.img) {
