@@ -181,10 +181,14 @@ const bugs = rawBugs.map(bug => ({
     function saveGame() {
     const saveData = {
     collection: collection.map(bug => ({
-    name: bug.name
+      name: bug.name
     })),
     money: money,
-    jellies: jellies.map(j => ({ x: j.x, y: j.y, timestamp: j.timestamp }))
+    jellies: jellies.map(j => ({
+      x: j.x,
+      y: j.y,
+      timestamp: j.timestamp
+    })),
     activeBugs: activeBugs.map(bug => ({
       name: bug.name,
       x: bug.x,
@@ -193,6 +197,7 @@ const bugs = rawBugs.map(bug => ({
       vy: bug.vy,
       rotation: bug.rotation,
       rotationSpeed: bug.rotationSpeed
+      }))
     };
     localStorage.setItem("bugGameSave", JSON.stringify(saveData));
     alert("セーブ完了！！");
@@ -206,6 +211,7 @@ const bugs = rawBugs.map(bug => ({
     renderCollection();
     localStorage.removeItem("bugGameSave");
     alert("リセットキンTV完了");
+    location.reload();
      }
     }
 
