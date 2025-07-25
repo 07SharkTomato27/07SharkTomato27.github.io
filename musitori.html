@@ -163,7 +163,7 @@ const bugs = rawBugs.map(bug => ({
     collection: collection.map(bug => ({
     name: bug.name
     })),
-    money: money
+    money: money,
     jellies: jellies.map(j => ({ x: j.x, y: j.y, timestamp: j.timestamp }))
     };
     localStorage.setItem("bugGameSave", JSON.stringify(saveData));
