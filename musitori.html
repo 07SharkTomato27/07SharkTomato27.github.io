@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <title>世界のカブクワ捕獲ゲーム</title>
+  <link href="favicon3.ico" rel="icon">
   <style>
     body {
       margin: 0;
@@ -180,7 +181,7 @@ const bugs = rawBugs.map(bug => ({
       img.src = bug.image;
       img.onload = () => {
         bug.img = img;
-        bug.scale = 0.5 + (bug.price / 150);
+        bug.scale = 0.5 + (bug.prealSize / 150);
         activeBugs.push(bug);
       };
     }
