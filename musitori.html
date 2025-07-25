@@ -60,8 +60,8 @@
   window.addEventListener("load", loadGame);
   
     function loadGame() {
-  const saveData = localStorage.getItem("bugGameSave");
-  if (saveData) {
+   const saveData = localStorage.getItem("bugGameSave");
+   if (saveData) {
     const parsed = JSON.parse(saveData);
 
     collection = parsed.collection.map(savedBug => {
@@ -80,15 +80,35 @@
     }).filter(bug => bug !== null);
 
     money = parsed.money || 0;
-    const now = Date.now();
-    jellies = (parsed.jellies || []).filter(j => now - j.timestamp < 300000);
+
+    jellies = (parsed.jellies || []).filter(j => Date.now() - j.timestamp < 300000);
     jellyActive = jellies.length > 0;
+
+    activeBugs = (parsed.activeBugs || []).map(savedBug => {
+      const raw = rawBugs.find(b => b.name === savedBug.name);
+      if (raw) {
+        const img = new Image();
+        img.src = raw.image;
+        return {
+          ...raw,
+          x: savedBug.x,
+          y: savedBug.y,
+          vx: savedBug.vx,
+          vy: savedBug.vy,
+          rotation: savedBug.rotation,
+          rotationSpeed: savedBug.rotationSpeed,
+          img: img,
+          scale: 0.5 + (raw.realSize / 150)
+        };
+      }
+      return null;
+    }).filter(bug => bug !== null);
+
     updateMoney();
     renderCollection();
-     }
+      }
     }
-    
-    
+       
    function playSound(id) {
    const original = document.getElementById(id);
    if (!original) return;
@@ -165,6 +185,14 @@ const bugs = rawBugs.map(bug => ({
     })),
     money: money,
     jellies: jellies.map(j => ({ x: j.x, y: j.y, timestamp: j.timestamp }))
+    activeBugs: activeBugs.map(bug => ({
+      name: bug.name,
+      x: bug.x,
+      y: bug.y,
+      vx: bug.vx,
+      vy: bug.vy,
+      rotation: bug.rotation,
+      rotationSpeed: bug.rotationSpeed
     };
     localStorage.setItem("bugGameSave", JSON.stringify(saveData));
     alert("セーブ完了！！");
