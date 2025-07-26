@@ -195,6 +195,25 @@ const bugs = rawBugs.map(bug => ({
     if (jellies.length === 0) jellyActive = false;
      }, 5 * 60 * 1000);
     }
+    function spawnBugNear(x, y) {
+    if (activeBugs.length >= 20) return;
+
+    const bug = Object.assign({}, bugs[Math.floor(Math.random() * bugs.length)]);
+    bug.rotationSpeed = (Math.random() - 0.5) * 0.02;
+    bug.x = x + (Math.random() - 0.5) * 100;
+    bug.y = y + (Math.random() - 0.5) * 100;
+    bug.rotation = Math.random() * Math.PI * 2;
+    bug.vx = (Math.random() - 0.5) * 1.5;
+    bug.vy = (Math.random() - 0.5) * 1.5;
+
+    const img = new Image();
+    img.src = bug.image;
+    img.onload = () => {
+    bug.img = img;
+    bug.scale = 0.5 + (bug.realSize / 150);
+    activeBugs.push(bug);
+     };
+    }
 
     function updateMoney() {
       document.getElementById("money").innerText = `所持金: ${money}円`;
