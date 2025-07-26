@@ -50,17 +50,16 @@
   </div>
   <div id="collection"></div>
   <div id="settings">
-  <div id="shop">
-    <h3>設定</h3>
-    <button onclick="saveGame()">セーブ</button>
-    <button onclick="resetGame()">リセット</button>
-    </div>
-    
-    </div>
-    <h3>ショップ</h3>
-    <button onclick="buyJelly()">ゼリー購入（100円）</button>
-    <button onclick="buyMelonJelly()">高級ゼリーを買う（500円）</button>
-  </div>
+  <h3>設定</h3>
+  <button onclick="saveGame()">セーブ</button>
+  <button onclick="resetGame()">リセット</button>
+</div>
+
+<div id="shop" style="display:none;">
+  <h3>ショップ</h3>
+  <button onclick="buyJelly()">ゼリー購入（100円）</button>
+  <button onclick="buyMelonJelly()">高級ゼリーを買う（500円）</button>
+</div>
   <audio id="getSound" src="media/get.ogg" preload="auto"></audio>
   <audio id="sellSound" src="media/uru.ogg" preload="auto"></audio>
 
