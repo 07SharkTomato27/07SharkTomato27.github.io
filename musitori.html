@@ -181,13 +181,19 @@ const bugs = rawBugs.map(bug => ({
 }
     
     function placeJelly(x, y, type = "normal") {
-    jellyActive = true;
-    const jelly = { x: x, y: y, type: type, timestamp: Date.now() };
-    jellies.push(jelly);
+  jellyActive = true;
+  const jelly = { x: x, y: y, type: type, timestamp: Date.now() };
+  jellies.push(jelly);
+
+    const spawnCount = (type === "melon") ? 15 : 10;
+    for (let i = 0; i < spawnCount; i++) {
+    spawnBugNear(x, y);
+    }
+
     setTimeout(() => {
     jellies = jellies.filter(j => j !== jelly);
     if (jellies.length === 0) jellyActive = false;
-    }, 5 * 60 * 1000);
+     }, 5 * 60 * 1000);
     }
 
     function updateMoney() {
