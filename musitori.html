@@ -76,7 +76,7 @@
       if (raw) {
         const scale = (raw.realSize / 100) * REAL_TO_CANVAS_SCALE;
         const img = new Image();
-        img.src = raw.image;
+        img.src = savedBug.image;
         return {
           ...raw,
           scale: scale,
@@ -213,7 +213,8 @@ const bugs = rawBugs.map(bug => ({
     function saveGame() {
     const saveData = {
     collection: collection.map(bug => ({
-      name: bug.name
+    name: bug.name,
+    image: bug.image
     })),
     money: money,
     jellies: jellies.map(j => ({
