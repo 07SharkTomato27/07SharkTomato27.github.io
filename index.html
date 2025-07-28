@@ -89,131 +89,79 @@
       transform: scale(1.1);
       box-shadow: 0 0 15px #fff;
     }
-    
-  #night-warning {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: url('image/nero.png') no-repeat center center;
-    background-size: contain;
-    background-color: black;
-    z-index: 9999;
-    color: red;
-    font-weight: bold;
-    overflow: hidden;
-  }
 
-  #ignore-btn {
-    position: absolute;
-    bottom: 10px;
-    left: 10px;
-    background: rgba(0,0,0,0.6);
-    color: white;
-    padding: 5px 10px;
-    border: none;
-    font-size: 14px;
-    cursor: pointer;
-    z-index: 10000;
-  }
-
-  #ignore-warning {
-    display: none;
-    position: absolute;
-    inset: 0;
-    background: black;
-    overflow: hidden;
-    z-index: 9999;
-  }
-
-  .nero-text {
-    position: absolute;
-    color: red;
-    font-weight: bold;
-    font-size: 20px;
-    user-select: none;
-    pointer-events: none;
-    white-space: nowrap;
-    transform-origin: center center;
-  }
-
-  #final-ignore-btn {
-    position: fixed;
-    bottom: 10px;
-    right: 10px;
-    background: rgba(255,0,0,0.8);
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    font-size: 16px;
-    cursor: pointer;
-    z-index: 10000;
-  }
-</style>
-
-<div id="night-warning">
-  <button id="ignore-btn">警告を虫</button>
-</div>
-
-<div id="ignore-warning"></div>
-
-<button id="final-ignore-btn" style="display:none;">本当に無視</button>
-  
-<script>
-  const now = new Date();
-  const warning = document.getElementById('night-warning');
-  const ignoreBtn = document.getElementById('ignore-btn');
-  const ignoreWarning = document.getElementById('ignore-warning');
-  const finalIgnoreBtn = document.getElementById('final-ignore-btn');
-
-  let audio;
-  function startAudioLoop() {
-    audio = new Audio('media/nero.mp3');
-    audio.loop = true;
-    audio.play().catch(() => {});
-  }
-  function stopAudio() {
-    if(audio){
-      audio.pause();
-      audio.currentTime = 0;
+    #night-warning {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: black;
+      z-index: 9999;
+      color: red;
+      font-weight: bold;
+      overflow: hidden;
     }
-  }
-  
-  function generateNeroText() {
-    ignoreWarning.innerHTML = '';
-    const count = 500;
-    for(let i=0; i<count; i++){
-      const span = document.createElement('span');
-      span.textContent = 'ねろ';
-      span.style.marginRight = '2px';
-      ignoreWarning.appendChild(span);
-      if(i % 20 === 19) ignoreWarning.appendChild(document.createElement('br'));
+
+    #nero-img {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
-  }
 
-  if (now.getHours() >= 22) {
-    warning.style.display = 'block';
-    startAudioLoop();
+    #ignore-btn {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      padding: 5px 10px;
+      border: none;
+      font-size: 14px;
+      cursor: pointer;
+      z-index: 10000;
+    }
 
-    ignoreBtn.onclick = () => {
-      
-      ignoreWarning.style.display = 'block';
-      generateNeroText();
-      warning.style.background = 'black';
-      
-      ignoreBtn.style.display = 'none';
-      finalIgnoreBtn.style.display = 'block';
-    };
+    #ignore-warning {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: black;
+      overflow: hidden;
+      z-index: 9999;
+    }
 
-    finalIgnoreBtn.onclick = () => {
-      
-      stopAudio();
-      warning.style.display = 'none';
-      ignoreWarning.style.display = 'none';
-      finalIgnoreBtn.style.display = 'none';
-    };
-   }
-  </script>
+    .nero-text {
+      position: absolute;
+      color: red;
+      font-weight: bold;
+      font-size: 20px;
+      user-select: none;
+      pointer-events: none;
+      white-space: nowrap;
+      transform-origin: center center;
+    }
 
+    #final-ignore-btn {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(255,0,0,0.8);
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      font-size: 16px;
+      cursor: pointer;
+      z-index: 10000;
+    }
+
+    .eye {
+      position: absolute;
+      width: 64px;
+      height: 64px;
+    }
   </style>
 </head>
 <body>
@@ -235,165 +183,113 @@
   <a class="button" style="background-color:#d7dfd5;color:#5f5f5e" href="https://07sharktomato27.github.io/s-a-n-s/">sans</a>
   <a class="button" style="background-color:#7e520f;color:#31f106" href="https://07sharktomato27.github.io/Shark-Minecraft/">sharkcraft</a>
 
+  <div id="night-warning">
+    <img id="nero-img" src="image/nero.png" alt="nero">
+    <button id="ignore-btn">警告を虫</button>
+  </div>
+  <div id="ignore-warning"></div>
+  <button id="final-ignore-btn" style="display:none;">本当に無視</button>
+
   <script>
-    function function1() {
-      window.open("info.html");
+    const warning = document.getElementById('night-warning');
+    const ignoreBtn = document.getElementById('ignore-btn');
+    const ignoreWarning = document.getElementById('ignore-warning');
+    const finalIgnoreBtn = document.getElementById('final-ignore-btn');
+
+    let audio;
+    const neroTexts = [];
+    const maxNeroCount = 300;
+
+    function startAudioLoop() {
+      audio = new Audio('media/nero.mp3');
+      audio.loop = true;
+      audio.play().catch(() => {});
     }
-    <style>
-  #night-warning {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: url('image/nero.png') no-repeat center center;
-    background-size: cover;
-    z-index: 9999;
-    color: red;
-    font-weight: bold;
-    overflow: hidden;
-  }
 
-  #ignore-btn {
-    position: absolute;
-    bottom: 10px;
-    left: 10px;
-    background: rgba(0,0,0,0.6);
-    color: white;
-    padding: 5px 10px;
-    border: none;
-    font-size: 14px;
-    cursor: pointer;
-    z-index: 10000;
-  }
-
-  #ignore-warning {
-    display: none;
-    position: absolute;
-    inset: 0;
-    background: black;
-    color: red;
-    font-weight: bold;
-    font-size: 20px;
-    line-height: 1.2;
-    overflow: auto;
-    padding: 10px;
-    z-index: 9999;
-  }
-
-  #final-ignore-btn {
-    position: fixed;
-    bottom: 10px;
-    right: 10px;
-    background: rgba(255,0,0,0.8);
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    font-size: 16px;
-    cursor: pointer;
-    z-index: 10000;
-  }
-</style>
-
-<div id="night-warning">
-  <button id="ignore-btn">警告を虫</button>
-</div>
-
-<div id="ignore-warning">
-  <!-- 赤い「ねろ」を大量に表示 -->
-</div>
-
-<button id="final-ignore-btn" style="display:none;">本当に無視</button>
-
-<script>
-  const now = new Date();
-  const warning = document.getElementById('night-warning');
-  const ignoreBtn = document.getElementById('ignore-btn');
-  const ignoreWarning = document.getElementById('ignore-warning');
-  const finalIgnoreBtn = document.getElementById('final-ignore-btn');
-
-  let audio;
-  function startAudioLoop() {
-    audio = new Audio('media/nero.mp3');
-    audio.loop = true;
-    audio.play().catch(() => {});
-  }
-  function stopAudio() {
-    if(audio){
-      audio.pause();
-      audio.currentTime = 0;
-    }
-  }
-
-  const neroTexts = [];
-  const maxNeroCount = 300;
-
-  function createNeroText() {
-    if (neroTexts.length >= maxNeroCount) return;
-
-    const span = document.createElement('span');
-    span.textContent = 'ねろ';
-    span.className = 'nero-text';
-
-    const x = Math.random() * (window.innerWidth - 60);
-    const y = Math.random() * (window.innerHeight - 30);
-    span.style.left = x + 'px';
-    span.style.top = y + 'px';
-
-    const rot = Math.random() * 360;
-    span.style.transform = `rotate(${rot}deg)`;
-
-    ignoreWarning.appendChild(span);
-    neroTexts.push({el: span, x, y, rot, vx: (Math.random() - 0.5)*2, vy: (Math.random() - 0.5)*2, vrot: (Math.random()-0.5)*4});
-  }
-
-  function updateNeroTexts() {
-    for (const obj of neroTexts) {
-      obj.x += obj.vx;
-      obj.y += obj.vy;
-      obj.rot += obj.vrot;
-
-      if (obj.x < 0 || obj.x > window.innerWidth - 60) obj.vx *= -1;
-      if (obj.y < 0 || obj.y > window.innerHeight - 30) obj.vy *= -1;
-
-      obj.el.style.left = obj.x + 'px';
-      obj.el.style.top = obj.y + 'px';
-      obj.el.style.transform = `rotate(${obj.rot}deg)`;
-    }
-    requestAnimationFrame(updateNeroTexts);
-  }
-
-  if (now.getHours() >= 22) {
-    warning.style.display = 'block';
-    startAudioLoop();
-
-    ignoreBtn.onclick = () => {
-      ignoreWarning.style.display = 'block';
-      warning.style.background = 'black';
-      ignoreBtn.style.display = 'none';
-      finalIgnoreBtn.style.display = 'block';
-
-      const intervalId = setInterval(() => {
-        if (neroTexts.length >= maxNeroCount) {
-          clearInterval(intervalId);
-          return;
-        }
-        createNeroText();
-      }, 300);
-
-      updateNeroTexts();
-    };
-
-    finalIgnoreBtn.onclick = () => {
-      stopAudio();
-      warning.style.display = 'none';
-      ignoreWarning.style.display = 'none';
-      finalIgnoreBtn.style.display = 'none';
-
-      for(const obj of neroTexts){
-        obj.el.remove();
+    function stopAudio() {
+      if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
       }
-      neroTexts.length = 0;
-    };
-  }
-</script>
+    }
+
+    function createNeroText() {
+      if (neroTexts.length >= maxNeroCount) return;
+      const span = document.createElement('span');
+      span.textContent = 'ねろ';
+      span.className = 'nero-text';
+      ignoreWarning.appendChild(span);
+
+      let x = Math.random() * window.innerWidth;
+      let y = Math.random() * window.innerHeight;
+      let rot = Math.random() * 360;
+      span.style.left = `${x}px`;
+      span.style.top = `${y}px`;
+      span.style.transform = `rotate(${rot}deg)`;
+
+      neroTexts.push({ el: span, x, y, rot, vx: (Math.random() - 0.5) * 4, vy: (Math.random() - 0.5) * 4, vrot: (Math.random() - 0.5) * 6 });
+    }
+
+    function updateNeroTexts() {
+      for (const obj of neroTexts) {
+        obj.x += obj.vx;
+        obj.y += obj.vy;
+        obj.rot += obj.vrot;
+
+        if (obj.x < -100 || obj.x > window.innerWidth + 100 || obj.y < -50 || obj.y > window.innerHeight + 50) {
+          obj.x = Math.random() * window.innerWidth;
+          obj.y = Math.random() * window.innerHeight;
+        }
+
+        obj.el.style.left = `${obj.x}px`;
+        obj.el.style.top = `${obj.y}px`;
+        obj.el.style.transform = `rotate(${obj.rot}deg)`;
+      }
+      requestAnimationFrame(updateNeroTexts);
+    }
+
+    function spawnEyes() {
+      let count = 0;
+      const interval = setInterval(() => {
+        const img = document.createElement('img');
+        img.src = 'image/eye.gif';
+        img.className = 'eye';
+        img.style.left = `${Math.random() * window.innerWidth}px`;
+        img.style.top = `${Math.random() * window.innerHeight}px`;
+        ignoreWarning.appendChild(img);
+        count++;
+        if (count >= 30) clearInterval(interval);
+      }, 100);
+    }
+
+    if (new Date().getHours() >= 22) {
+      warning.style.display = 'block';
+      startAudioLoop();
+
+      ignoreBtn.onclick = () => {
+        ignoreWarning.style.display = 'block';
+        warning.style.background = 'black';
+        ignoreBtn.style.display = 'none';
+        finalIgnoreBtn.style.display = 'block';
+
+        setInterval(() => {
+          createNeroText();
+        }, 300);
+        updateNeroTexts();
+        spawnEyes();
+      };
+
+      finalIgnoreBtn.onclick = () => {
+        stopAudio();
+        warning.style.display = 'none';
+        ignoreWarning.style.display = 'none';
+        finalIgnoreBtn.style.display = 'none';
+        for (const obj of neroTexts) {
+          obj.el.remove();
+        }
+        neroTexts.length = 0;
+      };
+    }
+  </script>
 </body>
 </html>
