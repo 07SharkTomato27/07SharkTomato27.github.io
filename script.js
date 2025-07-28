@@ -166,4 +166,6 @@ function resetGame() {
   location.reload();
 }
 
+console.log("script.js 読み込まれた");
+
 updateScore();
