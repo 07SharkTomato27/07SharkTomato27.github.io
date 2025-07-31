@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Shark Blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: "Helvetica Neue", sans-serif;
+      line-height: 1.6;
+      background: #f8f8f8;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 20px;
+    }
+    p {
+      margin-bottom: 20px;
+    }
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 14px;
+      color: #999;
+    }
+    .blog-image {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 20px auto;
+  border-radius: 6px;
+}
+
+.copy-container {
+  display: flex;
+  align-items: center;
+  background: #f4f4f4;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: 10px 0;
+  font-family: monospace;
+}
+.copy-text {
+  flex-grow: 1;
+  white-space: pre-wrap;
+}
+.copy-button {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+.copy-button:hover {
+  background: #0056b3;
+}
+    
+pre {
+  background: #f0f0f0;
+  padding: 10px;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-family: monospace;
+}
+button {
+  background: #008CBA;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+button:hover {
+  background: #005f73;
+}
+</style>
+
+</head>
+<body>
+  <div class="container">
+    <h1>子供用カメラに外部写真を・動画入れる方法</h1>
+    <p>”主はChromeBookを使ってます”</p>
+    <p>注：画像は画質を下げないとerrorになるそれと動画も画質をさげんとダメ</p>
+    <h1>まず画像の方から教えるぅ</h1>
+    <p>これはまあSDカードに適当な写真を入れるみたいな感じだね</p>
+    <p>クソ簡単</p>
+    <p>子供用カメラはこいつです↓</p>
+    <img src="blog/c.jpg" alt="子供カメラ" class="blog-image">
+    <p>これのカバー取って</p>
+    <p>SDカード入れて適当に写真撮って</p>
+    <p>そのSDカードをPCにさす</p>
+    <p>でそのSDカード開く</p>
+    <img src="blog/f.jpg" alt="ファイルの中身" class="blog-image">
+    <p>これのDCIMっていうフォルダを開く</p>
+    <p>そん中に　例：PICT0003.jpgみたいのがあるから</p>
+    <p>外部画像と入れ替える（名前と拡張子は一緒にする）</p>
+    <p>これでSDカードを子供用カメラにもどして見るだけ</p>
+    <p>errorだったら失敗</p>
+    <h1>外部動画の入れ方(replit使う)</h1>
+    <p>replitを使って画質を下げるかんじ</p>
+    <p>さっきのDCIMのなかに 例:MOVI0001.aviみたいなのがあると思う（動画をとっているなら）</p>
+    <p>それにさっきみたいに入れ替えるだけ（replitで画質落としてから）</p>
+    <p>replitにアクセスでログインすっっる</p>
+    <p>でcreate appを押す　ポチ↓ でテンプレからpythonでテンプレ作成</p>
+    <p>んでカメラに入れたい動画をアップロード</p>
+    <p>そしたらぁshellを開く</p>
+    <p>開きかた</p>
+    <img src="blog/hi.jpg" alt="開きかった" class="blog-image">
+    <p>いまこれが開いてると思うけどこれの検索するところでshellって打ってshellが出てきたら押すだけ</p>
+    <p>shellが開いたらコマンドうつ</p>
+    <span id="copyTarget" class="copy-text">apt update && apt install ffmpeg -y</span>
+    <button class="copy-button" onclick="copyText()">コピー</button>
+    <p>これでshellにエラーでなかったらコマンド成功！</p>
+    <p>そしたらまたコマンドだぁ</p>
+    <span id="copyTarget" class="copy-text">ffmpeg -i input.mp4 -vcodec mjpeg -acodec pcm_s16le -ar 11025 -ac 1 -s 320x240 -r 15 output.avi</span>
+    <button class="copy-button" onclick="copyText()">コピー</button>
+    <p>こいつはinput.mp4をoutput.aviに変えるコマンドだ</p>
+    <p>このコマンドにinput.mp4ってのあるけどこれはさっきアップロードしたmp4と同じ名前にしないとダメ</p>
+    <p>最後に　　　これ見て↓</p>
+    <img src="blog/gazou1.jpg" alt="画像なんだ" class="blog-image">
+    <img src="blog/gazou2.jpg" alt="画像だぜ" class="blog-image">
+    <img src="blog/gazou3.jpg" alt="画像だ" class="blog-image">
+    <p>スゲェだろ？？？</p>
+    <div class="footer">© 2025 SharkTomato</div>
+  </div>
+  <script>
+function copyText() {
+  const text = document.getElementById("copyTarget").innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    alert("コピーしました！");
+  });
+}
+</script>
+</body>
+</html>
