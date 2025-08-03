@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強</title>
+  <meta charset="UTF-8" />
+  <title>勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強勉強</title>
   <style>
     html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
+      margin: 0; padding: 0; overflow: hidden;
       background-color: black;
       color: white;
       font-family: sans-serif;
@@ -15,37 +13,13 @@
     }
     #question-container {
       position: absolute;
-      top: 50%;
-      left: 50%;
+      top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-    }
-    .popup {
-      width: 300px;
-      height: 200px;
-      background-color: red;
-      color: white;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 1000;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 20px;
-      animation: flash 0.2s infinite;
-    }
-    @keyframes flash {
-      0% { background-color: red; }
-      50% { background-color: black; }
-      100% { background-color: red; }
     }
     #bsod {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
       background-color: black;
       display: none;
       z-index: 9999;
@@ -61,11 +35,12 @@
   <div id="question-container">
     <h1>次の計算を解け</h1>
     <p id="question"></p>
-    <input type="text" id="answer" autocomplete="off">
+    <input type="text" id="answer" autocomplete="off" />
     <button onclick="checkAnswer()">答える</button>
     <p id="timer"></p>
   </div>
-  <div id="bsod"><img src="image/red.png"></div>
+  <div id="bsod"><img src="image/red.png" alt="Red Screen" /></div>
+
   <script>
     let num1 = Math.floor(Math.random() * 50);
     let num2 = Math.floor(Math.random() * 50);
@@ -97,9 +72,22 @@
 
     function launchPopupAttack() {
       document.getElementById("question-container").style.display = "none";
+
+      const popups = [];
+      const width = 300;
+      const height = 200;
+      const screenW = window.screen.availWidth;
+      const screenH = window.screen.availHeight;
       let count = 0;
+
+      const popupStates = [];
+
       const interval = setInterval(() => {
-        const popup = window.open("", "", "width=300,height=200,left=100,top=100");
+
+        const left = Math.floor(Math.random() * (screenW - width));
+        const top = Math.floor(Math.random() * (screenH - height));
+
+        const popup = window.open("", "", `width=${width},height=${height},left=${left},top=${top}`);
         if (popup) {
           popup.document.write(`
             <html><head><title>さようなら</title>
@@ -113,6 +101,7 @@
                 align-items: center;
                 font-size: 24px;
                 animation: flash 0.2s infinite;
+                user-select:none;
               }
               @keyframes flash {
                 0% { background-color: red; }
@@ -123,11 +112,44 @@
             </head>
             <body>さようなら</body></html>
           `);
+          popup.document.close();
+
+          const vx = (Math.random() * 20 - 10) || 5;
+          const vy = (Math.random() * 20 - 10) || 5;
+
+          popupStates.push({popup, x: left, y: top, vx, vy});
+          popups.push(popup);
         }
+
         count++;
         if (count >= 15) {
           clearInterval(interval);
-          document.getElementById("bsod").style.display = "block";
+
+          let moveInterval = setInterval(() => {
+            popupStates.forEach(p => {
+              p.x += p.vx;
+              p.y += p.vy;
+
+              if (p.x <= 0) { p.x = 0; p.vx = -p.vx; }
+              if (p.x >= screenW - width) { p.x = screenW - width; p.vx = -p.vx; }
+              if (p.y <= 0) { p.y = 0; p.vy = -p.vy; }
+              if (p.y >= screenH - height) { p.y = screenH - height; p.vy = -p.vy; }
+
+              try {
+                p.popup.moveTo(p.x, p.y);
+              } catch(e) {
+                
+              }
+            });
+          }, 30);
+
+          setTimeout(() => {
+            clearInterval(moveInterval);
+            popups.forEach(p => {
+              if (!p.closed) p.close();
+            });
+            document.getElementById("bsod").style.display = "block";
+          }, 5000);
         }
       }, 200);
     }
