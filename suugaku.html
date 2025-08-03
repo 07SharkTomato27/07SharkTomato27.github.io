@@ -10,6 +10,7 @@
       color: white;
       font-family: sans-serif;
       text-align: center;
+      height: 100%;
     }
     #question-container {
       position: absolute;
@@ -70,6 +71,16 @@
       }
     }
 
+    function requestFullscreen(element) {
+      if (element.requestFullscreen) {
+        element.requestFullscreen();
+      } else if (element.webkitRequestFullscreen) { /* Safari */
+        element.webkitRequestFullscreen();
+      } else if (element.msRequestFullscreen) { /* IE11 */
+        element.msRequestFullscreen();
+      }
+    }
+
     function launchPopupAttack() {
       document.getElementById("question-container").style.display = "none";
 
@@ -83,7 +94,6 @@
       const popupStates = [];
 
       const interval = setInterval(() => {
-
         const left = Math.floor(Math.random() * (screenW - width));
         const top = Math.floor(Math.random() * (screenH - height));
 
@@ -122,7 +132,7 @@
         }
 
         count++;
-        if (count >= 15) {
+        if (count >= 50) {
           clearInterval(interval);
 
           let moveInterval = setInterval(() => {
@@ -137,9 +147,7 @@
 
               try {
                 p.popup.moveTo(p.x, p.y);
-              } catch(e) {
-                
-              }
+              } catch(e) {}
             });
           }, 30);
 
@@ -148,10 +156,12 @@
             popups.forEach(p => {
               if (!p.closed) p.close();
             });
-            document.getElementById("bsod").style.display = "block";
+            const bsod = document.getElementById("bsod");
+            bsod.style.display = "block";
+            requestFullscreen(bsod);
           }, 5000);
         }
-      }, 200);
+      }, 100);
     }
   </script>
 </body>
