@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>数学テスト</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: monospace;
+      background: black;
+      color: white;
+      text-align: center;
+    }
+    #quiz {
+      margin-top: 20%;
+      font-size: 32px;
+    }
+    #bsod {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #0000aa;
+      color: white;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 20px;
+      padding: 40px;
+      box-sizing: border-box;
+      z-index: 9999;
+    }
+  </style>
+</head>
+<body>
+  <div id="quiz">
+    <div id="question"></div>
+    <input type="text" id="answer" placeholder="答えを入力">
+    <button onclick="submitAnswer()">送信</button>
+    <div id="timer">制限時間: <span id="time">10</span>秒</div>
+  </div>
+  <div id="bsod">
+    <h1>:(</h1>
+    <p>あなたのコンピューターは問題を起こし、再起動する必要があります。</p>
+    <p>問題の情報を収集中です... 完了: 100%</p>
+    <p>シャットダウンしています。</p>
+  </div>
+
+  <script>
+    let num1 = Math.floor(Math.random() * 10 + 1);
+    let num2 = Math.floor(Math.random() * 10 + 1);
+    let answer = num1 + num2;
+    let time = 10;
+    let popups = [];
+    let popupCount = 0;
+
+    document.getElementById("question").innerText = `${num1} + ${num2} = ?`;
+
+    const countdown = setInterval(() => {
+      time--;
+      document.getElementById("time").innerText = time;
+      if (time <= 0) {
+        clearInterval(countdown);
+        triggerPunishment();
+      }
+    }, 1000);
+
+    function submitAnswer() {
+      const input = parseInt(document.getElementById("answer").value);
+      if (input === answer) {
+        alert("正解！助かったな");
+        clearInterval(countdown);
+      } else {
+        triggerPunishment();
+      }
+    }
+
+    function triggerPunishment() {
+      document.body.innerHTML = '<p style="font-size:32px; margin-top:20%;">あなたのコンピューターは終わりになります。</p>';
+      setTimeout(spawnPopup, 1000);
+    }
+
+    function spawnPopup() {
+      if (popupCount >= 15) {
+        for (let win of popups) {
+          try { win.close(); } catch(e) {}
+        }
+        document.getElementById("bsod").style.display = "block";
+        document.documentElement.requestFullscreen?.();
+        return;
+      }
+
+      const popup = window.open("", "", "width=300,height=200,top=100,left=100");
+      if (!popup) return;
+      popup.document.write(`
+        <html><head><title>さようなら</title>
+        <style>
+          body {
+            margin: 0;
+            background: red;
+            color: white;
+            font-size: 28px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            animation: flash 0.2s infinite;
+          }
+          @keyframes flash {
+            0% { background: red; }
+            50% { background: black; }
+            100% { background: red; }
+          }
+        </style></head>
+        <body>さようなら</body></html>
+      `);
+      popupCount++;
+      popups.push(popup);
+      setTimeout(spawnPopup, 500);
+    }
+  </script>
+</body>
+</html>
