@@ -2,42 +2,32 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>Webピアノ</title>
+  <title>ピアノ</title>
   <style>
-    body {
-      margin: 0;
-      background: #222;
-    }
+    body { margin: 0; background: #111; }
     .piano {
-      position: relative;
       display: flex;
-      justify-content: start;
-      height: 100vh;
-      align-items: flex-end;
       overflow-x: auto;
-    }
-    .key {
-      width: 40px;
       height: 200px;
-      margin: 0 1px;
+      position: relative;
+    }
+    .white {
+      width: 40px;
+      height: 100%;
       background: white;
       border: 1px solid #000;
       box-sizing: border-box;
-      z-index: 0;
       position: relative;
-    }
-    .black {
-      position: absolute;
-      width: 30px;
-      height: 120px;
-      background: black;
       z-index: 1;
     }
-    .key:active {
-      background: #ccc;
-    }
-    .black:active {
-      background: #444;
+    .black {
+      width: 25px;
+      height: 120px;
+      background: black;
+      position: absolute;
+      top: 0;
+      margin-left: -12.5px;
+      z-index: 2;
     }
   </style>
 </head>
@@ -45,61 +35,54 @@
   <div class="piano" id="piano"></div>
 
   <script>
-    const notes = [
-      'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'
-    ];
+    const context = new (window.AudioContext || window.webkitAudioContext)();
+    const piano = document.getElementById("piano");
 
-    const freqs = {};
-    let baseFreq = 261.63; // C4
+    const notes = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"];
+    const whiteNotes = ["C", "D", "E", "F", "G", "A", "B"];
+    const blackNotes = ["C#", "D#", "", "F#", "G#", "A#", ""];
+
+    let midiNote = 21; // A0
     for (let i = 0; i < 88; i++) {
-      const noteIndex = i % 12;
-      const octave = Math.floor(i / 12);
-      const noteName = notes[noteIndex] + octave;
-      freqs[noteName] = baseFreq * Math.pow(2, (i - 39) / 12);
-    }
+      const freq = midiToFreq(midiNote);
+      const name = notes[midiNote % 12];
+      const octave = Math.floor(midiNote / 12) - 1;
+      const label = name + octave;
 
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playNote(note) {
-      if (!freqs[note]) return;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = freqs[note];
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      gain.gain.setValueAtTime(1, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1);
-      osc.stop(audioCtx.currentTime + 1);
-    }
+      const key = document.createElement("div");
+      key.className = "white";
+      key.dataset.freq = freq;
+      key.title = label;
+      key.addEventListener("mousedown", () => playNote(freq));
+      piano.appendChild(key);
 
-    const piano = document.getElementById('piano');
-
-    for (let i = 0; i < 88; i++) {
-      const noteIndex = i % 12;
-      const octave = Math.floor(i / 12);
-      const noteName = notes[noteIndex] + octave;
-      const isBlack = notes[noteIndex].includes('#');
-
-      if (!isBlack) {
-        const key = document.createElement('div');
-        key.className = 'key';
-        key.dataset.note = noteName;
-        key.onclick = () => playNote(noteName);
-        piano.appendChild(key);
-
-        const nextIndex = (noteIndex + 1) % 12;
-        const hasSharp = notes[nextIndex].includes('#');
-        if (hasSharp) {
-          const blackNote = notes[noteIndex + 1] + octave;
-          const blackKey = document.createElement('div');
-          blackKey.className = 'black';
-          blackKey.style.left = '28px';
-          blackKey.dataset.note = blackNote;
-          blackKey.onclick = () => playNote(blackNote);
-          key.appendChild(blackKey);
-        }
+      if (["C", "D", "F", "G", "A"].includes(name)) {
+        const black = document.createElement("div");
+        black.className = "black";
+        black.dataset.freq = midiToFreq(midiNote + 1);
+        black.title = notes[(midiNote + 1) % 12] + octave;
+        black.addEventListener("mousedown", () => playNote(midiToFreq(midiNote + 1)));
+        key.appendChild(black);
       }
+
+      midiNote++;
+    }
+
+    function midiToFreq(n) {
+      return 440 * Math.pow(2, (n - 69) / 12);
+    }
+
+    function playNote(freq) {
+      const osc = context.createOscillator();
+      const gain = context.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      osc.connect(gain);
+      gain.connect(context.destination);
+      gain.gain.setValueAtTime(0.2, context.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 1.2);
+      osc.start();
+      osc.stop(context.currentTime + 1.2);
     }
   </script>
 </body>
