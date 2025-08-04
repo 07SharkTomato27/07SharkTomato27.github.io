@@ -1,89 +1,86 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>ピアノ</title>
   <style>
-    body { margin: 0; background: #111; }
-    .piano {
-      display: flex;
-      overflow-x: auto;
-      height: 200px;
-      position: relative;
-    }
-    .white {
+    body { margin: 0; overflow: hidden; background: #222; }
+    .key {
+      position: absolute;
+      bottom: 0;
       width: 40px;
-      height: 100%;
-      background: white;
+      height: 200px;
       border: 1px solid #000;
       box-sizing: border-box;
-      position: relative;
-      z-index: 1;
+      cursor: pointer;
+      user-select: none;
     }
+    .white { background: white; z-index: 1; }
     .black {
-      width: 25px;
-      height: 120px;
       background: black;
-      position: absolute;
-      top: 0;
-      margin-left: -12.5px;
+      width: 24px;
+      height: 120px;
       z-index: 2;
     }
   </style>
 </head>
 <body>
-  <div class="piano" id="piano"></div>
 
-  <script>
-    const context = new (window.AudioContext || window.webkitAudioContext)();
-    const piano = document.getElementById("piano");
+<script>
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+const audioCtx = new AudioContext();
 
-    const notes = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"];
-    const whiteNotes = ["C", "D", "E", "F", "G", "A", "B"];
-    const blackNotes = ["C#", "D#", "", "F#", "G#", "A#", ""];
+function playNote(frequency) {
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
 
-    let midiNote = 21; // A0
-    for (let i = 0; i < 88; i++) {
-      const freq = midiToFreq(midiNote);
-      const name = notes[midiNote % 12];
-      const octave = Math.floor(midiNote / 12) - 1;
-      const label = name + octave;
+  osc.type = 'sine'; // ピアノに近づけるには detune + gain envelope を調整
+  osc.frequency.value = frequency;
 
-      const key = document.createElement("div");
-      key.className = "white";
-      key.dataset.freq = freq;
-      key.title = label;
-      key.addEventListener("mousedown", () => playNote(freq));
-      piano.appendChild(key);
+  gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.5, audioCtx.currentTime + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.5);
 
-      if (["C", "D", "F", "G", "A"].includes(name)) {
-        const black = document.createElement("div");
-        black.className = "black";
-        black.dataset.freq = midiToFreq(midiNote + 1);
-        black.title = notes[(midiNote + 1) % 12] + octave;
-        black.addEventListener("mousedown", () => playNote(midiToFreq(midiNote + 1)));
-        key.appendChild(black);
-      }
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 1.6);
+}
 
-      midiNote++;
-    }
+const noteFreq = (note) => 440 * Math.pow(2, (note - 69) / 12); // MIDI -> Hz
 
-    function midiToFreq(n) {
-      return 440 * Math.pow(2, (n - 69) / 12);
-    }
+const whiteNotes = [0, 2, 4, 5, 7, 9, 11]; // C, D, E, F, G, A, B
+const blackOffsets = {
+  1: true, 3: true, 6: true, 8: true, 10: true // C#, D#, F#, G#, A#
+};
 
-    function playNote(freq) {
-      const osc = context.createOscillator();
-      const gain = context.createGain();
-      osc.type = "sine";
-      osc.frequency.value = freq;
-      osc.connect(gain);
-      gain.connect(context.destination);
-      gain.gain.setValueAtTime(0.2, context.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 1.2);
-      osc.start();
-      osc.stop(context.currentTime + 1.2);
-    }
-  </script>
+const totalWhite = 36;
+const keyWidth = window.innerWidth / totalWhite;
+
+let whiteIndex = 0;
+
+for (let midi = 48; whiteIndex < totalWhite; midi++) {
+  const noteInOctave = midi % 12;
+  const isWhite = whiteNotes.includes(noteInOctave);
+  const freq = noteFreq(midi);
+
+  if (isWhite) {
+    const key = document.createElement('div');
+    key.className = 'key white';
+    key.style.left = (whiteIndex * keyWidth) + 'px';
+    key.style.width = keyWidth + 'px';
+    key.onclick = () => playNote(freq);
+    document.body.appendChild(key);
+    whiteIndex++;
+  } else {
+    const black = document.createElement('div');
+    black.className = 'key black';
+    const pos = whiteIndex - 1 + 0.7;
+    black.style.left = (pos * keyWidth - 12) + 'px';
+    black.onclick = () => playNote(freq);
+    document.body.appendChild(black);
+  }
+}
+</script>
+
 </body>
 </html>
