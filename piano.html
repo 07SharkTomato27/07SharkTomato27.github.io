@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Webピアノ</title>
+  <style>
+    body {
+      margin: 0;
+      background: #222;
+    }
+    .piano {
+      position: relative;
+      display: flex;
+      justify-content: start;
+      height: 100vh;
+      align-items: flex-end;
+      overflow-x: auto;
+    }
+    .key {
+      width: 40px;
+      height: 200px;
+      margin: 0 1px;
+      background: white;
+      border: 1px solid #000;
+      box-sizing: border-box;
+      z-index: 0;
+      position: relative;
+    }
+    .black {
+      position: absolute;
+      width: 30px;
+      height: 120px;
+      background: black;
+      z-index: 1;
+    }
+    .key:active {
+      background: #ccc;
+    }
+    .black:active {
+      background: #444;
+    }
+  </style>
+</head>
+<body>
+  <div class="piano" id="piano"></div>
+
+  <script>
+    const notes = [
+      'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'
+    ];
+
+    const freqs = {};
+    let baseFreq = 261.63; // C4
+    for (let i = 0; i < 88; i++) {
+      const noteIndex = i % 12;
+      const octave = Math.floor(i / 12);
+      const noteName = notes[noteIndex] + octave;
+      freqs[noteName] = baseFreq * Math.pow(2, (i - 39) / 12);
+    }
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playNote(note) {
+      if (!freqs[note]) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freqs[note];
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      gain.gain.setValueAtTime(1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1);
+      osc.stop(audioCtx.currentTime + 1);
+    }
+
+    const piano = document.getElementById('piano');
+
+    for (let i = 0; i < 88; i++) {
+      const noteIndex = i % 12;
+      const octave = Math.floor(i / 12);
+      const noteName = notes[noteIndex] + octave;
+      const isBlack = notes[noteIndex].includes('#');
+
+      if (!isBlack) {
+        const key = document.createElement('div');
+        key.className = 'key';
+        key.dataset.note = noteName;
+        key.onclick = () => playNote(noteName);
+        piano.appendChild(key);
+
+        const nextIndex = (noteIndex + 1) % 12;
+        const hasSharp = notes[nextIndex].includes('#');
+        if (hasSharp) {
+          const blackNote = notes[noteIndex + 1] + octave;
+          const blackKey = document.createElement('div');
+          blackKey.className = 'black';
+          blackKey.style.left = '28px';
+          blackKey.dataset.note = blackNote;
+          blackKey.onclick = () => playNote(blackNote);
+          key.appendChild(blackKey);
+        }
+      }
+    }
+  </script>
+</body>
+</html>
