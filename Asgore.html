@@ -91,28 +91,6 @@ function update(dt){
   }
   }
 
-  for(let i = beams.length - 1; i >= 0; i--){
-  const b = beams[i];
-  b.x += b.vx;
-  b.y += b.vy;
-  if(b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height){
-    beams.splice(i, 1);
-    continue;
-  }
-  if(disse.alive){
-    const cx = b.x, cy = b.y, cr = b.radius;
-    const rx = disse.x, ry = disse.y, rw = disse.w, rh = disse.h;
-    const closestX = Math.max(rx, Math.min(cx, rx + rw));
-    const closestY = Math.max(ry, Math.min(cy, ry + rh));
-    const dx = cx - closestX, dy = cy - closestY;
-    if(dx*dx + dy*dy <= cr*cr){
-      disse.alive = false;
-      beamAmmo++;
-      beams.splice(i, 1);
-    }
-  }
-}
-
   const forward = Math.cos(car.angle)*car.speed;
   road.offset += forward;
 
@@ -158,6 +136,28 @@ function update(dt){
     carImage=asgoreImg; 
     asgoreTimer = 30;
   }
+
+  for(let i = beams.length - 1; i >= 0; i--){
+  const b = beams[i];
+  b.x += b.vx;
+  b.y += b.vy;
+  if(b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height){
+    beams.splice(i, 1);
+    continue;
+  }
+  if(disse.alive){
+    const cx = b.x, cy = b.y, cr = b.radius;
+    const rx = disse.x, ry = disse.y, rw = disse.w, rh = disse.h;
+    const closestX = Math.max(rx, Math.min(cx, rx + rw));
+    const closestY = Math.max(ry, Math.min(cy, ry + rh));
+    const dx = cx - closestX, dy = cy - closestY;
+    if(dx*dx + dy*dy <= cr*cr){
+      disse.alive = false;
+      beamAmmo++;
+      beams.splice(i, 1);
+    }
+  }
+}
 
   if(asgoreTimer>0){ 
     asgoreTimer--; 
