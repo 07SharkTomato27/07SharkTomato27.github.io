@@ -103,13 +103,11 @@ function update(dt) {
     else car.speed = Math.min(0, car.speed + car.friction);
   }
 
-  // 移動
   const forward = Math.cos(car.angle) * car.speed;
   road.offset += forward;
   car.x += Math.cos(car.angle) * car.speed * 0.35;
   car.y += Math.sin(car.angle) * car.speed * 0.35;
 
-  // 車の位置制限
   const roadCenter = canvas.width / 2;
   const roadHalf = road.laneWidth * 1.4;
   const minX = roadCenter - roadHalf + car.radius;
@@ -117,49 +115,48 @@ function update(dt) {
   car.x = clamp(car.x, minX, maxX);
   car.y = clamp(car.y, car.radius, canvas.height - car.radius);
 
-  // ディセが死んでたら新しい場所に復活
   if (!disse.alive) {
     disse.x = Math.random() * (roadHalf * 2 - disse.w) + (roadCenter - roadHalf);
     disse.y = Math.random() * (canvas.height - 200) + 80;
     disse.alive = true;
-    beamAmmo++; // 殺したらビーム回数増加
+    beamAmmo++;
   }
 
-  // ディセ逃げる処理
-  if (disse.alive) {
-    const ax = asgore.x(), ay = asgore.y();
-    let dxA = disse.x - ax;
-    let dyA = disse.y - ay;
-    let distA = Math.hypot(dxA, dyA) || 1;
-    dxA /= distA;
-    dyA /= distA;
+ if (disse.alive) {
+  const ax = asgore.x(), ay = asgore.y();
+  let dxA = disse.x - ax;
+  let dyA = disse.y - ay;
+  let distA = Math.hypot(dxA, dyA) || 1;
+  dxA /= distA;
+  dyA /= distA;
 
-    let dxC = disse.x - car.x;
-    let dyC = disse.y - car.y;
-    let distC = Math.hypot(dxC, dyC) || 1;
-    dxC /= distC;
-    dyC /= distC;
+  let dxC = disse.x - car.x;
+  let dyC = disse.y - car.y;
+  let distC = Math.hypot(dxC, dyC) || 1;
+  dxC /= distC;
+  dyC /= distC;
 
-    const fleeSpeed = 2.2;
-    const fleeFromCarStrength = distC < 400 ? Math.min(3, 600 / distC) : 0;
+  const fleeSpeed = 2.2;
+  const fleeFromCarStrength = distC < 400 ? Math.min(3, 600 / distC) : 0;
 
-    let targetVx = dxA * fleeSpeed + dxC * fleeFromCarStrength;
-    let targetVy = dyA * fleeSpeed + dyC * fleeFromCarStrength;
+  let targetVx = dxA * fleeSpeed - dxC * fleeFromCarStrength;
+  let targetVy = dyA * fleeSpeed - dyC * fleeFromCarStrength;
 
-    disse.vx += (targetVx - disse.vx) * 0.12;
-    disse.vy += (targetVy - disse.vy) * 0.12;
+  disse.vx += (targetVx - disse.vx) * 0.12;
+  disse.vy += (targetVy - disse.vy) * 0.12;
 
-    disse.vx += (Math.random() - 0.5) * 0.4;
-    disse.vy += (Math.random() - 0.5) * 0.4;
+  disse.vx += (Math.random() - 0.5) * 0.4;
+  disse.vy += (Math.random() - 0.5) * 0.4;
 
-    disse.x += disse.vx + (-Math.cos(car.angle) * car.speed * 0.12);
-    disse.y += disse.vy;
+  disse.x += disse.vx + (-Math.cos(car.angle) * car.speed * 0.12);
+  disse.y += disse.vy;
 
-    disse.x = clamp(disse.x, roadCenter - roadHalf + 10, roadCenter + roadHalf - disse.w - 10);
-    disse.y = clamp(disse.y, 80, canvas.height - 120);
+  const roadCenter = canvas.width / 2;
+  const roadHalf = road.laneWidth * 1.4;
+  disse.x = Math.min(Math.max(disse.x, roadCenter - roadHalf + 10), roadCenter + roadHalf - disse.w - 10);
+  disse.y = Math.min(Math.max(disse.y, 80), canvas.height - 120);
   }
 
-  // ビーム移動・衝突判定
   for (let i = beams.length - 1; i >= 0; i--) {
     const b = beams[i];
     b.x += b.vx;
@@ -183,7 +180,6 @@ function update(dt) {
     }
   }
 
-  // 衝突判定 車とディセ
   if (disse.alive && circleRectCar(disse)) {
     disse.alive = false;
     boomSound.play();
@@ -241,7 +237,6 @@ function draw() {
     ctx.fill();
   }
 
-  // 画面左上に弾数表示
   ctx.fillStyle = 'white';
   ctx.font = '20px monospace';
   ctx.fillText('ビーム残弾: ' + beamAmmo, 10, 30);
