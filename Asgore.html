@@ -80,22 +80,27 @@ function update(dt){
   car.y = clamp(car.y, car.radius, canvas.height - car.radius);
 
   if(disse.alive){
-    const ax = asgore.x(), ay = asgore.y();
-    let vx = disse.x - ax, vy = disse.y - ay;
-    const dist = Math.hypot(vx,vy) || 1;
-    vx /= dist; vy /= dist;
-    const fleeBase = 2.2;
-    const carDist = Math.hypot(disse.x - car.x, disse.y - car.y);
-    const fleeFromCar = clamp(1.6 - (carDist/400), 0, 1.6);
-    disse.vx += (vx * (fleeBase + fleeFromCar) - disse.vx) * 0.08;
-    disse.vy += (vy * (fleeBase) - disse.vy) * 0.08;
-    disse.vx += (Math.random()-0.5)*0.6; 
-    disse.vy += (Math.random()-0.5)*0.6;
-    disse.x += disse.vx + (-Math.cos(car.angle)*car.speed*0.12);
-    disse.y += disse.vy;
-    disse.x = clamp(disse.x, roadCenter - roadHalf + 10, roadCenter + roadHalf - disse.w - 10);
-    disse.y = clamp(disse.y, 80, canvas.height - 120);
-  }
+  const ax = asgore.x(), ay = asgore.y();
+  let dx = disse.x - ax;
+  let dy = disse.y - ay;
+  const dist = Math.hypot(dx, dy) || 1;
+  dx /= dist; dy /= dist;
+  const fleeSpeed = 2.2;
+  const carDist = Math.hypot(disse.x - car.x, disse.y - car.y);
+  const fleeFromCar = Math.min(Math.max(1.6 - (carDist/400), 0), 1.6);
+  const targetVx = dx * (fleeSpeed + fleeFromCar);
+  const targetVy = dy * fleeSpeed;
+  disse.vx += (targetVx - disse.vx) * 0.08;
+  disse.vy += (targetVy - disse.vy) * 0.08;
+  disse.vx += (Math.random() - 0.5) * 0.6;
+  disse.vy += (Math.random() - 0.5) * 0.6;
+  disse.x += disse.vx + (-Math.cos(car.angle) * car.speed * 0.12);
+  disse.y += disse.vy;
+  const roadCenter = canvas.width / 2;
+  const roadHalf = road.laneWidth * 1.4;
+  disse.x = Math.min(Math.max(disse.x, roadCenter - roadHalf + 10), roadCenter + roadHalf - disse.w - 10);
+  disse.y = Math.min(Math.max(disse.y, 80), canvas.height - 120);
+}
 
   if(disse.alive && circleRectCar(disse)){
     disse.alive=false; 
