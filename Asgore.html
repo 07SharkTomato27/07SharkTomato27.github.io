@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
+<meta charset="utf-8" />
 <title>アズゴア</title>
 <style>
   body{margin:0;background:#000}
@@ -11,11 +11,66 @@
 <body>
 <canvas id="game"></canvas>
 <script>
-  let beams = [];
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+function resize(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+const carImg = new Image();
+carImg.src = 'image/drive/car.png';
+const asgoreImg = new Image();
+asgoreImg.src = 'image/drive/asgore.png';
+const disseImg = new Image();
+disseImg.src = 'image/drive/run.png';
+
+let carImage = carImg;
+
+const bgSound = new Audio('media/drive/asgore.mp3');
+bgSound.loop = true;
+const boomSound = new Audio('media/drive/boom.mp3');
+
+let musicStarted = false;
+function startMusic(){
+  if(!musicStarted){
+    bgSound.play().catch(() => {});
+    musicStarted = true;
+  }
+}
+window.addEventListener('click', startMusic);
+window.addEventListener('keydown', startMusic);
+
+const road = { offset:0, laneWidth: Math.min(300, Math.floor(Math.min(window.innerWidth,1200)/3)) };
+
+const car = {
+  x: canvas.width / 2,
+  y: canvas.height - 120,
+  angle: 0,
+  speed: 0,
+  maxSpeed: 12,
+  accel: 0.4,
+  friction: 0.08,
+  turnSpeed: 0.045,
+  radius: 36,
+};
+
+const asgore = { x: () => canvas.width / 2, y: () => canvas.height * 0.2 };
+
+let disse = { x: canvas.width / 2 + 100, y: 100, w: 50, h: 80, alive: true, vx: 0, vy: 0 };
+
+const keys = {};
+window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+let beams = [];
 let beamAmmo = 0;
 
-  window.addEventListener('keydown', e => {
-  if(e.key.toLowerCase() === 'z' && beamAmmo > 0){
+window.addEventListener('keydown', e => {
+  if (e.key.toLowerCase() === 'z' && beamAmmo > 0) {
     beamAmmo--;
     const bx = car.x + Math.cos(car.angle) * car.radius;
     const by = car.y + Math.sin(car.angle) * car.radius;
@@ -29,193 +84,177 @@ let beamAmmo = 0;
   }
 });
 
-const canvas=document.getElementById('game');
-const ctx=canvas.getContext('2d');
-function resize(){
-  canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+let asgoreTimer = 60;
+
+function clamp(v, a, b) {
+  return Math.max(a, Math.min(b, v));
 }
-window.addEventListener('resize',resize); resize();
-const W=()=>canvas.width, H=()=>canvas.height;
 
-const carImg=new Image(); carImg.src='image/drive/car.png';
-const asgoreImg=new Image(); asgoreImg.src='image/drive/asgore.png';
-const disseImg=new Image(); disseImg.src='image/drive/run.png';
-let carImage=carImg;
+function update(dt) {
+  if (keys['arrowup'] || keys['w']) car.speed += car.accel;
+  if (keys['arrowdown'] || keys['s']) car.speed -= car.accel;
+  if (keys['arrowleft'] || keys['a']) car.angle -= car.turnSpeed * Math.max(0.2, Math.abs(car.speed));
+  if (keys['arrowright'] || keys['d']) car.angle += car.turnSpeed * Math.max(0.2, Math.abs(car.speed));
 
-const bgSound=new Audio('media/drive/asgore.mp3'); 
-bgSound.loop=true;
+  car.speed = clamp(car.speed, -car.maxSpeed * 0.5, car.maxSpeed);
 
-const boomSound=new Audio('media/drive/boom.mp3');
-
-window.addEventListener('click', ()=>{ try{ bgSound.play(); }catch(e){} },{once:true});
-
-// world state
-const road = { offset:0, laneWidth: Math.min(300, Math.floor(Math.min(window.innerWidth,1200)/3)) };
-const car={
-  x:canvas.width/2,
-  y:canvas.height - 120,
-  angle:0,
-  speed:0,
-  maxSpeed:12,
-  accel:0.4,
-  friction:0.08,
-  turnSpeed:0.045,
-  radius:36
-};
-const asgore = { x: ()=>canvas.width/2, y: ()=>canvas.height*0.2 };
-let disse = { x: canvas.width/2 + 100, y: 100, w:50, h:80, alive:true, vx:0, vy:0 };
-
-const keys={}; 
-window.addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true); 
-window.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
-
-function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
-
-let asgoreTimer=60;
-  
-function update(dt){
-  if(keys['arrowup']||keys['w']) car.speed += car.accel;
-  if(keys['arrowdown']||keys['s']) car.speed -= car.accel;
-  if(keys['arrowleft']||keys['a']) car.angle -= car.turnSpeed * Math.max(0.2,Math.abs(car.speed));
-  if(keys['arrowright']||keys['d']) car.angle += car.turnSpeed * Math.max(0.2,Math.abs(car.speed));
-  car.speed = clamp(car.speed, -car.maxSpeed*0.5, car.maxSpeed);
-  if(!keys['arrowup'] && !keys['w'] && !keys['arrowdown'] && !keys['s']){
-    if(car.speed>0) car.speed = Math.max(0, car.speed - car.friction);
+  if (!keys['arrowup'] && !keys['w'] && !keys['arrowdown'] && !keys['s']) {
+    if (car.speed > 0) car.speed = Math.max(0, car.speed - car.friction);
     else car.speed = Math.min(0, car.speed + car.friction);
-    if(!disse.alive){
+  }
+
+  // 移動
+  const forward = Math.cos(car.angle) * car.speed;
+  road.offset += forward;
+  car.x += Math.cos(car.angle) * car.speed * 0.35;
+  car.y += Math.sin(car.angle) * car.speed * 0.35;
+
+  // 車の位置制限
   const roadCenter = canvas.width / 2;
   const roadHalf = road.laneWidth * 1.4;
-  disse.x = Math.random() * (roadHalf * 2 - disse.w) + (roadCenter - roadHalf);
-  disse.y = Math.random() * (canvas.height - 200) + 80;
-  disse.alive = true;
-  }
-  }
-
-  const forward = Math.cos(car.angle)*car.speed;
-  road.offset += forward;
-
-  car.x += Math.cos(car.angle)*car.speed*0.35;
-  car.y += Math.sin(car.angle)*car.speed*0.35;
-
-  const roadCenter = canvas.width/2;
-  const roadHalf = road.laneWidth*1.4;
-  const minX = roadCenter - roadHalf + car.radius; 
+  const minX = roadCenter - roadHalf + car.radius;
   const maxX = roadCenter + roadHalf - car.radius;
   car.x = clamp(car.x, minX, maxX);
   car.y = clamp(car.y, car.radius, canvas.height - car.radius);
-  
-  if(disse.alive){
-  const ax = asgore.x(), ay = asgore.y();
-  let dxA = disse.x - ax;
-  let dyA = disse.y - ay;
-  let distA = Math.hypot(dxA, dyA) || 1;
-  dxA /= distA; dyA /= distA;
-  let dxC = disse.x - car.x;
-  let dyC = disse.y - car.y;
-  let distC = Math.hypot(dxC, dyC) || 1;
-  dxC /= distC; dyC /= distC;
-  const fleeSpeed = 2.2;
-  const fleeFromCarStrength = distC < 400 ? Math.min(3, 600 / distC) : 0;
-  let targetVx = dxA * fleeSpeed + dxC * fleeFromCarStrength;
-  let targetVy = dyA * fleeSpeed + dyC * fleeFromCarStrength;
-  disse.vx += (targetVx - disse.vx) * 0.12;
-  disse.vy += (targetVy - disse.vy) * 0.12;
-  disse.vx += (Math.random() - 0.5) * 0.4;
-  disse.vy += (Math.random() - 0.5) * 0.4;
-  disse.x += disse.vx + (-Math.cos(car.angle) * car.speed * 0.12);
-  disse.y += disse.vy;
-  const roadCenter = canvas.width / 2;
-  const roadHalf = road.laneWidth * 1.4;
-  disse.x = Math.min(Math.max(disse.x, roadCenter - roadHalf + 10), roadCenter + roadHalf - disse.w - 10);
-  disse.y = Math.min(Math.max(disse.y, 80), canvas.height - 120);
-}
 
-  if(disse.alive && circleRectCar(disse)){
-    disse.alive=false; 
-    boomSound.play(); 
-    carImage=asgoreImg; 
+  // ディセが死んでたら新しい場所に復活
+  if (!disse.alive) {
+    disse.x = Math.random() * (roadHalf * 2 - disse.w) + (roadCenter - roadHalf);
+    disse.y = Math.random() * (canvas.height - 200) + 80;
+    disse.alive = true;
+    beamAmmo++; // 殺したらビーム回数増加
+  }
+
+  // ディセ逃げる処理
+  if (disse.alive) {
+    const ax = asgore.x(), ay = asgore.y();
+    let dxA = disse.x - ax;
+    let dyA = disse.y - ay;
+    let distA = Math.hypot(dxA, dyA) || 1;
+    dxA /= distA;
+    dyA /= distA;
+
+    let dxC = disse.x - car.x;
+    let dyC = disse.y - car.y;
+    let distC = Math.hypot(dxC, dyC) || 1;
+    dxC /= distC;
+    dyC /= distC;
+
+    const fleeSpeed = 2.2;
+    const fleeFromCarStrength = distC < 400 ? Math.min(3, 600 / distC) : 0;
+
+    let targetVx = dxA * fleeSpeed + dxC * fleeFromCarStrength;
+    let targetVy = dyA * fleeSpeed + dyC * fleeFromCarStrength;
+
+    disse.vx += (targetVx - disse.vx) * 0.12;
+    disse.vy += (targetVy - disse.vy) * 0.12;
+
+    disse.vx += (Math.random() - 0.5) * 0.4;
+    disse.vy += (Math.random() - 0.5) * 0.4;
+
+    disse.x += disse.vx + (-Math.cos(car.angle) * car.speed * 0.12);
+    disse.y += disse.vy;
+
+    disse.x = clamp(disse.x, roadCenter - roadHalf + 10, roadCenter + roadHalf - disse.w - 10);
+    disse.y = clamp(disse.y, 80, canvas.height - 120);
+  }
+
+  // ビーム移動・衝突判定
+  for (let i = beams.length - 1; i >= 0; i--) {
+    const b = beams[i];
+    b.x += b.vx;
+    b.y += b.vy;
+    if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) {
+      beams.splice(i, 1);
+      continue;
+    }
+    if (disse.alive) {
+      const cx = b.x, cy = b.y, cr = b.radius;
+      const rx = disse.x, ry = disse.y, rw = disse.w, rh = disse.h;
+      const closestX = Math.max(rx, Math.min(cx, rx + rw));
+      const closestY = Math.max(ry, Math.min(cy, ry + rh));
+      const dx = cx - closestX, dy = cy - closestY;
+      if (dx * dx + dy * dy <= cr * cr) {
+        disse.alive = false;
+        beamAmmo++;
+        beams.splice(i, 1);
+        boomSound.play();
+      }
+    }
+  }
+
+  // 衝突判定 車とディセ
+  if (disse.alive && circleRectCar(disse)) {
+    disse.alive = false;
+    boomSound.play();
+    carImage = asgoreImg;
     asgoreTimer = 30;
   }
 
-  for(let i = beams.length - 1; i >= 0; i--){
-  const b = beams[i];
-  b.x += b.vx;
-  b.y += b.vy;
-  if(b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height){
-    beams.splice(i, 1);
-    continue;
-  }
-  if(disse.alive){
-    const cx = b.x, cy = b.y, cr = b.radius;
-    const rx = disse.x, ry = disse.y, rw = disse.w, rh = disse.h;
-    const closestX = Math.max(rx, Math.min(cx, rx + rw));
-    const closestY = Math.max(ry, Math.min(cy, ry + rh));
-    const dx = cx - closestX, dy = cy - closestY;
-    if(dx*dx + dy*dy <= cr*cr){
-      disse.alive = false;
-      beamAmmo++;
-      beams.splice(i, 1);
-    }
+  if (asgoreTimer > 0) {
+    asgoreTimer--;
+    if (asgoreTimer === 0) carImage = carImg;
   }
 }
 
-  if(asgoreTimer>0){ 
-    asgoreTimer--; 
-    if(asgoreTimer===0) carImage = carImg; 
-  }
-}
-
-function circleRectCar(r){
+function circleRectCar(r) {
   const cx = car.x, cy = car.y, cr = car.radius;
   const rx = r.x, ry = r.y, rw = r.w, rh = r.h;
-  const closestX = Math.max(rx, Math.min(cx, rx+rw));
-  const closestY = Math.max(ry, Math.min(cy, ry+rh));
-  const dx = cx-closestX, dy = cy-closestY; 
-  return (dx*dx+dy*dy)<=cr*cr;
+  const closestX = Math.max(rx, Math.min(cx, rx + rw));
+  const closestY = Math.max(ry, Math.min(cy, ry + rh));
+  const dx = cx - closestX, dy = cy - closestY;
+  return (dx * dx + dy * dy) <= cr * cr;
 }
 
-function drawRoad(){
-  const cw=canvas.width, ch=canvas.height;
+function drawRoad() {
+  const cw = canvas.width, ch = canvas.height;
   ctx.fillStyle = '#ADFF2F';
-  ctx.fillRect(0,0,cw,ch);
-  ctx.fillStyle='#2b2b2b'; 
-  ctx.fillRect(cw/2-road.laneWidth*1.2, 0, road.laneWidth*2.4, ch);
-  const dashH = 40; 
-  const gap = 30; 
-  const total = dashH+gap;
+  ctx.fillRect(0, 0, cw, ch);
+  ctx.fillStyle = '#2b2b2b';
+  ctx.fillRect(cw / 2 - road.laneWidth * 1.2, 0, road.laneWidth * 2.4, ch);
+  const dashH = 40;
+  const gap = 30;
+  const total = dashH + gap;
   const offset = (road.offset % total + total) % total;
-  ctx.fillStyle='rgba(255,255,200,0.9)';
-  for(let y = -total + offset; y < ch + total; y += total){
-    const stripeW = 8; 
-    ctx.fillRect(cw/2 - stripeW/2, y, stripeW, dashH);
+  ctx.fillStyle = 'rgba(255,255,200,0.9)';
+  for (let y = -total + offset; y < ch + total; y += total) {
+    const stripeW = 8;
+    ctx.fillRect(cw / 2 - stripeW / 2, y, stripeW, dashH);
   }
 }
 
-function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawRoad();
-  if(disse.alive) ctx.drawImage(disseImg, disse.x, disse.y, disse.w, disse.h);
-  else ctx.fillStyle='rgba(160,10,10,0.9)', ctx.fillRect(disse.x, disse.y, disse.w, disse.h/2);
-  ctx.save(); 
-  ctx.translate(car.x,car.y); 
-  ctx.rotate(car.angle); 
-  ctx.drawImage(carImage, -car.radius, -car.radius, car.radius*2, car.radius*2); 
+  if (disse.alive) ctx.drawImage(disseImg, disse.x, disse.y, disse.w, disse.h);
+  else ctx.fillStyle = 'rgba(160,10,10,0.9)', ctx.fillRect(disse.x, disse.y, disse.w, disse.h / 2);
+  ctx.save();
+  ctx.translate(car.x, car.y);
+  ctx.rotate(car.angle);
+  ctx.drawImage(carImage, -car.radius, -car.radius, car.radius * 2, car.radius * 2);
   ctx.restore();
-  for(const b of beams){
-  ctx.fillStyle = '#0ff';
-  ctx.beginPath();
-  ctx.arc(b.x, b.y, b.radius, 0, Math.PI*2);
-  ctx.fill();
-}
+
+  for (const b of beams) {
+    ctx.fillStyle = '#0ff';
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // 画面左上に弾数表示
+  ctx.fillStyle = 'white';
+  ctx.font = '20px monospace';
+  ctx.fillText('ビーム残弾: ' + beamAmmo, 10, 30);
 }
 
-let last=performance.now(); 
-function frame(t){ 
-  const dt=Math.min(0.05,(t-last)/1000); 
-  last=t; 
-  update(dt); 
-  draw(); 
-  requestAnimationFrame(frame); 
+let last = performance.now();
+
+function frame(t) {
+  const dt = Math.min(0.05, (t - last) / 1000);
+  last = t;
+  update(dt);
+  draw();
+  requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
 </script>
