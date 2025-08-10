@@ -19,29 +19,42 @@ function resize(){
 window.addEventListener('resize',resize); resize();
 const W=()=>canvas.width, H=()=>canvas.height;
 
-// images
 const carImg=new Image(); carImg.src='image/drive/car.png';
 const asgoreImg=new Image(); asgoreImg.src='image/drive/asgore.png';
 const disseImg=new Image(); disseImg.src='image/drive/run.png';
 let carImage=carImg;
 
-// sounds
-const bgSound=new Audio('media/drive/asgore.mp3'); bgSound.loop=true;
+const bgSound=new Audio('media/drive/asgore.mp3'); 
+bgSound.loop=true;
+
 const boomSound=new Audio('media/drive/boom.mp3');
+
 window.addEventListener('click', ()=>{ try{ bgSound.play(); }catch(e){} },{once:true});
 
 // world state
 const road = { offset:0, laneWidth: Math.min(300, Math.floor(Math.min(window.innerWidth,1200)/3)) };
-const car={ x:120, y:window.innerHeight*0.6, angle:0, speed:0, maxSpeed:12, accel:0.4, friction:0.08, turnSpeed:0.045, radius:36 };
+const car={
+  x:canvas.width/2,
+  y:canvas.height - 120,
+  angle:0,
+  speed:0,
+  maxSpeed:12,
+  accel:0.4,
+  friction:0.08,
+  turnSpeed:0.045,
+  radius:36
+};
 const asgore = { x: ()=>canvas.width/2, y: ()=>canvas.height*0.2 };
-let disse = { x: canvas.width - 200, y: canvas.height/2, w:50, h:80, alive:true, vx:0, vy:0 };
+let disse = { x: canvas.width/2 + 100, y: 100, w:50, h:80, alive:true, vx:0, vy:0 };
 
-const keys={}; window.addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true); window.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+const keys={}; 
+window.addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true); 
+window.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 
 function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
 
-let asgoreTimer=0;
-
+let asgoreTimer=60;
+  
 function update(dt){
   if(keys['arrowup']||keys['w']) car.speed += car.accel;
   if(keys['arrowdown']||keys['s']) car.speed -= car.accel;
@@ -61,7 +74,8 @@ function update(dt){
 
   const roadCenter = canvas.width/2;
   const roadHalf = road.laneWidth*1.4;
-  const minX = roadCenter - roadHalf + car.radius; const maxX = roadCenter + roadHalf - car.radius;
+  const minX = roadCenter - roadHalf + car.radius; 
+  const maxX = roadCenter + roadHalf - car.radius;
   car.x = clamp(car.x, minX, maxX);
   car.y = clamp(car.y, car.radius, canvas.height - car.radius);
 
@@ -75,7 +89,8 @@ function update(dt){
     const fleeFromCar = clamp(1.6 - (carDist/400), 0, 1.6);
     disse.vx += (vx * (fleeBase + fleeFromCar) - disse.vx) * 0.08;
     disse.vy += (vy * (fleeBase) - disse.vy) * 0.08;
-    disse.vx += (Math.random()-0.5)*0.6; disse.vy += (Math.random()-0.5)*0.6;
+    disse.vx += (Math.random()-0.5)*0.6; 
+    disse.vy += (Math.random()-0.5)*0.6;
     disse.x += disse.vx + (-Math.cos(car.angle)*car.speed*0.12);
     disse.y += disse.vy;
     disse.x = clamp(disse.x, roadCenter - roadHalf + 10, roadCenter + roadHalf - disse.w - 10);
@@ -83,10 +98,16 @@ function update(dt){
   }
 
   if(disse.alive && circleRectCar(disse)){
-    disse.alive=false; boomSound.play(); carImage=asgoreImg; asgoreTimer = 60;
+    disse.alive=false; 
+    boomSound.play(); 
+    carImage=asgoreImg; 
+    asgoreTimer = 30;
   }
 
-  if(asgoreTimer>0){ asgoreTimer--; if(asgoreTimer===0) carImage = carImg; }
+  if(asgoreTimer>0){ 
+    asgoreTimer--; 
+    if(asgoreTimer===0) carImage = carImg; 
+  }
 }
 
 function circleRectCar(r){
@@ -94,18 +115,24 @@ function circleRectCar(r){
   const rx = r.x, ry = r.y, rw = r.w, rh = r.h;
   const closestX = Math.max(rx, Math.min(cx, rx+rw));
   const closestY = Math.max(ry, Math.min(cy, ry+rh));
-  const dx = cx-closestX, dy = cy-closestY; return (dx*dx+dy*dy)<=cr*cr;
+  const dx = cx-closestX, dy = cy-closestY; 
+  return (dx*dx+dy*dy)<=cr*cr;
 }
 
 function drawRoad(){
   const cw=canvas.width, ch=canvas.height;
-  ctx.fillStyle='#444'; ctx.fillRect(0,0,cw,ch);
-  ctx.fillStyle='#2b2b2b'; ctx.fillRect(cw/2-road.laneWidth*1.2, 0, road.laneWidth*2.4, ch);
-  const dashH = 40; const gap = 30; const total = dashH+gap;
+  ctx.fillStyle='#444'; 
+  ctx.fillRect(0,0,cw,ch);
+  ctx.fillStyle='#2b2b2b'; 
+  ctx.fillRect(cw/2-road.laneWidth*1.2, 0, road.laneWidth*2.4, ch);
+  const dashH = 40; 
+  const gap = 30; 
+  const total = dashH+gap;
   const offset = (road.offset % total + total) % total;
   ctx.fillStyle='rgba(255,255,200,0.9)';
   for(let y = -total + offset; y < ch + total; y += total){
-    const stripeW = 8; ctx.fillRect(cw/2 - stripeW/2, y, stripeW, dashH);
+    const stripeW = 8; 
+    ctx.fillRect(cw/2 - stripeW/2, y, stripeW, dashH);
   }
 }
 
@@ -114,10 +141,21 @@ function draw(){
   drawRoad();
   if(disse.alive) ctx.drawImage(disseImg, disse.x, disse.y, disse.w, disse.h);
   else ctx.fillStyle='rgba(160,10,10,0.9)', ctx.fillRect(disse.x, disse.y, disse.w, disse.h/2);
-  ctx.save(); ctx.translate(car.x,car.y); ctx.rotate(car.angle); ctx.drawImage(carImage, -car.radius, -car.radius, car.radius*2, car.radius*2); ctx.restore();
+  ctx.save(); 
+  ctx.translate(car.x,car.y); 
+  ctx.rotate(car.angle); 
+  ctx.drawImage(carImage, -car.radius, -car.radius, car.radius*2, car.radius*2); 
+  ctx.restore();
 }
 
-let last=performance.now(); function frame(t){ const dt=Math.min(0.05,(t-last)/1000); last=t; update(dt); draw(); requestAnimationFrame(frame); }
+let last=performance.now(); 
+function frame(t){ 
+  const dt=Math.min(0.05,(t-last)/1000); 
+  last=t; 
+  update(dt); 
+  draw(); 
+  requestAnimationFrame(frame); 
+}
 requestAnimationFrame(frame);
 </script>
 </body>
