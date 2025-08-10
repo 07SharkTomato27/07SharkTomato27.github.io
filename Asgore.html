@@ -11,6 +11,24 @@
 <body>
 <canvas id="game"></canvas>
 <script>
+  let beams = [];
+let beamAmmo = 0;
+
+  window.addEventListener('keydown', e => {
+  if(e.key.toLowerCase() === 'z' && beamAmmo > 0){
+    beamAmmo--;
+    const bx = car.x + Math.cos(car.angle) * car.radius;
+    const by = car.y + Math.sin(car.angle) * car.radius;
+    beams.push({
+      x: bx,
+      y: by,
+      vx: Math.cos(car.angle) * 15,
+      vy: Math.sin(car.angle) * 15,
+      radius: 6
+    });
+  }
+});
+
 const canvas=document.getElementById('game');
 const ctx=canvas.getContext('2d');
 function resize(){
@@ -64,6 +82,34 @@ function update(dt){
   if(!keys['arrowup'] && !keys['w'] && !keys['arrowdown'] && !keys['s']){
     if(car.speed>0) car.speed = Math.max(0, car.speed - car.friction);
     else car.speed = Math.min(0, car.speed + car.friction);
+    if(!disse.alive){
+  const roadCenter = canvas.width / 2;
+  const roadHalf = road.laneWidth * 1.4;
+  disse.x = Math.random() * (roadHalf * 2 - disse.w) + (roadCenter - roadHalf);
+  disse.y = Math.random() * (canvas.height - 200) + 80;
+  disse.alive = true;
+  for(let i = beams.length - 1; i >= 0; i--){
+  const b = beams[i];
+  b.x += b.vx;
+  b.y += b.vy;
+  if(b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height){
+    beams.splice(i, 1);
+    continue;
+  }
+  if(disse.alive){
+    const cx = b.x, cy = b.y, cr = b.radius;
+    const rx = disse.x, ry = disse.y, rw = disse.w, rh = disse.h;
+    const closestX = Math.max(rx, Math.min(cx, rx + rw));
+    const closestY = Math.max(ry, Math.min(cy, ry + rh));
+    const dx = cx - closestX, dy = cy - closestY;
+    if(dx*dx + dy*dy <= cr*cr){
+      disse.alive = false;
+      beamAmmo++;
+      beams.splice(i, 1);
+    }
+  }
+}
+  }
   }
 
   const forward = Math.cos(car.angle)*car.speed;
@@ -78,7 +124,7 @@ function update(dt){
   const maxX = roadCenter + roadHalf - car.radius;
   car.x = clamp(car.x, minX, maxX);
   car.y = clamp(car.y, car.radius, canvas.height - car.radius);
-
+  
   if(disse.alive){
   const ax = asgore.x(), ay = asgore.y();
   let dxA = disse.x - ax;
@@ -90,20 +136,20 @@ function update(dt){
   let distC = Math.hypot(dxC, dyC) || 1;
   dxC /= distC; dyC /= distC;
   const fleeSpeed = 2.2;
-  const fleeFromCarStrength = Math.min(Math.max(1.6 - (distC / 400), 0), 1.6);
+  const fleeFromCarStrength = distC < 400 ? Math.min(3, 600 / distC) : 0;
   let targetVx = dxA * fleeSpeed + dxC * fleeFromCarStrength;
   let targetVy = dyA * fleeSpeed + dyC * fleeFromCarStrength;
-  disse.vx += (targetVx - disse.vx) * 0.08;
-  disse.vy += (targetVy - disse.vy) * 0.08;
-  disse.vx += (Math.random() - 0.5) * 0.6;
-  disse.vy += (Math.random() - 0.5) * 0.6;
+  disse.vx += (targetVx - disse.vx) * 0.12;
+  disse.vy += (targetVy - disse.vy) * 0.12;
+  disse.vx += (Math.random() - 0.5) * 0.4;
+  disse.vy += (Math.random() - 0.5) * 0.4;
   disse.x += disse.vx + (-Math.cos(car.angle) * car.speed * 0.12);
   disse.y += disse.vy;
   const roadCenter = canvas.width / 2;
   const roadHalf = road.laneWidth * 1.4;
   disse.x = Math.min(Math.max(disse.x, roadCenter - roadHalf + 10), roadCenter + roadHalf - disse.w - 10);
   disse.y = Math.min(Math.max(disse.y, 80), canvas.height - 120);
-  }
+}
 
   if(disse.alive && circleRectCar(disse)){
     disse.alive=false; 
@@ -154,6 +200,12 @@ function draw(){
   ctx.rotate(car.angle); 
   ctx.drawImage(carImage, -car.radius, -car.radius, car.radius*2, car.radius*2); 
   ctx.restore();
+  for(const b of beams){
+  ctx.fillStyle = '#0ff';
+  ctx.beginPath();
+  ctx.arc(b.x, b.y, b.radius, 0, Math.PI*2);
+  ctx.fill();
+}
 }
 
 let last=performance.now(); 
