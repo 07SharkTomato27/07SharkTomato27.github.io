@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Local Web IDE (Dark)</title>
+<link rel="icon" href="data:;base64,iVBORw0KGgo=" />
+<style>
+  :root{
+    --bg:#0b0f12;--panel:#0f1417;--muted:#98a0a6;--accent:#7ad0ff;--danger:#ff6b6b;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Helvetica,Arial;color:#e6eef6;background:linear-gradient(180deg,#06070a 0%, #0b0f12 100%);}
+  .app{display:grid;grid-template-columns:320px 1fr 420px;grid-template-rows:56px 1fr;gap:12px;height:100vh;padding:12px}
+  header{grid-column:1/-1;background:transparent;display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:12px}
+  .brand{font-weight:700;color:var(--accent)}
+  .toolbar{margin-left:auto;display:flex;gap:8px}
+  button{background:#0b1114;border:1px solid #11161a;padding:8px 10px;border-radius:8px;color:var(--muted);cursor:pointer}
+  button.primary{background:linear-gradient(180deg,#16313a,#0f2328);color:#e6f7ff;border:1px solid rgba(122,208,255,0.12)}
+  .panel{background:linear-gradient(180deg,#071018, #0f1417);border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.02);height:calc(100% - 8px);overflow:auto}
+
+  /* left file tree */
+  .files{display:flex;flex-direction:column;height:100%}
+  .files .actions{display:flex;gap:8px;margin-bottom:8px}
+  .tree{font-size:14px;color:var(--muted)}
+  .node{padding:6px 8px;border-radius:8px;display:flex;justify-content:space-between;align-items:center}
+  .node:hover{background:rgba(255,255,255,0.02);cursor:pointer}
+  .node.selected{background:rgba(122,208,255,0.06);color:#cff6ff}
+  .folder{font-weight:600}
+  .children{margin-left:12px}
+
+  /* center editor */
+  .editor{display:flex;flex-direction:column;height:100%}
+  .filename{font-weight:600;margin-bottom:8px}
+  textarea{flex:1;width:100%;resize:none;background:#020406;border:1px solid rgba(255,255,255,0.03);padding:12px;border-radius:10px;color:#dff6ff;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', monospace;font-size:13px}
+  .editor .actions{display:flex;gap:8px;margin-top:8px}
+
+  /* right preview */
+  .previewHeader{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  iframe.preview{width:100%;height:calc(100% - 46px);border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:white}
+
+  .muted{color:var(--muted);font-size:13px}
+  input[type=file]{display:none}
+  .small{font-size:12px;padding:6px 8px}
+
+  /* responsive */
+  @media(max-width:1000px){.app{grid-template-columns:1fr;grid-template-rows:56px auto 320px 1fr} .preview{order:3}}
+</style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">Local Web IDE</div>
+      <div class="muted">Dark • ファイルを作成・アップロードして HTML プレビュー</div>
+      <div class="toolbar">
+        <label class="small" title="エクスポート">エクスポート</label>
+        <button id="exportBtn" class="small">ZIP</button>
+      </div>
+    </header>
+
+    <aside class="panel files" id="left">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-weight:700">ファイル</div>
+        <div class="muted" id="sizeHint">0 files</div>
+      </div>
+      <div class="actions">
+        <button id="newFile">新規ファイル</button>
+        <button id="newFolder">新規フォルダ</button>
+        <label for="uploadInput"><button id="uploadBtn">アップロード</button></label>
+        <input id="uploadInput" type="file" multiple />
+      </div>
+      <div class="tree" id="tree"></div>
+    </aside>
+
+    <main class="panel editor" id="center">
+      <div class="filename" id="filename">(未選択)</div>
+      <textarea id="editor" placeholder="ここにコードを編集" spellcheck="false"></textarea>
+      <div class="actions">
+        <button id="saveBtn" class="primary">保存</button>
+        <button id="renameBtn">名前変更</button>
+        <button id="deleteBtn">削除</button>
+        <div style="flex:1"></div>
+        <button id="runBtn" class="primary">プレビューを更新</button>
+      </div>
+    </main>
+
+    <aside class="panel" id="right">
+      <div class="previewHeader">
+        <div style="font-weight:700">プレビュー</div>
+        <div class="muted">(HTML を選択してプレビュー)</div>
+        <div style="flex:1"></div>
+        <button id="openFull">全画面</button>
+      </div>
+      <iframe id="previewFrame" class="preview" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
+    </aside>
+  </div>
+
+<script>
+// シンプルな仮想ファイルシステム（オブジェクト）
+let fs = {name:'root',type:'folder',children:[]};
+let selectedNode = null;
+const treeEl = document.getElementById('tree');
+const editor = document.getElementById('editor');
+const filenameEl = document.getElementById('filename');
+const previewFrame = document.getElementById('previewFrame');
+const sizeHint = document.getElementById('sizeHint');
+
+function uid(){return Math.random().toString(36).slice(2,9)}
+
+function renderTree(){
+  treeEl.innerHTML = '';
+  let count = 0;
+  function walk(node, container){
+    const nodeEl = document.createElement('div');
+    nodeEl.className = 'node' + (node===selectedNode? ' selected':'');
+    const left = document.createElement('div');
+    left.textContent = node.type==='folder'? '📁 ' + node.name : node.name;
+    left.className = node.type==='folder'? 'folder':'';
+    left.onclick = (e)=>{ e.stopPropagation(); selectNode(node)};
+    nodeEl.appendChild(left);
+    if(node.type==='folder'){
+      const exp = document.createElement('div'); exp.textContent = node.expanded? '▾':'▸'; exp.style.marginLeft='8px'; exp.onclick = (e)=>{e.stopPropagation(); node.expanded=!node.expanded; renderTree()}
+      nodeEl.insertBefore(exp,left);
+    }
+    container.appendChild(nodeEl);
+    count++;
+    if(node.type==='folder' && node.expanded){
+      const c = document.createElement('div'); c.className='children'; container.appendChild(c);
+      node.children.forEach(ch=> walk(ch,c));
+    }
+  }
+  walk(fs, treeEl);
+  sizeHint.textContent = count + ' items';
+}
+
+function selectNode(node){
+  selectedNode = node;
+  if(node.type==='file'){
+    editor.value = node.content || '';
+    filenameEl.textContent = node.path || node.name;
+  } else {
+    editor.value = '';
+    filenameEl.textContent = node.path || node.name + '/';
+  }
+  renderTree();
+}
+
+function makeFile(name, content=''){return {id:uid(),name,path:name,type:'file',content}} 
+function makeFolder(name){return {id:uid(),name,path:name,type:'folder',children:[],expanded:true}}
+
+function findParent(folder, targetId){ // returns {parent, index}
+  if(!folder.children) return null;
+  for(let i=0;i<folder.children.length;i++){
+    if(folder.children[i].id===targetId) return {parent:folder, index:i};
+    if(folder.children[i].type==='folder'){
+      const r = findParent(folder.children[i], targetId);
+      if(r) return r;
+    }
+  }
+  return null;
+}
+
+// controls
+document.getElementById('newFile').onclick = ()=>{
+  const name = prompt('ファイル名を入力（例: index.html）'); if(!name) return;
+  const node = makeFile(name,''); fs.children.push(node); node.path = node.name; renderTree(); selectNode(node);
+}
+
+document.getElementById('newFolder').onclick = ()=>{
+  const name = prompt('フォルダ名を入力'); if(!name) return;
+  const node = makeFolder(name); fs.children.push(node); node.path = node.name + '/'; renderTree(); selectNode(node);
+}
+
+document.getElementById('saveBtn').onclick = ()=>{
+  if(!selectedNode || selectedNode.type!=='file'){ alert('ファイルを選んでください'); return }
+  selectedNode.content = editor.value; alert('保存しました');
+}
+
+document.getElementById('deleteBtn').onclick = ()=>{
+  if(!selectedNode){alert('選択してください');return}
+  if(selectedNode===fs){alert('ルートは削除できません');return}
+  if(!confirm('削除しますか？')) return;
+  const p = findParent(fs, selectedNode.id);
+  if(p){ p.parent.children.splice(p.index,1); selectedNode=null; editor.value=''; filenameEl.textContent='(未選択)'; renderTree(); }
+}
+
+document.getElementById('renameBtn').onclick = ()=>{
+  if(!selectedNode){alert('選択してください');return}
+  const name = prompt('新しい名前を入力', selectedNode.name); if(!name) return;
+  selectedNode.name = name; renderTree();
+}
+
+// upload
+const uploadInput = document.getElementById('uploadInput');
+uploadInput.onchange = async (e)=>{
+  const files = Array.from(e.target.files);
+  for(const f of files){
+    const txt = await f.text();
+    const n = makeFile(f.name, txt); fs.children.push(n);
+  }
+  renderTree();
+}
+
+// Run / Preview
+function buildPreview(){
+  // find an HTML file to preview: selected file if .html otherwise index.html or first .html
+  let htmlFile = null;
+  if(selectedNode && selectedNode.type==='file' && selectedNode.name.endsWith('.html')) htmlFile = selectedNode;
+  if(!htmlFile){ htmlFile = fs.children.find(x=>x.type==='file' && x.name.endsWith('.html')) }
+  if(!htmlFile){ previewFrame.srcdoc = '<!doctype html><meta charset="utf-8"><style>body{background:#111;color:#ddd;font-family:system-ui;padding:20px}</style><h2>No HTML file</h2><p>index.html を作成するか、HTMLファイルを選択してください</p>'; return }
+  // assemble: include all css/js files from root as tags (simple approach)
+  let cssLinks = '';
+  let scripts = '';
+  function collect(node){
+    if(node.type==='file'){
+      if(node.name.endsWith('.css')) cssLinks += `<style>\n${node.content || ''}\n</style>\n`;
+      if(node.name.endsWith('.js')) scripts += `<script>\n${node.content || ''}\n<\/script>\n`;
+    } else if(node.type==='folder'){
+      node.children.forEach(collect);
+    }
+  }
+  fs.children.forEach(collect);
+  const out = htmlFile.content || '';
+  // inject css and scripts before </head> or at end
+  let doc = out;
+  if(doc.includes('</head>')) doc = doc.replace('</head>', cssLinks + '</head>'); else doc = cssLinks + doc;
+  if(doc.includes('</body>')) doc = doc.replace('</body>', scripts + '</body>'); else doc = doc + scripts;
+  previewFrame.srcdoc = doc;
+}
+
+document.getElementById('runBtn').onclick = buildPreview;
+
+// Fullscreen preview
+document.getElementById('openFull').onclick = ()=>{
+  const el = previewFrame;
+  if(el.requestFullscreen) el.requestFullscreen(); else alert('全画面非対応');
+}
+
+// export simple zip (uses JSZip if available) - fallback: create a single blob of files list
+document.getElementById('exportBtn').onclick = ()=>{
+  // try JSZip in window
+  if(window.JSZip){
+    const zip = new JSZip();
+    function add(node, path){
+      if(node.type==='file') zip.file(path + node.name, node.content || '');
+      else node.children.forEach(ch=> add(ch, path + node.name + '/'));
+    }
+    fs.children.forEach(ch=> add(ch,''));
+    zip.generateAsync({type:'blob'}).then(b=>{
+      const url = URL.createObjectURL(b); const a = document.createElement('a'); a.href=url; a.download='project.zip'; a.click();
+    });
+  } else {
+    // fallback: download a JSON project file
+    const b = new Blob([JSON.stringify(fs, null, 2)],{type:'application/json'});
+    const url = URL.createObjectURL(b); const a=document.createElement('a'); a.href=url; a.download='project.json'; a.click();
+  }
+}
+
+// initial starter files
+fs.children.push(makeFile('index.html', `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Sample</title>
+</head>
+<body>
+  <h1>Hello from Local Web IDE</h1>
+  <script>console.log('hello')</script>
+</body>
+</html>`));
+fs.children.push(makeFile('script.js','console.log("script loaded")'));
+fs.children.push(makeFile('style.css','body{font-family:system-ui;background:#fff;color:#111}'));
+renderTree();
+
+// helper: set paths when saving (flat root only) - enhanceable
+function updatePaths(){
+  function walk(node,base){ node.path = base + node.name + (node.type==='folder'?'/':''); if(node.type==='folder') node.children.forEach(ch=>walk(ch,node.path)); }
+  walk(fs,'');
+}
+setInterval(updatePaths,1000);
+
+// click to select first file
+selectNode(fs.children[0]);
+
+</script>
+</body>
+</html>
