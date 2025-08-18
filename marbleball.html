@@ -5,39 +5,47 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Marble Ball 2D</title>
 <style>
-  html,body{margin:0;height:100%;background:#000;color:#ddd;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  html,body{margin:0;height:100%;background:#111;color:#ddd;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
   #ui{position:fixed;left:12px;top:12px;display:flex;flex-wrap:wrap;gap:6px;z-index:10}
-  #ui button,#ui input[type=file]{background:#111;color:#ddd;border:1px solid #333;border-radius:8px;padding:6px 10px;cursor:pointer}
+  #ui button,#ui input[type=file]{background:#222;color:#ddd;border:1px solid #444;border-radius:8px;padding:6px 10px;cursor:pointer}
   #ui .group{display:flex;gap:6px}
   #msg{position:fixed;left:12px;bottom:12px;color:#9fd;background:rgba(0,0,0,.4);padding:6px 10px;border:1px solid #244;border-radius:8px;font-size:12px;white-space:pre-line;max-width:min(680px,80vw)}
-  canvas{display:block}
+  canvas{display:block;background:#111}
   #io{position:fixed;right:12px;top:12px;display:flex;flex-direction:column;gap:6px}
   #io textarea{width:min(420px,40vw);height:130px;background:#0b0b0b;color:#ddd;border:1px solid #333;border-radius:8px;padding:8px;resize:vertical}
+  #palette{position:fixed;left:12px;top:80px;display:flex;flex-direction:column;gap:6px;background:#1a1a1a;padding:6px;border-radius:8px}
+  #palette button{background:#333;color:#ddd;border:1px solid #555;border-radius:6px;padding:4px;cursor:grab;font-size:12px}
 </style>
 </head>
 <body>
 <div id="ui">
   <div class="group">
-    <button id="playBtn">Play</button>
-    <button id="editBtn">Edit</button>
-    <button id="setStartBtn">Set Start</button>
-    <button id="setGoalBtn">Set Goal</button>
+    <button id="playBtn">プレイ</button>
+    <button id="editBtn">編集</button>
+    <button id="setStartBtn">スタート位置</button>
+    <button id="setGoalBtn">ゴール位置</button>
   </div>
   <div class="group">
-    <button id="addBallBtn">Add Ball</button>
-    <button id="clearBallsBtn">Clear Balls</button>
+    <button id="addBallBtn">ボール追加</button>
+    <button id="clearBallsBtn">ボール消去</button>
   </div>
   <div class="group">
-    <button id="undoBtn">Undo Wall</button>
-    <button id="clearCourseBtn">Clear Course</button>
+    <button id="undoBtn">壁を戻す</button>
+    <button id="clearCourseBtn">コース全消去</button>
   </div>
   <div class="group">
-    <button id="saveBtn">Save</button>
-    <button id="loadBtn">Load</button>
+    <button id="saveBtn">保存</button>
+    <button id="loadBtn">読み込み</button>
   </div>
 </div>
+<div id="palette">
+  <button draggable="true" data-shape="rect">四角</button>
+  <button draggable="true" data-shape="tri">三角</button>
+  <button draggable="true" data-shape="circle">丸</button>
+  <button draggable="true" data-shape="line">線</button>
+</div>
 <div id="io">
-  <textarea id="courseJSON" placeholder="ここにコースJSON（Saveで生成/Loadで読み込み）"></textarea>
+  <textarea id="courseJSON" placeholder="ここにコースJSON（保存で生成/読み込みで再現）"></textarea>
 </div>
 <pre id="msg"></pre>
 
@@ -46,261 +54,79 @@
 <script src="https://cdn.jsdelivr.net/npm/matter-js@0.20.0/build/matter.min.js"></script>
 <script>
 (() => {
-  const {Engine, Render, Runner, World, Bodies, Body, Composite, Composites, Events, Vector} = Matter;
+  const {Engine, Render, Runner, World, Bodies, Body, Composite, Events, Vector} = Matter;
 
   const engine = Engine.create();
   engine.gravity.y = 1.2;
 
   const canvas = document.getElementById('world');
-  function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    render.options.width = canvas.width;
-    render.options.height = canvas.height;
-    Render.lookAt(render, Composite.allBodies(engine.world));
-    updateBounds();
-  }
   const render = Render.create({
     canvas,
     engine,
-    options: {
-      wireframes: false,
-      background: '#000',
-      width: window.innerWidth,
-      height: window.innerHeight,
-      pixelRatio: window.devicePixelRatio || 1
-    }
+    options: { wireframes: false, background: '#111', width: window.innerWidth, height: window.innerHeight }
   });
   Render.run(render);
   const runner = Runner.create();
   Runner.run(runner, engine);
 
-  let bounds = [];
-  function updateBounds(){
-    if(bounds.length) bounds.forEach(b=>World.remove(engine.world,b));
-    const w = canvas.width, h = canvas.height, t = 80;
-    bounds = [
-      Bodies.rectangle(w/2, -t/2, w, t, {isStatic:true, render:{fillStyle:'#111'}}),
-      Bodies.rectangle(w/2, h+t/2, w, t, {isStatic:true, render:{fillStyle:'#111'}}),
-      Bodies.rectangle(-t/2, h/2, t, h, {isStatic:true, render:{fillStyle:'#111'}}),
-      Bodies.rectangle(w+t/2, h/2, t, h, {isStatic:true, render:{fillStyle:'#111'}}),
-    ];
-    bounds.forEach(b=>World.add(engine.world,b));
-  }
+  function resize(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+  window.addEventListener('resize', resize); resize();
 
-  window.addEventListener('resize', resize);
-  resize();
+  const courseWalls=[]; const balls=[];
+  const msg=document.getElementById('msg');
 
-  const courseWalls = [];
-  const balls = [];
-  const msg = document.getElementById('msg');
+  const startMarker = Bodies.circle(180, 180, 14, {isStatic:true, render:{fillStyle:'#1e90ff'}});
+  const goalRadius=22;
+  const goalSensor=Bodies.circle(520,300,goalRadius,{isStatic:true,isSensor:true,render:{fillStyle:'transparent',strokeStyle:'#0f8',lineWidth:3}});
+  World.add(engine.world,[startMarker,goalSensor]);
 
-  const startMarker = Bodies.circle(180, 180, 14, {
-    isStatic: true,
-    render: { fillStyle: '#1e90ff', strokeStyle:'#8cf', lineWidth:2 }
+  Events.on(engine,'collisionStart',e=>{ e.pairs.forEach(p=>{const a=p.bodyA,b=p.bodyB;if((a===goalSensor&&balls.includes(b))||(b===goalSensor&&balls.includes(a))){const ball=a===goalSensor?b:a;ball.render.strokeStyle='#0f8';}});});
+
+  let mode='edit';
+  const ui={ play:playBtn,edit:editBtn,setStart:setStartBtn,setGoal:setGoalBtn,addBall:addBallBtn,clearBalls:clearBallsBtn,undo:undoBtn,clearCourse:clearCourseBtn,save:saveBtn,load:loadBtn,json:courseJSON };
+  function setMode(m){ mode=m; flash(`モード: ${m}\n・編集: ドラッグで壁作成/パレットで形追加\n・スタート/ゴール: クリックで移動\n・プレイ: ボール追加して開始`);} setMode('edit');
+  ui.play.onclick=()=>setMode('play');
+  ui.edit.onclick=()=>setMode('edit');
+  ui.setStart.onclick=()=>setMode('setStart');
+  ui.setGoal.onclick=()=>setMode('setGoal');
+  ui.addBall.onclick=()=>spawnBall();
+  ui.clearBalls.onclick=()=>clearBalls();
+
+  function randCol(){return `hsl(${(Math.random()*360)|0} 80% 60%)`;}
+  function spawnBall(){const {x,y}=startMarker.position;const ball=Bodies.circle(x,y,12,{restitution:0.3,frictionAir:0.005,render:{fillStyle:randCol()}});balls.push(ball);World.add(engine.world,ball);}
+  function clearBalls(){balls.splice(0).forEach(b=>World.remove(engine.world,b));}
+
+  function addWall(x,y,w,h,angle=0){const wall=Bodies.rectangle(x,y,w,h,{isStatic:true,angle,render:{fillStyle:'#e6e6e6'}});World.add(engine.world,wall);courseWalls.push({x,y,w,h,angle});}
+  function addCircle(x,y,r){const c=Bodies.circle(x,y,r,{isStatic:true,render:{fillStyle:'#e6e6e6'}});World.add(engine.world,c);}
+  function addTriangle(x,y){const s=40;const t=Bodies.polygon(x,y,3,s,{isStatic:true,render:{fillStyle:'#e6e6e6'}});World.add(engine.world,t);}
+
+  // パレットドラッグ&ドロップ
+  const palette=document.getElementById('palette');
+  palette.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('dragstart',ev=>{ev.dataTransfer.setData('shape',btn.dataset.shape);});
   });
-  const goalRadius = 22;
-  const goalSensor = Bodies.circle(520, 300, goalRadius, {
-    isStatic: true, isSensor: true,
-    render: { fillStyle: 'transparent', strokeStyle:'#00ff8a', lineWidth:3 }
-  });
-  World.add(engine.world, [startMarker, goalSensor]);
-
-  Events.on(engine, 'collisionStart', e=>{
-    e.pairs.forEach(p=>{
-      const a=p.bodyA, b=p.bodyB;
-      if((a===goalSensor && balls.includes(b)) || (b===goalSensor && balls.includes(a))){
-        const ball = a===goalSensor ? b : a;
-        Body.setVelocity(ball,{x:0,y:0});
-        Body.setAngularVelocity(ball,0);
-        ball.render.strokeStyle = '#00ff8a';
-        ball.render.lineWidth = 4;
-      }
-    });
-  });
-
-  let mode = 'edit';
-  const ui = {
-    play: document.getElementById('playBtn'),
-    edit: document.getElementById('editBtn'),
-    setStart: document.getElementById('setStartBtn'),
-    setGoal: document.getElementById('setGoalBtn'),
-    addBall: document.getElementById('addBallBtn'),
-    clearBalls: document.getElementById('clearBallsBtn'),
-    undo: document.getElementById('undoBtn'),
-    clearCourse: document.getElementById('clearCourseBtn'),
-    save: document.getElementById('saveBtn'),
-    load: document.getElementById('loadBtn'),
-    json: document.getElementById('courseJSON')
-  };
-
-  function setMode(m){
-    mode = m;
-    flash(`Mode: ${m}\n・Edit: ドラッグで壁作成 / Undoで一つ戻す\n・Set Start/Goal: クリックで位置変更\n・Play: Add Ballでスタート位置に追加`);
-  }
-  setMode('edit');
-
-  ui.play.onclick = ()=>setMode('play');
-  ui.edit.onclick = ()=>setMode('edit');
-  ui.setStart.onclick = ()=>setMode('setStart');
-  ui.setGoal.onclick = ()=>setMode('setGoal');
-
-  ui.addBall.onclick = ()=>spawnBall();
-  ui.clearBalls.onclick = ()=>clearBalls();
-  ui.undo.onclick = ()=>undoWall();
-  ui.clearCourse.onclick = ()=>clearCourse();
-  ui.save.onclick = ()=>saveCourse();
-  ui.load.onclick = ()=>loadCourse();
-
-  function randCol(){
-    const h = (Math.random()*360)|0;
-    return `hsl(${h} 80% 60%)`;
-  }
-
-  function spawnBall(){
-    const {x,y} = startMarker.position;
-    const r = 12;
-    const ball = Bodies.circle(x, y, r, {
-      restitution: 0.3,
-      friction: 0.02,
-      frictionAir: 0.005,
-      render: { fillStyle: randCol() }
-    });
-    balls.push(ball);
-    World.add(engine.world, ball);
-  }
-
-  function clearBalls(){
-    balls.splice(0).forEach(b=>World.remove(engine.world,b));
-  }
-
-  function addWallFromLine(x1,y1,x2,y2){
-    const cx = (x1+x2)/2, cy=(y1+y2)/2;
-    const dx = x2-x1, dy=y2-y1;
-    const len = Math.max(8, Math.hypot(dx,dy));
-    const angle = Math.atan2(dy,dx);
-    const thick = 14;
-    const wall = Bodies.rectangle(cx, cy, len, thick, {
-      isStatic: true,
-      angle,
-      render: { fillStyle: '#e6e6e6' }
-    });
-    World.add(engine.world, wall);
-    courseWalls.push({w:len,h:thick,x:cx,y:cy,angle});
-  }
-
-  function undoWall(){
-    if(!courseWalls.length) return;
-
-    const last = courseWalls.pop();
-    
-    const toRemove = Composite.allBodies(engine.world).reverse().find(b=>{
-      return b.isStatic && Math.abs(b.position.x-last.x)<1 && Math.abs(b.position.y-last.y)<1 &&
-             Math.abs(b.angle-last.angle)<1e-3 && Math.abs(b.bounds.max.x-b.bounds.min.x - last.w)<2;
-    });
-    if(toRemove) World.remove(engine.world,toRemove);
-  }
-
-  function clearCourse(){
-    const statics = Composite.allBodies(engine.world).filter(b=>b.isStatic && b!==startMarker && b!==goalSensor && !bounds.includes(b));
-    statics.forEach(b=>World.remove(engine.world,b));
-    courseWalls.length = 0;
-  }
-
-  function saveCourse(){
-    const data = {
-      version:1,
-      walls: courseWalls,
-      start: {x:startMarker.position.x, y:startMarker.position.y},
-      goal: {x:goalSensor.position.x, y:goalSensor.position.y, r: goalRadius}
-    };
-    ui.json.value = JSON.stringify(data);
-    flash('Saved.');
-  }
-
-  function loadCourse(){
-    try{
-      const data = JSON.parse(ui.json.value);
-      clearCourse();
-      if(data.start) Body.setPosition(startMarker, data.start);
-      if(data.goal) Body.setPosition(goalSensor, {x:data.goal.x, y:data.goal.y});
-      (data.walls||[]).forEach(w=>{
-        const wall = Bodies.rectangle(w.x, w.y, w.w, w.h, {isStatic:true, angle:w.angle, render:{fillStyle:'#e6e6e6'}});
-        World.add(engine.world, wall);
-        courseWalls.push({w:w.w,h:w.h,x:w.x,y:w.y,angle:w.angle});
-      });
-      flash('Loaded.');
-    }catch(e){
-      flash('Load failed: JSONエラー');
-    }
-  }
-
-  let dragging=false, sx=0, sy=0, ex=0, ey=0;
-  canvas.addEventListener('mousedown', (ev)=>{
-    const {x,y} = getMouse(ev);
-    if(mode==='edit'){
-      dragging=true; sx=x; sy=y; ex=x; ey=y;
-    }else if(mode==='setStart'){
-      Body.setPosition(startMarker,{x,y});
-    }else if(mode==='setGoal'){
-      Body.setPosition(goalSensor,{x,y});
-    }else if(mode==='play'){
-    }
-  });
-  canvas.addEventListener('mousemove', (ev)=>{
-    if(!dragging) return;
-    const {x,y} = getMouse(ev);
-    ex=x; ey=y;
-  });
-  window.addEventListener('mouseup', ()=>{
-    if(dragging){
-      dragging=false;
-      if(distance(sx,sy,ex,ey)>6) addWallFromLine(sx,sy,ex,ey);
-    }
+  canvas.addEventListener('dragover',ev=>ev.preventDefault());
+  canvas.addEventListener('drop',ev=>{
+    ev.preventDefault();
+    const shape=ev.dataTransfer.getData('shape');
+    const rect=canvas.getBoundingClientRect();
+    const x=ev.clientX-rect.left,y=ev.clientY-rect.top;
+    if(shape==='rect') addWall(x,y,80,20);
+    if(shape==='circle') addCircle(x,y,20);
+    if(shape==='tri') addTriangle(x,y);
   });
 
-  function getMouse(ev){
-    const rect = canvas.getBoundingClientRect();
-    return { x: (ev.clientX-rect.left), y: (ev.clientY-rect.top) };
-  }
-  function distance(x1,y1,x2,y2){ return Math.hypot(x2-x1,y2-y1); }
+  let dragging=false,sx=0,sy=0,ex=0,ey=0;
+  canvas.addEventListener('mousedown',ev=>{const {x,y}=getMouse(ev);if(mode==='edit'){dragging=true;sx=x;sy=y;ex=x;ey=y;}else if(mode==='setStart'){Body.setPosition(startMarker,{x,y});}else if(mode==='setGoal'){Body.setPosition(goalSensor,{x,y});}});
+  canvas.addEventListener('mousemove',ev=>{if(!dragging) return;const {x,y}=getMouse(ev);ex=x;ey=y;});
+  window.addEventListener('mouseup',()=>{if(dragging){dragging=false;if(Math.hypot(sx-ex,sy-ey)>6)addWall((sx+ex)/2,(sy+ey)/2,Math.hypot(ex-sx,ey-sy),14,Math.atan2(ey-sy,ex-sx));}});
 
-  const ctx = canvas.getContext('2d');
-  const drawOverlay = ()=>{
-    if(dragging && mode==='edit'){
-      ctx.save();
-      ctx.translate(0.5,0.5);
-      ctx.beginPath();
-      ctx.moveTo(sx,sy);
-      ctx.lineTo(ex,ey);
-      ctx.lineWidth = 4;
-      ctx.strokeStyle = '#55aaff';
-      ctx.stroke();
-      ctx.restore();
-    }
-    
-    ctx.save();
-    ctx.font = '12px system-ui, sans-serif';
-    ctx.fillStyle = '#9cf';
-    ctx.fillText('START', startMarker.position.x+12, startMarker.position.y-12);
-    ctx.fillStyle = '#8f8';
-    ctx.fillText('GOAL', goalSensor.position.x+12, goalSensor.position.y-12);
-    ctx.restore();
+  function getMouse(ev){const rect=canvas.getBoundingClientRect();return{x:ev.clientX-rect.left,y:ev.clientY-rect.top};}
 
-    requestAnimationFrame(drawOverlay);
-  };
-  requestAnimationFrame(drawOverlay);
+  const ctx=canvas.getContext('2d');
+  function drawOverlay(){if(dragging&&mode==='edit'){ctx.save();ctx.clearRect(0,0,canvas.width,canvas.height);ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.lineWidth=4;ctx.strokeStyle='#55aaff';ctx.stroke();ctx.restore();}requestAnimationFrame(drawOverlay);}requestAnimationFrame(drawOverlay);
 
-  function flash(t){
-    msg.textContent = t;
-    clearTimeout(flash._t);
-    flash._t = setTimeout(()=>{msg.textContent='';}, 3500);
-  }
-
-  addWallFromLine(120,420, 520,520);
-  addWallFromLine(520,520, 840,420);
-  Body.setPosition(startMarker,{x:140,y:160});
-  Body.setPosition(goalSensor,{x:900,y:360});
+  function flash(t){msg.textContent=t;clearTimeout(flash._t);flash._t=setTimeout(()=>msg.textContent='',3500);}
 })();
 </script>
 </body>
