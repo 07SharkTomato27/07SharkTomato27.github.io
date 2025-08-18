@@ -7,12 +7,10 @@
 <style>
   html,body{margin:0;height:100%;background:#111;color:#ddd;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
   #ui{position:fixed;left:12px;top:12px;display:flex;flex-wrap:wrap;gap:6px;z-index:10}
-  #ui button,#ui input[type=file]{background:#222;color:#ddd;border:1px solid #444;border-radius:8px;padding:6px 10px;cursor:pointer}
+  #ui button{background:#222;color:#ddd;border:1px solid #444;border-radius:8px;padding:6px 10px;cursor:pointer}
   #ui .group{display:flex;gap:6px}
   #msg{position:fixed;left:12px;bottom:12px;color:#9fd;background:rgba(0,0,0,.4);padding:6px 10px;border:1px solid #244;border-radius:8px;font-size:12px;white-space:pre-line;max-width:min(680px,80vw)}
   canvas{display:block;background:#111}
-  #io{position:fixed;right:12px;top:12px;display:flex;flex-direction:column;gap:6px}
-  #io textarea{width:min(420px,40vw);height:130px;background:#0b0b0b;color:#ddd;border:1px solid #333;border-radius:8px;padding:8px;resize:vertical}
   #palette{position:fixed;left:12px;top:80px;display:flex;flex-direction:column;gap:6px;background:#1a1a1a;padding:6px;border-radius:8px}
   #palette button{background:#333;color:#ddd;border:1px solid #555;border-radius:6px;padding:4px;cursor:grab;font-size:12px}
 </style>
@@ -20,7 +18,8 @@
 <body>
 <div id="ui">
   <div class="group">
-    <button id="playBtn">プレイ</button>
+    <button id="playBtn">プレイ開始</button>
+    <button id="stopBtn">停止</button>
     <button id="editBtn">編集</button>
     <button id="setStartBtn">スタート位置</button>
     <button id="setGoalBtn">ゴール位置</button>
@@ -33,19 +32,12 @@
     <button id="undoBtn">壁を戻す</button>
     <button id="clearCourseBtn">コース全消去</button>
   </div>
-  <div class="group">
-    <button id="saveBtn">保存</button>
-    <button id="loadBtn">読み込み</button>
-  </div>
 </div>
 <div id="palette">
   <button draggable="true" data-shape="rect">四角</button>
   <button draggable="true" data-shape="tri">三角</button>
   <button draggable="true" data-shape="circle">丸</button>
   <button draggable="true" data-shape="line">線</button>
-</div>
-<div id="io">
-  <textarea id="courseJSON" placeholder="ここにコースJSON（保存で生成/読み込みで再現）"></textarea>
 </div>
 <pre id="msg"></pre>
 
@@ -54,7 +46,7 @@
 <script src="https://cdn.jsdelivr.net/npm/matter-js@0.20.0/build/matter.min.js"></script>
 <script>
 (() => {
-  const {Engine, Render, Runner, World, Bodies, Body, Composite, Events, Vector} = Matter;
+  const {Engine, Render, Runner, World, Bodies, Body, Events, Vector} = Matter;
 
   const engine = Engine.create();
   engine.gravity.y = 1.2;
@@ -72,7 +64,7 @@
   function resize(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
   window.addEventListener('resize', resize); resize();
 
-  const courseWalls=[]; const balls=[];
+  const balls=[];
   const msg=document.getElementById('msg');
 
   const startMarker = Bodies.circle(180, 180, 14, {isStatic:true, render:{fillStyle:'#1e90ff'}});
@@ -83,24 +75,33 @@
   Events.on(engine,'collisionStart',e=>{ e.pairs.forEach(p=>{const a=p.bodyA,b=p.bodyB;if((a===goalSensor&&balls.includes(b))||(b===goalSensor&&balls.includes(a))){const ball=a===goalSensor?b:a;ball.render.strokeStyle='#0f8';}});});
 
   let mode='edit';
-  const ui={ play:playBtn,edit:editBtn,setStart:setStartBtn,setGoal:setGoalBtn,addBall:addBallBtn,clearBalls:clearBallsBtn,undo:undoBtn,clearCourse:clearCourseBtn,save:saveBtn,load:loadBtn,json:courseJSON };
-  function setMode(m){ mode=m; flash(`モード: ${m}\n・編集: ドラッグで壁作成/パレットで形追加\n・スタート/ゴール: クリックで移動\n・プレイ: ボール追加して開始`);} setMode('edit');
-  ui.play.onclick=()=>setMode('play');
-  ui.edit.onclick=()=>setMode('edit');
-  ui.setStart.onclick=()=>setMode('setStart');
-  ui.setGoal.onclick=()=>setMode('setGoal');
-  ui.addBall.onclick=()=>spawnBall();
-  ui.clearBalls.onclick=()=>clearBalls();
+  const playBtn=document.getElementById('playBtn');
+  const stopBtn=document.getElementById('stopBtn');
+  const editBtn=document.getElementById('editBtn');
+  const setStartBtn=document.getElementById('setStartBtn');
+  const setGoalBtn=document.getElementById('setGoalBtn');
+  const addBallBtn=document.getElementById('addBallBtn');
+  const clearBallsBtn=document.getElementById('clearBallsBtn');
+
+  function setMode(m){ mode=m; flash(`モード: ${m}`); }
+  setMode('edit');
+
+  playBtn.onclick=()=>{setMode('play'); spawnBall();};
+  stopBtn.onclick=()=>{setMode('edit'); clearBalls();};
+  editBtn.onclick=()=>setMode('edit');
+  setStartBtn.onclick=()=>setMode('setStart');
+  setGoalBtn.onclick=()=>setMode('setGoal');
+  addBallBtn.onclick=()=>spawnBall();
+  clearBallsBtn.onclick=()=>clearBalls();
 
   function randCol(){return `hsl(${(Math.random()*360)|0} 80% 60%)`;}
   function spawnBall(){const {x,y}=startMarker.position;const ball=Bodies.circle(x,y,12,{restitution:0.3,frictionAir:0.005,render:{fillStyle:randCol()}});balls.push(ball);World.add(engine.world,ball);}
   function clearBalls(){balls.splice(0).forEach(b=>World.remove(engine.world,b));}
 
-  function addWall(x,y,w,h,angle=0){const wall=Bodies.rectangle(x,y,w,h,{isStatic:true,angle,render:{fillStyle:'#e6e6e6'}});World.add(engine.world,wall);courseWalls.push({x,y,w,h,angle});}
+  function addWall(x,y,w,h,angle=0){const wall=Bodies.rectangle(x,y,w,h,{isStatic:true,angle,render:{fillStyle:'#e6e6e6'}});World.add(engine.world,wall);}
   function addCircle(x,y,r){const c=Bodies.circle(x,y,r,{isStatic:true,render:{fillStyle:'#e6e6e6'}});World.add(engine.world,c);}
-  function addTriangle(x,y){const s=40;const t=Bodies.polygon(x,y,3,s,{isStatic:true,render:{fillStyle:'#e6e6e6'}});World.add(engine.world,t);}
+  function addTriangle(x,y){const s=30;const t=Bodies.polygon(x,y,3,s,{isStatic:true,render:{fillStyle:'#e6e6e6'}});World.add(engine.world,t);}
 
-  // パレットドラッグ&ドロップ
   const palette=document.getElementById('palette');
   palette.querySelectorAll('button').forEach(btn=>{
     btn.addEventListener('dragstart',ev=>{ev.dataTransfer.setData('shape',btn.dataset.shape);});
@@ -111,22 +112,44 @@
     const shape=ev.dataTransfer.getData('shape');
     const rect=canvas.getBoundingClientRect();
     const x=ev.clientX-rect.left,y=ev.clientY-rect.top;
-    if(shape==='rect') addWall(x,y,80,20);
+    if(shape==='rect') addWall(x,y,40,40);
     if(shape==='circle') addCircle(x,y,20);
     if(shape==='tri') addTriangle(x,y);
   });
 
-  let dragging=false,sx=0,sy=0,ex=0,ey=0;
-  canvas.addEventListener('mousedown',ev=>{const {x,y}=getMouse(ev);if(mode==='edit'){dragging=true;sx=x;sy=y;ex=x;ey=y;}else if(mode==='setStart'){Body.setPosition(startMarker,{x,y});}else if(mode==='setGoal'){Body.setPosition(goalSensor,{x,y});}});
-  canvas.addEventListener('mousemove',ev=>{if(!dragging) return;const {x,y}=getMouse(ev);ex=x;ey=y;});
-  window.addEventListener('mouseup',()=>{if(dragging){dragging=false;if(Math.hypot(sx-ex,sy-ey)>6)addWall((sx+ex)/2,(sy+ey)/2,Math.hypot(ex-sx,ey-sy),14,Math.atan2(ey-sy,ex-sx));}});
+  let drawingLine=false,sx=0,sy=0,ex=0,ey=0;
+  canvas.addEventListener('mousedown',ev=>{
+    const {x,y}=getMouse(ev);
+    if(mode==='edit'){
+      if(currentShape==='line'){drawingLine=true;sx=x;sy=y;ex=x;ey=y;}
+    } else if(mode==='setStart'){
+      if(Vector.magnitude(Vector.sub(startMarker.position,{x,y}))<30){ Body.setPosition(startMarker,{x,y}); }
+    } else if(mode==='setGoal'){
+      if(Vector.magnitude(Vector.sub(goalSensor.position,{x,y}))<30){ Body.setPosition(goalSensor,{x,y}); }
+    }
+  });
+  canvas.addEventListener('mousemove',ev=>{if(!drawingLine) return;const {x,y}=getMouse(ev);ex=x;ey=y;});
+  window.addEventListener('mouseup',()=>{if(drawingLine){drawingLine=false;if(Math.hypot(sx-ex,sy-ey)>6) addWall((sx+ex)/2,(sy+ey)/2,Math.hypot(ex-sx,ey-sy),6,Math.atan2(ey-sy,ex-sx));}});
 
   function getMouse(ev){const rect=canvas.getBoundingClientRect();return{x:ev.clientX-rect.left,y:ev.clientY-rect.top};}
 
   const ctx=canvas.getContext('2d');
-  function drawOverlay(){if(dragging&&mode==='edit'){ctx.save();ctx.clearRect(0,0,canvas.width,canvas.height);ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.lineWidth=4;ctx.strokeStyle='#55aaff';ctx.stroke();ctx.restore();}requestAnimationFrame(drawOverlay);}requestAnimationFrame(drawOverlay);
+  let currentShape=null;
+  palette.querySelectorAll('button').forEach(btn=>{
+    btn.onclick=()=>{if(btn.dataset.shape==='line'){currentShape='line';setMode('edit');}};
+  });
 
-  function flash(t){msg.textContent=t;clearTimeout(flash._t);flash._t=setTimeout(()=>msg.textContent='',3500);}
+  function drawOverlay(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    if(drawingLine&&mode==='edit'){
+      ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);
+      ctx.lineWidth=4;ctx.strokeStyle='#55aaff';ctx.stroke();
+    }
+    requestAnimationFrame(drawOverlay);
+  }
+  requestAnimationFrame(drawOverlay);
+
+  function flash(t){msg.textContent=t;clearTimeout(flash._t);flash._t=setTimeout(()=>msg.textContent='',2500);}
 })();
 </script>
 </body>
