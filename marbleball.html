@@ -35,6 +35,10 @@
     <button id="undoBtn" disabled>壁を戻す</button>
     <button id="clearCourseBtn">コース全消去</button>
   </div>
+  <div class="group">
+    <button id="saveBtn">コース保存</button>
+    <button id="loadBtn">コース読込</button>
+  </div>
 </div>
 <div id="palette">
   <button draggable="true" data-shape="rect">四角</button>
@@ -52,8 +56,7 @@
 <script src="https://cdn.jsdelivr.net/npm/matter-js@0.20.0/build/matter.min.js"></script>
 <script>
 (() => {
-  const {Engine, Render, Runner, World, Bodies, Body, Events, Vector, Composite} = Matter;
-
+  const {Engine, Render, Runner, World, Bodies, Body, Events} = Matter;
   const engine = Engine.create();
   engine.gravity.y = 1.2;
 
@@ -77,13 +80,10 @@
   window.addEventListener('resize', resize); resize();
 
   const balls=[]; const msg=document.getElementById('msg');
-
   const startMarker = Bodies.circle(180, 180, 14, {isStatic:true, render:{fillStyle:'#1e90ff'}});
   const goalRadius=22;
   const goalSensor=Bodies.circle(520,300,goalRadius,{isStatic:true,isSensor:true,render:{fillStyle:'transparent',strokeStyle:'#0f8',lineWidth:3}});
   World.add(engine.world,[startMarker,goalSensor]);
-
-  Events.on(engine,'collisionStart',e=>{ e.pairs.forEach(p=>{const a=p.bodyA,b=p.bodyB; if((a===goalSensor&&balls.includes(b))||(b===goalSensor&&balls.includes(a))){const ball=a===goalSensor?b:a; ball.render.strokeStyle='#0f8';}});});
 
   let mode='edit';
   const playBtn=document.getElementById('playBtn');
@@ -96,6 +96,8 @@
   const undoBtn=document.getElementById('undoBtn');
   const clearCourseBtn=document.getElementById('clearCourseBtn');
   const lineBtn=document.getElementById('lineBtn');
+  const saveBtn=document.getElementById('saveBtn');
+  const loadBtn=document.getElementById('loadBtn');
 
   function setMode(m){ mode=m; flash(`モード: ${m}`); }
   setMode('edit');
@@ -114,18 +116,23 @@
   function clearBalls(){balls.splice(0).forEach(b=>World.remove(engine.world,b));}
 
   const placedWalls=[];
-  function addWall(x,y,w,h,angle=0){
-    const wall=Bodies.rectangle(x,y,w,h,{isStatic:true,angle,render:{fillStyle:'#e6e6e6'}});
-    World.add(engine.world,wall);
-    placedWalls.push(wall);
-    undoBtn.disabled = placedWalls.length===0;
-  }
-  function addCircle(x,y,r){const c=Bodies.circle(x,y,r,{isStatic:true,render:{fillStyle:'#e6e6e6'}});World.add(engine.world,c);placedWalls.push(c);undoBtn.disabled=false;}
-  function addTriangle(x,y){const s=30;const t=Bodies.polygon(x,y,3,s,{isStatic:true,render:{fillStyle:'#e6e6e6'}});World.add(engine.world,t);placedWalls.push(t);undoBtn.disabled=false;}
-  undoBtn.onclick=()=>{const b=placedWalls.pop(); if(b){World.remove(engine.world,b);} undoBtn.disabled=placedWalls.length===0;};
-  function clearCourse(){ placedWalls.splice(0).forEach(b=>World.remove(engine.world,b)); undoBtn.disabled=true; }
+  function addWall(x,y,w,h,angle=0){const wall=Bodies.rectangle(x,y,w,h,{isStatic:true,angle,render:{fillStyle:'#e6e6e6'}});World.add(engine.world,wall);placedWalls.push({type:'rect',x,y,w,h,angle});}
+  function addCircle(x,y,r){const c=Bodies.circle(x,y,r,{isStatic:true,render:{fillStyle:'#e6e6e6'}});World.add(engine.world,c);placedWalls.push({type:'circle',x,y,r});}
+  function addTriangle(x,y){const s=30;const t=Bodies.polygon(x,y,3,s,{isStatic:true,render:{fillStyle:'#e6e6e6'}});World.add(engine.world,t);placedWalls.push({type:'tri',x,y,s});}
 
-  
+  undoBtn.onclick=()=>{ placedWalls.pop(); rebuildCourse(); };
+  function clearCourse(){ placedWalls.splice(0); rebuildCourse(); }
+
+  function rebuildCourse(){
+    World.clear(engine.world,false);
+    World.add(engine.world,[startMarker,goalSensor]);
+    placedWalls.forEach(o=>{
+      if(o.type==='rect') addWall(o.x,o.y,o.w,o.h,o.angle);
+      if(o.type==='circle') addCircle(o.x,o.y,o.r);
+      if(o.type==='tri') addTriangle(o.x,o.y);
+    });
+  }
+
   const palette=document.getElementById('palette');
   palette.querySelectorAll('[draggable=true]').forEach(btn=>{
     btn.addEventListener('dragstart',ev=>{ev.dataTransfer.setData('shape',btn.dataset.shape);});
@@ -150,10 +157,9 @@
     if(mode==='edit' && currentShape==='line'){
       drawingLine=true; sx=x; sy=y; ex=x; ey=y;
     } else if(mode==='setStart'){
-      
-      if(distPt(startMarker.position,{x,y}) <= 16){ draggingStart=true; }
+      draggingStart=true;
     } else if(mode==='setGoal'){
-      if(distPt(goalSensor.position,{x,y}) <= goalRadius){ draggingGoal=true; }
+      draggingGoal=true;
     }
   });
   window.addEventListener('mousemove',ev=>{
@@ -168,7 +174,6 @@
   });
 
   function getMouse(ev){ const r=worldCanvas.getBoundingClientRect(); return {x:ev.clientX-r.left, y:ev.clientY-r.top}; }
-  function distPt(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
 
   function drawOverlay(){
     octx.clearRect(0,0,overlayCanvas.width,overlayCanvas.height);
@@ -181,6 +186,34 @@
   requestAnimationFrame(drawOverlay);
 
   let currentShape=null;
+
+  saveBtn.onclick=()=>{
+    const data={walls:placedWalls,start:startMarker.position,goal:goalSensor.position};
+    const blob=new Blob([JSON.stringify(data)],{type:'text/plain'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='course.txt';
+    a.click();
+  };
+
+  loadBtn.onclick=()=>{
+    const input=document.createElement('input');
+    input.type='file';
+    input.accept='text/plain';
+    input.onchange=()=>{
+      const file=input.files[0];
+      const reader=new FileReader();
+      reader.onload=()=>{
+        const data=JSON.parse(reader.result);
+        placedWalls.splice(0,data.walls.length,...data.walls);
+        Body.setPosition(startMarker,data.start);
+        Body.setPosition(goalSensor,data.goal);
+        rebuildCourse();
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
 
   function flash(t){ msg.textContent=t; clearTimeout(flash._t); flash._t=setTimeout(()=>msg.textContent='',2500); }
 })();
