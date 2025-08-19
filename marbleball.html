@@ -32,8 +32,9 @@
     <button id="clearBallsBtn">ボール消去</button>
   </div>
   <div class="group">
-    <button id="undoBtn" disabled>壁を戻す</button>
+    <button id="undoBtn" disabled>戻す</button>
     <button id="clearCourseBtn">コース全消去</button>
+    <button id="eraserBtn">消しゴム</button>
   </div>
   <div class="group">
     <button id="saveBtn">コース保存</button>
@@ -98,6 +99,7 @@
   const lineBtn=document.getElementById('lineBtn');
   const saveBtn=document.getElementById('saveBtn');
   const loadBtn=document.getElementById('loadBtn');
+  const eraserBtn=document.getElementById('eraserBtn');
 
   function setMode(m){ mode=m; flash(`モード: ${m}`); }
   setMode('edit');
@@ -110,6 +112,7 @@
   addBallBtn.onclick=()=> spawnBall();
   clearBallsBtn.onclick=()=> clearBalls();
   clearCourseBtn.onclick=()=> clearCourse();
+  eraserBtn.onclick=()=> setMode('eraser');
 
   function randCol(){return `hsl(${(Math.random()*360)|0} 80% 60%)`;}
   function spawnBall(){const {x,y}=startMarker.position;const ball=Bodies.circle(x,y,12,{restitution:0.3,frictionAir:0.005,render:{fillStyle:randCol()}});balls.push(ball);World.add(engine.world,ball);}  
@@ -124,6 +127,7 @@
   function clearCourse(){ placedWalls.splice(0); rebuildCourse(); }
 
   function rebuildCourse(){
+    const ballsCopy=[...balls];
     World.clear(engine.world,false);
     World.add(engine.world,[startMarker,goalSensor]);
     placedWalls.forEach(o=>{
@@ -131,6 +135,7 @@
       if(o.type==='circle') addCircle(o.x,o.y,o.r);
       if(o.type==='tri') addTriangle(o.x,o.y);
     });
+    ballsCopy.forEach(b=>World.add(engine.world,b));
   }
 
   const palette=document.getElementById('palette');
@@ -160,6 +165,14 @@
       draggingStart=true;
     } else if(mode==='setGoal'){
       draggingGoal=true;
+    } else if(mode==='eraser'){
+      for(let i=placedWalls.length-1;i>=0;i--){
+        const o=placedWalls[i];
+        if(o.type==='rect' && Math.abs(o.x-x)<40 && Math.abs(o.y-y)<40){ placedWalls.splice(i,1); break; }
+        if(o.type==='circle' && Math.hypot(o.x-x,o.y-y)<o.r){ placedWalls.splice(i,1); break; }
+        if(o.type==='tri' && Math.abs(o.x-x)<30 && Math.abs(o.y-y)<30){ placedWalls.splice(i,1); break; }
+      }
+      rebuildCourse();
     }
   });
   window.addEventListener('mousemove',ev=>{
@@ -205,7 +218,7 @@
       const reader=new FileReader();
       reader.onload=()=>{
         const data=JSON.parse(reader.result);
-        placedWalls.splice(0,data.walls.length,...data.walls);
+        placedWalls.splice(0,placedWalls.length,...data.walls);
         Body.setPosition(startMarker,data.start);
         Body.setPosition(goalSensor,data.goal);
         rebuildCourse();
