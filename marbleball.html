@@ -34,7 +34,6 @@
   <div class="group">
     <button id="undoBtn" disabled>戻す</button>
     <button id="clearCourseBtn">コース全消去</button>
-    <button id="eraserBtn">消しゴム</button>
   </div>
   <div class="group">
     <button id="saveBtn">コース保存</button>
@@ -45,7 +44,9 @@
   <button draggable="true" data-shape="rect">四角</button>
   <button draggable="true" data-shape="tri">三角</button>
   <button draggable="true" data-shape="circle">丸</button>
-  <button data-shape="line" id="lineBtn">線（ドラッグで地形）</button>
+  <button data-shape="line" id="lineBtn">線を書く</button>
+  <button id="freehandBtn">フリーハンド地形</button>
+  <button id="eraserBtn">消しゴム</button>
 </div>
 <pre id="msg"></pre>
 
@@ -57,7 +58,7 @@
 <script src="https://cdn.jsdelivr.net/npm/matter-js@0.20.0/build/matter.min.js"></script>
 <script>
 (() => {
-  const {Engine, Render, Runner, World, Bodies, Body, Events} = Matter;
+  const {Engine, Render, Runner, World, Bodies, Body} = Matter;
   const engine = Engine.create();
   engine.gravity.y = 1.2;
 
@@ -100,6 +101,7 @@
   const saveBtn=document.getElementById('saveBtn');
   const loadBtn=document.getElementById('loadBtn');
   const eraserBtn=document.getElementById('eraserBtn');
+  const freehandBtn=document.getElementById('freehandBtn');
 
   function setMode(m){ mode=m; flash(`モード: ${m}`); }
   setMode('edit');
@@ -112,16 +114,18 @@
   addBallBtn.onclick=()=> spawnBall();
   clearBallsBtn.onclick=()=> clearBalls();
   clearCourseBtn.onclick=()=> clearCourse();
+  lineBtn.onclick=()=>{ currentShape = (currentShape==='line'? null : 'line'); setMode('edit'); };
   eraserBtn.onclick=()=> setMode('eraser');
+  freehandBtn.onclick=()=> setMode('freehand');
 
   function randCol(){return `hsl(${(Math.random()*360)|0} 80% 60%)`;}
   function spawnBall(){const {x,y}=startMarker.position;const ball=Bodies.circle(x,y,12,{restitution:0.3,frictionAir:0.005,render:{fillStyle:randCol()}});balls.push(ball);World.add(engine.world,ball);}  
   function clearBalls(){balls.splice(0).forEach(b=>World.remove(engine.world,b));}
 
   const placedWalls=[];
-  function addWall(x,y,w,h,angle=0){const wall=Bodies.rectangle(x,y,w,h,{isStatic:true,angle,render:{fillStyle:'#e6e6e6'}});World.add(engine.world,wall);placedWalls.push({type:'rect',x,y,w,h,angle});}
-  function addCircle(x,y,r){const c=Bodies.circle(x,y,r,{isStatic:true,render:{fillStyle:'#e6e6e6'}});World.add(engine.world,c);placedWalls.push({type:'circle',x,y,r});}
-  function addTriangle(x,y){const s=30;const t=Bodies.polygon(x,y,3,s,{isStatic:true,render:{fillStyle:'#e6e6e6'}});World.add(engine.world,t);placedWalls.push({type:'tri',x,y,s});}
+  function addWall(x,y,w,h,angle=0,record=true){const wall=Bodies.rectangle(x,y,w,h,{isStatic:true,angle,render:{fillStyle:'#e6e6e6'}});World.add(engine.world,wall);if(record){placedWalls.push({type:'rect',x,y,w,h,angle});}undoBtn.disabled=placedWalls.length===0;}
+  function addCircle(x,y,r,record=true){const c=Bodies.circle(x,y,r,{isStatic:true,render:{fillStyle:'#e6e6e6'}});World.add(engine.world,c);if(record){placedWalls.push({type:'circle',x,y,r});}undoBtn.disabled=placedWalls.length===0;}
+  function addTriangle(x,y,s=30,record=true){const t=Bodies.polygon(x,y,3,s,{isStatic:true,render:{fillStyle:'#e6e6e6'}});World.add(engine.world,t);if(record){placedWalls.push({type:'tri',x,y,s});}undoBtn.disabled=placedWalls.length===0;}
 
   undoBtn.onclick=()=>{ placedWalls.pop(); rebuildCourse(); };
   function clearCourse(){ placedWalls.splice(0); rebuildCourse(); }
@@ -131,11 +135,12 @@
     World.clear(engine.world,false);
     World.add(engine.world,[startMarker,goalSensor]);
     placedWalls.forEach(o=>{
-      if(o.type==='rect') addWall(o.x,o.y,o.w,o.h,o.angle);
-      if(o.type==='circle') addCircle(o.x,o.y,o.r);
-      if(o.type==='tri') addTriangle(o.x,o.y);
+      if(o.type==='rect') addWall(o.x,o.y,o.w,o.h,o.angle,false);
+      if(o.type==='circle') addCircle(o.x,o.y,o.r,false);
+      if(o.type==='tri') addTriangle(o.x,o.y,o.s,false);
     });
     ballsCopy.forEach(b=>World.add(engine.world,b));
+    undoBtn.disabled=placedWalls.length===0;
   }
 
   const palette=document.getElementById('palette');
@@ -150,17 +155,20 @@
     const x=ev.clientX-rect.left, y=ev.clientY-rect.top;
     if(shape==='rect') addWall(x,y,40,40);
     if(shape==='circle') addCircle(x,y,20);
-    if(shape==='tri') addTriangle(x,y);
+    if(shape==='tri') addTriangle(x,y,30);
   });
-  lineBtn.onclick=()=>{ currentShape = (currentShape==='line'? null : 'line'); setMode('edit'); };
 
   let drawingLine=false,sx=0,sy=0,ex=0,ey=0;
+  let freehandDrawing=false; let freePts=[];
   let draggingStart=false, draggingGoal=false;
+  let currentShape=null;
 
   worldCanvas.addEventListener('mousedown',ev=>{
     const {x,y}=getMouse(ev);
     if(mode==='edit' && currentShape==='line'){
       drawingLine=true; sx=x; sy=y; ex=x; ey=y;
+    } else if(mode==='freehand'){
+      freehandDrawing=true; freePts=[{x,y}];
     } else if(mode==='setStart'){
       draggingStart=true;
     } else if(mode==='setGoal'){
@@ -168,9 +176,9 @@
     } else if(mode==='eraser'){
       for(let i=placedWalls.length-1;i>=0;i--){
         const o=placedWalls[i];
-        if(o.type==='rect' && Math.abs(o.x-x)<40 && Math.abs(o.y-y)<40){ placedWalls.splice(i,1); break; }
-        if(o.type==='circle' && Math.hypot(o.x-x,o.y-y)<o.r){ placedWalls.splice(i,1); break; }
-        if(o.type==='tri' && Math.abs(o.x-x)<30 && Math.abs(o.y-y)<30){ placedWalls.splice(i,1); break; }
+        if(o.type==='rect' && hitRect(o,x,y)){ placedWalls.splice(i,1); break; }
+        if(o.type==='circle' && Math.hypot(o.x-x,o.y-y)<=o.r){ placedWalls.splice(i,1); break; }
+        if(o.type==='tri' && Math.hypot(o.x-x,o.y-y)<=o.s){ placedWalls.splice(i,1); break; }
       }
       rebuildCourse();
     }
@@ -178,27 +186,30 @@
   window.addEventListener('mousemove',ev=>{
     const {x,y}=getMouse(ev);
     if(drawingLine){ ex=x; ey=y; }
+    if(freehandDrawing){ const last=freePts[freePts.length-1]; if(Math.hypot(x-last.x,y-last.y)>3) freePts.push({x,y}); }
     if(draggingStart){ Body.setPosition(startMarker,{x,y}); }
     if(draggingGoal){ Body.setPosition(goalSensor,{x,y}); }
   });
   window.addEventListener('mouseup',()=>{
     if(drawingLine){ drawingLine=false; const len=Math.hypot(ex-sx,ey-sy); if(len>6){ addWall((sx+ex)/2,(sy+ey)/2,len,8,Math.atan2(ey-sy,ex-sx)); }}
+    if(freehandDrawing){ freehandDrawing=false; for(let i=1;i<freePts.length;i++){ const p0=freePts[i-1], p1=freePts[i]; const len=Math.hypot(p1.x-p0.x,p1.y-p0.y); if(len>1){ const mx=(p0.x+p1.x)/2, my=(p0.y+p1.y)/2; const ang=Math.atan2(p1.y-p0.y,p1.x-p0.x); addWall(mx,my,len,8,ang); } } freePts=[]; }
     draggingStart=false; draggingGoal=false;
   });
 
+  function hitRect(o,px,py){ const c=Math.cos(o.angle), s=Math.sin(o.angle); const dx=px-o.x, dy=py-o.y; const lx=dx*c+dy*s; const ly=-dx*s+dy*c; return Math.abs(lx)<=o.w/2 && Math.abs(ly)<=o.h/2; }
   function getMouse(ev){ const r=worldCanvas.getBoundingClientRect(); return {x:ev.clientX-r.left, y:ev.clientY-r.top}; }
 
   function drawOverlay(){
     octx.clearRect(0,0,overlayCanvas.width,overlayCanvas.height);
     if(drawingLine && mode==='edit' && currentShape==='line'){
-      octx.beginPath(); octx.moveTo(sx,sy); octx.lineTo(ex,ey);
-      octx.lineWidth = 3; octx.strokeStyle = '#55aaff'; octx.stroke();
+      octx.beginPath(); octx.moveTo(sx,sy); octx.lineTo(ex,ey); octx.lineWidth=3; octx.strokeStyle='#55aaff'; octx.stroke();
+    }
+    if(freehandDrawing && mode==='freehand' && freePts.length){
+      octx.beginPath(); octx.moveTo(freePts[0].x,freePts[0].y); for(let i=1;i<freePts.length;i++){ octx.lineTo(freePts[i].x,freePts[i].y); } octx.lineWidth=3; octx.strokeStyle='#ffaa55'; octx.stroke();
     }
     requestAnimationFrame(drawOverlay);
   }
   requestAnimationFrame(drawOverlay);
-
-  let currentShape=null;
 
   saveBtn.onclick=()=>{
     const data={walls:placedWalls,start:startMarker.position,goal:goalSensor.position};
