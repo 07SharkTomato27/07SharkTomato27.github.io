@@ -119,7 +119,7 @@
   freehandBtn.onclick=()=> setMode('freehand');
 
   function randCol(){return `hsl(${(Math.random()*360)|0} 80% 60%)`;}
-  function spawnBall(){const {x,y}=startMarker.position;const ball=Bodies.circle(x,y,12,{restitution:0.3,frictionAir:0.005,render:{fillStyle:randCol()}});balls.push(ball);World.add(engine.world,ball);}  
+  function spawnBall(){const {x,y}=startMarker.position;const ball=Bodies.circle(x,y,12,{restitution:0.3,friction:0.05,frictionAir:0.005,render:{fillStyle:randCol()}});balls.push(ball);World.add(engine.world,ball);}  
   function clearBalls(){balls.splice(0).forEach(b=>World.remove(engine.world,b));}
 
   const placedWalls=[];
@@ -163,8 +163,7 @@
   let draggingStart=false, draggingGoal=false;
   let currentShape=null;
 
-  worldCanvas.addEventListener('mousedown',ev=>{
-    const {x,y}=getMouse(ev);
+  function handleDown(x,y){
     if(mode==='edit' && currentShape==='line'){
       drawingLine=true; sx=x; sy=y; ex=x; ey=y;
     } else if(mode==='freehand'){
@@ -182,22 +181,30 @@
       }
       rebuildCourse();
     }
-  });
-  window.addEventListener('mousemove',ev=>{
-    const {x,y}=getMouse(ev);
+  }
+  function handleMove(x,y){
     if(drawingLine){ ex=x; ey=y; }
     if(freehandDrawing){ const last=freePts[freePts.length-1]; if(Math.hypot(x-last.x,y-last.y)>3) freePts.push({x,y}); }
     if(draggingStart){ Body.setPosition(startMarker,{x,y}); }
     if(draggingGoal){ Body.setPosition(goalSensor,{x,y}); }
-  });
-  window.addEventListener('mouseup',()=>{
+  }
+  function handleUp(){
     if(drawingLine){ drawingLine=false; const len=Math.hypot(ex-sx,ey-sy); if(len>6){ addWall((sx+ex)/2,(sy+ey)/2,len,8,Math.atan2(ey-sy,ex-sx)); }}
     if(freehandDrawing){ freehandDrawing=false; for(let i=1;i<freePts.length;i++){ const p0=freePts[i-1], p1=freePts[i]; const len=Math.hypot(p1.x-p0.x,p1.y-p0.y); if(len>1){ const mx=(p0.x+p1.x)/2, my=(p0.y+p1.y)/2; const ang=Math.atan2(p1.y-p0.y,p1.x-p0.x); addWall(mx,my,len,8,ang); } } freePts=[]; }
     draggingStart=false; draggingGoal=false;
-  });
+  }
+
+  worldCanvas.addEventListener('mousedown',ev=>{const {x,y}=getMouse(ev);handleDown(x,y);});
+  window.addEventListener('mousemove',ev=>{const {x,y}=getMouse(ev);handleMove(x,y);});
+  window.addEventListener('mouseup',()=>{handleUp();});
+
+  worldCanvas.addEventListener('touchstart',ev=>{const t=ev.touches[0];const {x,y}=getTouch(t);handleDown(x,y);});
+  window.addEventListener('touchmove',ev=>{const t=ev.touches[0];const {x,y}=getTouch(t);handleMove(x,y);});
+  window.addEventListener('touchend',()=>{handleUp();});
 
   function hitRect(o,px,py){ const c=Math.cos(o.angle), s=Math.sin(o.angle); const dx=px-o.x, dy=py-o.y; const lx=dx*c+dy*s; const ly=-dx*s+dy*c; return Math.abs(lx)<=o.w/2 && Math.abs(ly)<=o.h/2; }
   function getMouse(ev){ const r=worldCanvas.getBoundingClientRect(); return {x:ev.clientX-r.left, y:ev.clientY-r.top}; }
+  function getTouch(t){ const r=worldCanvas.getBoundingClientRect(); return {x:t.clientX-r.left, y:t.clientY-r.top}; }
 
   function drawOverlay(){
     octx.clearRect(0,0,overlayCanvas.width,overlayCanvas.height);
@@ -240,6 +247,8 @@
   };
 
   function flash(t){ msg.textContent=t; clearTimeout(flash._t); flash._t=setTimeout(()=>msg.textContent='',2500); }
+
+  window.addEventListener('contextmenu',e=>e.preventDefault());
 })();
 </script>
 </body>
