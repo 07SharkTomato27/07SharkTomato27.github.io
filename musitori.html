@@ -24,7 +24,7 @@
       padding: 10px;
       border-radius: 10px;
     }
-    #collection, #settings, #shop {
+    #collection, #settings, #shop, #battle {
       display: none;
       position: absolute;
       top: 80px;
@@ -45,6 +45,7 @@
     <button onclick="buyJelly()">ゼリー購入（100円）</button>
     <button onclick="toggleShop()">ショップ</button>
     <button onclick="toggleCollection()">コレクション</button>
+    <button onclick="toggleBattle()">バトル</button>
     <button onclick="toggleSettings()">設定</button>
     <p id="money">所持金: 500円</p>
   </div>
@@ -60,6 +61,12 @@
   <button onclick="buyJelly()">ゼリー購入（100円）</button>
   <button onclick="buyMelonJelly()">高級ゼリーを買う（500円）</button>
 </div>
+  <div id="battle">
+    <h3>バトル</h3>
+    <div id="battleArea"></div>
+    <button onclick="startBattle()">バトル開始</button>
+    <button onclick="toggleBattle()">戻る</button>
+  </div>
   <audio id="getSound" src="media/get.ogg" preload="auto"></audio>
   <audio id="sellSound" src="media/uru.ogg" preload="auto"></audio>
 
@@ -236,7 +243,12 @@ const bugs = rawBugs.map(bug => ({
       const set = document.getElementById("settings");
       set.style.display = set.style.display === "none" ? "block" : "none";
     }
-
+    function toggleBattle() {
+    const b = document.getElementById("battle");
+    b.style.display = b.style.display === "none" ? "block" : "none";
+    if (b.style.display === "block") document.getElementById("battleArea").innerHTML = "";
+    }
+    
     function saveGame() {
     const saveData = {
     collection: collection.map(bug => ({
@@ -373,7 +385,43 @@ const bugs = rawBugs.map(bug => ({
   ctx.fill();
   });
 
-
+  function startBattle() {
+  if (collection.length < 2) {
+  alert("虫が2匹以上必要です");
+  return;
+  }
+    const i1 = Math.floor(Math.random() * collection.length);
+    let i2 = Math.floor(Math.random() * collection.length);
+    while (i2 === i1) i2 = Math.floor(Math.random() * collection.length);
+    const bug1 = collection[i1];
+    const bug2 = collection[i2];
+    const area = document.getElementById("battleArea");
+    area.innerHTML = "";
+    const img1 = document.createElement("img");
+    img1.src = bug1.img ? bug1.img.src : bug1.image;
+    img1.style.width = "150px";
+    img1.style.margin = "20px";
+    const img2 = document.createElement("img");
+    img2.src = bug2.img ? bug2.img.src : bug2.image;
+    img2.style.width = "150px";
+    img2.style.margin = "20px";
+    const vs = document.createElement("div");
+    vs.textContent = "VS";
+    vs.style.fontSize = "30px";
+    vs.style.margin = "20px";
+    area.appendChild(img1);
+    area.appendChild(vs);
+    area.appendChild(img2);
+    setTimeout(() => {
+      const winner = Math.random() < 0.5 ? bug1 : bug2;
+      const result = document.createElement("div");
+      result.textContent = winner.name + "の勝ち！";
+      result.style.fontSize = "24px";
+      result.style.marginTop = "20px";
+      area.appendChild(result);
+    }, 2000);
+  }
+      
   activeBugs.forEach(bug => {
     if (bug.img) {
       bug.vx += (Math.random() - 0.5) * 0.2;
