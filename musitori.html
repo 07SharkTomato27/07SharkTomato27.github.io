@@ -425,10 +425,8 @@ function startBattle() {
   const bug1 = collection[i1];
   const bug2 = collection[i2];
 
-  const bet = money;
-
-  const tempActive = [...activeBugs];
-  activeBugs = [];
+  const bet = prompt(`どちらに賭けますか？1:${bug1.name} 2:${bug2.name}`, "1");
+  if (bet !== "1" && bet !== "2") return alert("無効な選択です");
 
   const overlay = document.createElement("div");
   overlay.style.position = "fixed";
@@ -443,53 +441,82 @@ function startBattle() {
   overlay.style.alignItems = "center";
   overlay.style.zIndex = "1000";
 
-  const fightArea = document.createElement("div");
-  fightArea.style.display = "flex";
-  fightArea.style.alignItems = "center";
+  const fightCanvas = document.createElement("canvas");
+  fightCanvas.width = 400;
+  fightCanvas.height = 300;
+  overlay.appendChild(fightCanvas);
+  const fctx = fightCanvas.getContext("2d");
 
-  const img1 = document.createElement("img");
-  img1.src = bug1.img ? bug1.img.src : bug1.image;
-  img1.style.width = "150px";
-  img1.style.margin = "20px";
+  const audio = new Audio("media/fight.mp3");
+  audio.loop = true;
+  audio.play();
 
-  const img2 = document.createElement("img");
-  img2.src = bug2.img ? bug2.img.src : bug2.image;
-  img2.style.width = "150px";
-  img2.style.margin = "20px";
+  const pos = [
+    { x: 100, y: 150, vx: 2 },
+    { x: 300, y: 150, vx: -2 }
+  ];
 
-  const vs = document.createElement("div");
-  vs.textContent = "VS";
-  vs.style.fontSize = "30px";
-  vs.style.margin = "20px";
+  let elapsed = 0;
+  const duration = 10000;
+  let winner = null;
 
-  fightArea.appendChild(img1);
-  fightArea.appendChild(vs);
-  fightArea.appendChild(img2);
-  overlay.appendChild(fightArea);
+  function fightLoop(timestamp) {
+    fctx.clearRect(0,0, fightCanvas.width, fightCanvas.height);
 
-  const resultText = document.createElement("div");
-  resultText.style.color = "#fff";
-  resultText.style.fontSize = "36px";
-  resultText.style.marginTop = "20px";
-  overlay.appendChild(resultText);
+    pos[0].x += pos[0].vx;
+    pos[1].x += pos[1].vx;
 
-  const closeBtn = document.createElement("button");
-  closeBtn.textContent = "閉じる";
-  closeBtn.style.fontSize = "20px";
-  closeBtn.onclick = () => {
-    overlay.remove();
-    activeBugs = tempActive;
-  };
-  overlay.appendChild(closeBtn);
+    if (Math.abs(pos[0].x - pos[1].x) < 50) {
+      pos[0].vx *= -1;
+      pos[1].vx *= -1;
+    }
+
+    fctx.drawImage(bug1.img, pos[0].x - 30, pos[0].y - 30, 60, 60);
+    fctx.drawImage(bug2.img, pos[1].x - 30, pos[1].y - 30, 60, 60);
+
+    elapsed += 16;
+    if (elapsed < duration) {
+      requestAnimationFrame(fightLoop);
+    } else {
+      winner = Math.random() < 0.5 ? bug1 : bug2;
+
+      const loser = winner === bug1 ? bug2 : bug1;
+      let flyX = loser === bug1 ? pos[0].x : pos[1].x;
+      let flyY = loser === bug1 ? pos[0].y : pos[1].y;
+      let flyVX = Math.random() * 5 - 2.5;
+      let flyVY = -5;
+      const gravity = 0.3;
+
+      function flyLoop() {
+        fctx.clearRect(0,0, fightCanvas.width, fightCanvas.height);
+        fctx.drawImage(winner.img, pos[winner===bug1?0:1].x - 30, pos[winner===bug1?0:1].y - 30, 60,60);
+        fctx.drawImage(loser.img, flyX - 30, flyY - 30, 60,60);
+
+        flyX += flyVX;
+        flyY += flyVY;
+        flyVY += gravity;
+
+        if (flyY < fightCanvas.height + 50) {
+          requestAnimationFrame(flyLoop);
+        } else {
+          audio.pause();
+          audio.currentTime = 0;
+          if ((bet==="1" && winner===bug1) || (bet==="2" && winner===bug2)) {
+            money += bet*2;
+          } else {
+            money -= bet*1;
+          }
+          updateMoney();
+          alert(`${winner.name}の勝利！！`);
+          overlay.remove();
+        }
+      }
+      flyLoop();
+    }
+  }
 
   document.body.appendChild(overlay);
-
-  setTimeout(() => {
-    const winner = Math.random() < 0.5 ? bug1 : bug2;
-    money = winner === bug1 ? money + bet * 2 : money - bet;
-    updateMoney();
-    resultText.textContent = `${winner.name}の勝利！！`;
-  }, 3000);
+  requestAnimationFrame(fightLoop);
 }
 
     updateMoney();
