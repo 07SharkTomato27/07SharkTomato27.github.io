@@ -422,33 +422,14 @@ function startBattle() {
   const i1 = Math.floor(Math.random() * collection.length);
   let i2 = Math.floor(Math.random() * collection.length);
   while (i2 === i1) i2 = Math.floor(Math.random() * collection.length);
+
   const bug1 = collection[i1];
   const bug2 = collection[i2];
 
   const bet = money;
 
-  const area = document.getElementById("battleArea");
-  area.innerHTML = "";
-
   const tempActive = [...activeBugs];
-  activeBugs = [bug1, bug2];
-
-  const img1 = document.createElement("img");
-  img1.src = bug1.img ? bug1.img.src : bug1.image;
-  img1.style.width = "150px";
-  img1.style.margin = "20px";
-  const img2 = document.createElement("img");
-  img2.src = bug2.img ? bug2.img.src : bug2.image;
-  img2.style.width = "150px";
-  img2.style.margin = "20px";
-  const vs = document.createElement("div");
-  vs.textContent = "VS";
-  vs.style.fontSize = "30px";
-  vs.style.margin = "20px";
-
-  area.appendChild(img1);
-  area.appendChild(vs);
-  area.appendChild(img2);
+  activeBugs = [];
 
   const overlay = document.createElement("div");
   overlay.style.position = "fixed";
@@ -463,10 +444,35 @@ function startBattle() {
   overlay.style.alignItems = "center";
   overlay.style.zIndex = "1000";
 
+  const fightArea = document.createElement("div");
+  fightArea.style.display = "flex";
+  fightArea.style.alignItems = "center";
+
+  const img1 = document.createElement("img");
+  img1.src = bug1.img ? bug1.img.src : bug1.image;
+  img1.style.width = "150px";
+  img1.style.margin = "20px";
+
+  const img2 = document.createElement("img");
+  img2.src = bug2.img ? bug2.img.src : bug2.image;
+  img2.style.width = "150px";
+  img2.style.margin = "20px";
+
+  const vs = document.createElement("div");
+  vs.textContent = "VS";
+  vs.style.fontSize = "30px";
+  vs.style.margin = "20px";
+
+  fightArea.appendChild(img1);
+  fightArea.appendChild(vs);
+  fightArea.appendChild(img2);
+  overlay.appendChild(fightArea);
+
   const resultText = document.createElement("div");
   resultText.style.color = "#fff";
   resultText.style.fontSize = "36px";
-  resultText.style.marginBottom = "20px";
+  resultText.style.marginTop = "20px";
+  overlay.appendChild(resultText);
 
   const closeBtn = document.createElement("button");
   closeBtn.textContent = "閉じる";
@@ -474,20 +480,15 @@ function startBattle() {
   closeBtn.onclick = () => {
     overlay.remove();
     activeBugs = tempActive;
-    area.innerHTML = "";
   };
-
-  overlay.appendChild(resultText);
   overlay.appendChild(closeBtn);
+
   document.body.appendChild(overlay);
 
   setTimeout(() => {
     const winner = Math.random() < 0.5 ? bug1 : bug2;
-    const loser = winner === bug1 ? bug2 : bug1;
-
-    money += winner === bug1 ? bet : -bet;
+    money = winner === bug1 ? money + bet * 2 : money - bet;
     updateMoney();
-
     resultText.textContent = `${winner.name}の勝利！！`;
   }, 3000);
 }
