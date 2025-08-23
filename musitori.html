@@ -371,55 +371,56 @@ const bugs = rawBugs.map(bug => ({
   }
 });
 
-    function draw() {
+  function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = "rgba(255, 255, 0, 0.5)";
   jellies.forEach(j => {
   ctx.beginPath();
   ctx.arc(j.x, j.y, 15, 0, Math.PI * 2);
   if (j.type === "melon") {
-    ctx.fillStyle = "rgba(0, 255, 0, 0.5)";
+  ctx.fillStyle = "rgba(0, 255, 0, 0.5)";
   } else {
-    ctx.fillStyle = "rgba(255, 255, 0, 0.5)";
+  ctx.fillStyle = "rgba(255, 255, 0, 0.5)";
   }
   ctx.fill();
   });
+  }
 
   function startBattle() {
   if (collection.length < 2) {
   alert("虫が2匹以上必要です");
   return;
   }
-    const i1 = Math.floor(Math.random() * collection.length);
-    let i2 = Math.floor(Math.random() * collection.length);
-    while (i2 === i1) i2 = Math.floor(Math.random() * collection.length);
-    const bug1 = collection[i1];
-    const bug2 = collection[i2];
-    const area = document.getElementById("battleArea");
-    area.innerHTML = "";
-    const img1 = document.createElement("img");
-    img1.src = bug1.img ? bug1.img.src : bug1.image;
-    img1.style.width = "150px";
-    img1.style.margin = "20px";
-    const img2 = document.createElement("img");
-    img2.src = bug2.img ? bug2.img.src : bug2.image;
-    img2.style.width = "150px";
-    img2.style.margin = "20px";
-    const vs = document.createElement("div");
-    vs.textContent = "VS";
-    vs.style.fontSize = "30px";
-    vs.style.margin = "20px";
-    area.appendChild(img1);
-    area.appendChild(vs);
-    area.appendChild(img2);
-    setTimeout(() => {
-      const winner = Math.random() < 0.5 ? bug1 : bug2;
-      const result = document.createElement("div");
-      result.textContent = winner.name + "の勝ち！";
-      result.style.fontSize = "24px";
-      result.style.marginTop = "20px";
-      area.appendChild(result);
-    }, 2000);
+  const i1 = Math.floor(Math.random() * collection.length);
+  let i2 = Math.floor(Math.random() * collection.length);
+  while (i2 === i1) i2 = Math.floor(Math.random() * collection.length);
+  const bug1 = collection[i1];
+  const bug2 = collection[i2];
+  const area = document.getElementById("battleArea");
+  area.innerHTML = "";
+  const img1 = document.createElement("img");
+  img1.src = bug1.img ? bug1.img.src : bug1.image;
+  img1.style.width = "150px";
+  img1.style.margin = "20px";
+  const img2 = document.createElement("img");
+  img2.src = bug2.img ? bug2.img.src : bug2.image;
+  img2.style.width = "150px";
+  img2.style.margin = "20px";
+  const vs = document.createElement("div");
+  vs.textContent = "VS";
+  vs.style.fontSize = "30px";
+  vs.style.margin = "20px";
+  area.appendChild(img1);
+  area.appendChild(vs);
+  area.appendChild(img2);
+  setTimeout(() => {
+  const winner = Math.random() < 0.5 ? bug1 : bug2;
+  const result = document.createElement("div");
+  result.textContent = winner.name + "の勝ち！";
+  result.style.fontSize = "24px";
+  result.style.marginTop = "20px";
+  area.appendChild(result);
+  }, 2000);
   }
       
   activeBugs.forEach(bug => {
