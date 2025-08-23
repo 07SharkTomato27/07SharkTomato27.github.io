@@ -425,13 +425,13 @@ function startBattle() {
   const bug1 = collection[i1];
   const bug2 = collection[i2];
 
-  const bet = Math.floor(Math.random() * (money + 1));
+  const bet = money;
 
   const area = document.getElementById("battleArea");
   area.innerHTML = "";
 
   const tempActive = [...activeBugs];
-  activeBugs = [];
+  activeBugs = [bug1, bug2];
 
   const img1 = document.createElement("img");
   img1.src = bug1.img ? bug1.img.src : bug1.image;
@@ -474,22 +474,22 @@ function startBattle() {
   closeBtn.onclick = () => {
     overlay.remove();
     activeBugs = tempActive;
+    area.innerHTML = "";
   };
 
   overlay.appendChild(resultText);
   overlay.appendChild(closeBtn);
   document.body.appendChild(overlay);
 
-  let fightTime = 3000;
   setTimeout(() => {
     const winner = Math.random() < 0.5 ? bug1 : bug2;
     const loser = winner === bug1 ? bug2 : bug1;
 
-    if (winner === bug1) money += bet; else money -= bet;
+    money += winner === bug1 ? bet : -bet;
     updateMoney();
 
     resultText.textContent = `${winner.name}の勝利！！`;
-  }, fightTime);
+  }, 3000);
 }
       
   activeBugs.forEach(bug => {
