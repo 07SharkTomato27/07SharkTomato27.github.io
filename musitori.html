@@ -425,8 +425,11 @@ function startBattle() {
   const bug1 = collection[i1];
   const bug2 = collection[i2];
 
-  const bet = prompt(`どちらに賭けますか？1:${bug1.name} 2:${bug2.name}`, "1");
-  if (bet !== "1" && bet !== "2") return alert("無効な選択です");
+  const choice = prompt(`どちらに賭けますか？1:${bug1.name} 2:${bug2.name}`, "1");
+  if (choice !== "1" && choice !== "2") return alert("無効な選択です");
+
+  const amount = parseInt(prompt("いくら賭けますか？所持金:" + money, "0"));
+  if (isNaN(amount) || amount <= 0 || amount > money) return alert("無効な金額です");
 
   const overlay = document.createElement("div");
   overlay.style.position = "fixed";
@@ -456,12 +459,14 @@ function startBattle() {
     { x: 300, y: 150, vx: -2 }
   ];
 
-  let elapsed = 0;
-  const duration = 10000;
+  let startTime = null;
   let winner = null;
 
   function fightLoop(timestamp) {
-    fctx.clearRect(0,0, fightCanvas.width, fightCanvas.height);
+    if (!startTime) startTime = timestamp;
+    const elapsed = timestamp - startTime;
+
+    fctx.clearRect(0,0,fightCanvas.width,fightCanvas.height);
 
     pos[0].x += pos[0].vx;
     pos[1].x += pos[1].vx;
@@ -474,12 +479,10 @@ function startBattle() {
     fctx.drawImage(bug1.img, pos[0].x - 30, pos[0].y - 30, 60, 60);
     fctx.drawImage(bug2.img, pos[1].x - 30, pos[1].y - 30, 60, 60);
 
-    elapsed += 16;
-    if (elapsed < duration) {
+    if (elapsed < 10000) {
       requestAnimationFrame(fightLoop);
     } else {
       winner = Math.random() < 0.5 ? bug1 : bug2;
-
       const loser = winner === bug1 ? bug2 : bug1;
       let flyX = loser === bug1 ? pos[0].x : pos[1].x;
       let flyY = loser === bug1 ? pos[0].y : pos[1].y;
@@ -488,9 +491,9 @@ function startBattle() {
       const gravity = 0.3;
 
       function flyLoop() {
-        fctx.clearRect(0,0, fightCanvas.width, fightCanvas.height);
-        fctx.drawImage(winner.img, pos[winner===bug1?0:1].x - 30, pos[winner===bug1?0:1].y - 30, 60,60);
-        fctx.drawImage(loser.img, flyX - 30, flyY - 30, 60,60);
+        fctx.clearRect(0,0,fightCanvas.width,fightCanvas.height);
+        fctx.drawImage(winner.img, (winner===bug1?pos[0].x:pos[1].x) - 30, (winner===bug1?pos[0].y:pos[1].y) - 30, 60, 60);
+        fctx.drawImage(loser.img, flyX - 30, flyY - 30, 60, 60);
 
         flyX += flyVX;
         flyY += flyVY;
@@ -501,10 +504,10 @@ function startBattle() {
         } else {
           audio.pause();
           audio.currentTime = 0;
-          if ((bet==="1" && winner===bug1) || (bet==="2" && winner===bug2)) {
-            money += bet*2;
+          if ((choice==="1" && winner===bug1) || (choice==="2" && winner===bug2)) {
+            money += amount * 2;
           } else {
-            money -= bet*1;
+            money -= amount;
           }
           updateMoney();
           alert(`${winner.name}の勝利！！`);
@@ -514,6 +517,10 @@ function startBattle() {
       flyLoop();
     }
   }
+
+  document.body.appendChild(overlay);
+  requestAnimationFrame(fightLoop);
+}
 
   document.body.appendChild(overlay);
   requestAnimationFrame(fightLoop);
