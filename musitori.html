@@ -445,8 +445,8 @@ function startBattle() {
   overlay.style.zIndex = "1000";
 
   const fightCanvas = document.createElement("canvas");
-  fightCanvas.width = 1200;
-  fightCanvas.height = 800;
+  fightCanvas.width = 800;
+  fightCanvas.height = 600;
   overlay.appendChild(fightCanvas);
   const fctx = fightCanvas.getContext("2d");
 
@@ -455,10 +455,10 @@ function startBattle() {
   audio.play();
 
   const originalPos = [
-    { x: 300, y: 400 },
-    { x: 900, y: 400 }
+    { x: 200, y: 300 },
+    { x: 600, y: 300 }
   ];
-  const pos = [{...originalPos[0], vx: 4}, {...originalPos[1], vx: -4}];
+  const pos = [{...originalPos[0], vx: 3}, {...originalPos[1], vx: -3}];
 
   let startTime = null;
   let winner = null;
@@ -487,8 +487,8 @@ function startBattle() {
           fctx.drawImage(bug2.img, pos[1].x - bug2.img.width/2, pos[1].y - bug2.img.height/2);
           requestAnimationFrame(backLoop);
         } else {
-          pos[0].vx = 4;
-          pos[1].vx = -4;
+          pos[0].vx = 3;
+          pos[1].vx = -3;
           requestAnimationFrame(fightLoop);
         }
       }
