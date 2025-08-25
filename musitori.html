@@ -445,8 +445,8 @@ function startBattle() {
   overlay.style.zIndex = "1000";
 
   const fightCanvas = document.createElement("canvas");
-  fightCanvas.width = 800;
-  fightCanvas.height = 600;
+  fightCanvas.width = 1200;
+  fightCanvas.height = 800;
   overlay.appendChild(fightCanvas);
   const fctx = fightCanvas.getContext("2d");
 
@@ -455,10 +455,10 @@ function startBattle() {
   audio.play();
 
   const originalPos = [
-    { x: 200, y: 300 },
-    { x: 600, y: 300 }
+    { x: 300, y: 400 },
+    { x: 900, y: 400 }
   ];
-  const pos = [{...originalPos[0], vx: 3}, {...originalPos[1], vx: -3}];
+  const pos = [{...originalPos[0], vx: 4}, {...originalPos[1], vx: -4}];
 
   let startTime = null;
   let winner = null;
@@ -472,16 +472,34 @@ function startBattle() {
     pos[0].x += pos[0].vx;
     pos[1].x += pos[1].vx;
 
-    if (Math.abs(pos[0].x - pos[1].x) < 60) {
-      pos[0].x = originalPos[0].x;
-      pos[0].y = originalPos[0].y;
-      pos[1].x = originalPos[1].x;
-      pos[1].y = originalPos[1].y;
-      pos[0].vx = 3;
-      pos[1].vx = -3;
+    if (Math.abs(pos[0].x - pos[1].x) < 80) {
+      let backFrames = 30;
+      function backLoop() {
+        if (backFrames > 0) {
+          pos[0].x += (originalPos[0].x - pos[0].x) / backFrames;
+          pos[1].x += (originalPos[1].x - pos[1].x) / backFrames;
+          backFrames--;
+          fctx.clearRect(0,0,fightCanvas.width,fightCanvas.height);
+          fctx.save();
+          fctx.scale(-1,1);
+          fctx.drawImage(bug1.img, -pos[0].x - bug1.img.width/2, pos[0].y - bug1.img.height/2);
+          fctx.restore();
+          fctx.drawImage(bug2.img, pos[1].x - bug2.img.width/2, pos[1].y - bug2.img.height/2);
+          requestAnimationFrame(backLoop);
+        } else {
+          pos[0].vx = 4;
+          pos[1].vx = -4;
+          requestAnimationFrame(fightLoop);
+        }
+      }
+      backLoop();
+      return;
     }
 
-    fctx.drawImage(bug1.img, pos[0].x - bug1.img.width/2, pos[0].y - bug1.img.height/2);
+    fctx.save();
+    fctx.scale(-1,1);
+    fctx.drawImage(bug1.img, -pos[0].x - bug1.img.width/2, pos[0].y - bug1.img.height/2);
+    fctx.restore();
     fctx.drawImage(bug2.img, pos[1].x - bug2.img.width/2, pos[1].y - bug2.img.height/2);
 
     if (elapsed < 10000) {
@@ -497,8 +515,16 @@ function startBattle() {
 
       function flyLoop() {
         fctx.clearRect(0,0,fightCanvas.width,fightCanvas.height);
-        fctx.drawImage(winner.img, (winner===bug1?pos[0].x:pos[1].x) - winner.img.width/2, (winner===bug1?pos[0].y:pos[1].y) - winner.img.height/2);
-        fctx.drawImage(loser.img, flyX - loser.img.width/2, flyY - loser.img.height/2);
+        fctx.save();
+        if (winner === bug1) {
+          fctx.scale(-1,1);
+          fctx.drawImage(winner.img, -pos[0].x - winner.img.width/2, pos[0].y - winner.img.height/2);
+          fctx.restore();
+          fctx.drawImage(loser.img, flyX - loser.img.width/2, flyY - loser.img.height/2);
+        } else {
+          fctx.drawImage(winner.img, pos[1].x - winner.img.width/2, pos[1].y - winner.img.height/2);
+          fctx.drawImage(loser.img, flyX - loser.img.width/2, flyY - loser.img.height/2);
+        }
 
         flyX += flyVX;
         flyY += flyVY;
