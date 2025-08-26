@@ -463,15 +463,18 @@ const bugs = rawBugs.map(bug => ({
   let startTime = null;
   let winner = null;
 
-  function drawBug(bug, x, y, targetX) {
-  const scale = bug.scale || 1;
-  fctx.save();
-  fctx.translate(x, y);
-  const angle = Math.atan2(0, targetX - x);
-  fctx.rotate(angle);
-  fctx.drawImage(bug.img, -bug.img.width/2 * scale, -bug.img.height/2 * scale, bug.img.width * scale, bug.img.height * scale);
-  fctx.restore();
-}
+  function drawBug(bug, x, y, targetX, targetY) {
+    if (!bug.img) return;
+    const scale = bug.scale || 1;
+    fctx.save();
+    fctx.translate(x, y);
+    if (typeof targetX === 'number' && typeof targetY === 'number') {
+      const angle = Math.atan2(targetY - y, targetX - x);
+      fctx.rotate(angle);
+    }
+    fctx.drawImage(bug.img, -bug.img.width/2 * scale, -bug.img.height/2 * scale, bug.img.width * scale, bug.img.height * scale);
+    fctx.restore();
+  }
 
   function fightLoop(timestamp) {
     if (!startTime) startTime = timestamp;
@@ -490,8 +493,8 @@ const bugs = rawBugs.map(bug => ({
           pos[1].x += (originalPos[1].x - pos[1].x) / backFrames;
           backFrames--;
           fctx.clearRect(0,0,fightCanvas.width,fightCanvas.height);
-          drawBug(bug1, pos[0].x, pos[0].y, true);
-          drawBug(bug2, pos[1].x, pos[1].y, false);
+          drawBug(bug1, pos[0].x, pos[0].y, pos[1].x, pos[1].y);
+          drawBug(bug2, pos[1].x, pos[1].y, pos[0].x, pos[0].y);
           requestAnimationFrame(backLoop);
         } else {
           pos[0].vx = 3;
@@ -503,8 +506,8 @@ const bugs = rawBugs.map(bug => ({
       return;
     }
 
-    drawBug(bug1, pos[0].x, pos[0].y, true);
-    drawBug(bug2, pos[1].x, pos[1].y, false);
+    drawBug(bug1, pos[0].x, pos[0].y, pos[1].x, pos[1].y);
+    drawBug(bug2, pos[1].x, pos[1].y, pos[0].x, pos[0].y);
 
     if (elapsed < 10000) {
       requestAnimationFrame(fightLoop);
@@ -519,12 +522,12 @@ const bugs = rawBugs.map(bug => ({
 
       function flyLoop() {
         fctx.clearRect(0,0,fightCanvas.width,fightCanvas.height);
-        drawBug(winner, winner === bug1 ? pos[0].x : pos[1].x, winner === bug1 ? pos[0].y : pos[1].y, winner === bug1);
+        drawBug(winner, winner === bug1 ? pos[0].x : pos[1].x, winner === bug1 ? pos[0].y : pos[1].y, loser === bug1 ? pos[1].x : pos[0].x, loser === bug1 ? pos[1].y : pos[0].y);
+
         fctx.save();
         fctx.translate(flyX, flyY);
         if (loser === bug1) fctx.scale(-1,1);
         fctx.drawImage(loser.img, -loser.img.width/2 * loser.scale, -loser.img.height/2 * loser.scale, loser.img.width * loser.scale, loser.img.height * loser.scale);
-
         fctx.restore();
 
         flyX += flyVX;
