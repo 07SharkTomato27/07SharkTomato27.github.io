@@ -447,7 +447,6 @@ const bugs = rawBugs.map(bug => ({
   const fightCanvas = document.createElement("canvas");
   fightCanvas.width = 900;
   fightCanvas.height = 600;
-  fightCanvas.style.zIndex = "0";
   overlay.appendChild(fightCanvas);
   const fctx = fightCanvas.getContext("2d");
 
@@ -464,16 +463,15 @@ const bugs = rawBugs.map(bug => ({
   let startTime = null;
   let winner = null;
 
-  function drawBug(bug, x, y, faceRight) {
-    const scale = (bug.scale || 1);
-    const w = bug.img.width * scale;
-    const h = bug.img.height * scale;
-    fctx.save();
-    fctx.translate(x, y);
-    if (!faceRight) fctx.scale(-1, 1);
-    fctx.drawImage(bug.img, -w/2, -h/2, w, h);
-    fctx.restore();
-  }
+  function drawBug(bug, x, y, targetX) {
+  const scale = bug.scale || 1;
+  fctx.save();
+  fctx.translate(x, y);
+  const angle = Math.atan2(0, targetX - x);
+  fctx.rotate(angle);
+  fctx.drawImage(bug.img, -bug.img.width/2 * scale, -bug.img.height/2 * scale, bug.img.width * scale, bug.img.height * scale);
+  fctx.restore();
+}
 
   function fightLoop(timestamp) {
     if (!startTime) startTime = timestamp;
@@ -521,20 +519,13 @@ const bugs = rawBugs.map(bug => ({
 
       function flyLoop() {
         fctx.clearRect(0,0,fightCanvas.width,fightCanvas.height);
-        if (winner === bug1) {
-          drawBug(winner, pos[0].x, pos[0].y, true);
-          fctx.save();
-          fctx.translate(flyX, flyY);
-          fctx.scale(-1, 1);
-          fctx.drawImage(loser.img, -loser.img.width/4, -loser.img.height/4, loser.img.width/2, loser.img.height/2);
-          fctx.restore();
-        } else {
-          drawBug(winner, pos[1].x, pos[1].y, false);
-          fctx.save();
-          fctx.translate(flyX, flyY);
-          fctx.drawImage(loser.img, -loser.img.width/4, -loser.img.height/4, loser.img.width/2, loser.img.height/2);
-          fctx.restore();
-        }
+        drawBug(winner, winner === bug1 ? pos[0].x : pos[1].x, winner === bug1 ? pos[0].y : pos[1].y, winner === bug1);
+        fctx.save();
+        fctx.translate(flyX, flyY);
+        if (loser === bug1) fctx.scale(-1,1);
+        fctx.drawImage(loser.img, -loser.img.width/2 * loser.scale, -loser.img.height/2 * loser.scale, loser.img.width * loser.scale, loser.img.height * loser.scale);
+
+        fctx.restore();
 
         flyX += flyVX;
         flyY += flyVY;
@@ -554,7 +545,7 @@ const bugs = rawBugs.map(bug => ({
 
           const resultText = document.createElement("div");
           resultText.textContent = `${winner.name}の勝利！！`;
-          resultText.style.color = "white";
+          resultText.style.color = "black";
           resultText.style.fontSize = "30px";
           resultText.style.position = "fixed";
           resultText.style.top = "40%";
