@@ -412,6 +412,177 @@ const bugs = rawBugs.map(bug => ({
   requestAnimationFrame(draw);
 }
 
+    function startBattle() {
+  if (collection.length < 2) {
+    alert("虫が2匹以上必要です");
+    return;
+  }
+
+  const i1 = Math.floor(Math.random() * collection.length);
+  let i2 = Math.floor(Math.random() * collection.length);
+  while (i2 === i1) i2 = Math.floor(Math.random() * collection.length);
+
+  const bug1 = collection[i1];
+  const bug2 = collection[i2];
+
+  const choice = prompt(`どちらに賭けますか？1:${bug1.name} 2:${bug2.name}`, "1");
+  if (choice !== "1" && choice !== "2") return alert("無効な選択です");
+
+  const amount = parseInt(prompt("いくら賭けますか？所持金:" + money, "0"));
+  if (isNaN(amount) || amount <= 0 || amount > money) return alert("無効な金額です");
+
+  const overlay = document.createElement("div");
+  overlay.style.position = "fixed";
+  overlay.style.top = "0";
+  overlay.style.left = "0";
+  overlay.style.width = "100%";
+  overlay.style.height = "100%";
+  overlay.style.background = "rgba(0,0,0,0.5)";
+  overlay.style.display = "flex";
+  overlay.style.flexDirection = "column";
+  overlay.style.justifyContent = "center";
+  overlay.style.alignItems = "center";
+  overlay.style.zIndex = "1000";
+
+  const fightCanvas = document.createElement("canvas");
+  fightCanvas.width = 900;
+  fightCanvas.height = 600;
+  fightCanvas.style.zIndex = "0";
+  overlay.appendChild(fightCanvas);
+  const fctx = fightCanvas.getContext("2d");
+
+  const audio = new Audio("media/fight.mp3");
+  audio.loop = true;
+  audio.play();
+
+  const originalPos = [
+    { x: 250, y: 400 },
+    { x: 650, y: 400 }
+  ];
+  const pos = [{...originalPos[0], vx: 3}, {...originalPos[1], vx: -3}];
+
+  let startTime = null;
+  let winner = null;
+
+  function drawBug(bug, x, y, faceRight) {
+    const scale = (bug.scale || 1);
+    const w = bug.img.width * scale;
+    const h = bug.img.height * scale;
+    fctx.save();
+    fctx.translate(x, y);
+    if (!faceRight) fctx.scale(-1, 1);
+    fctx.drawImage(bug.img, -w/2, -h/2, w, h);
+    fctx.restore();
+  }
+
+  function fightLoop(timestamp) {
+    if (!startTime) startTime = timestamp;
+    const elapsed = timestamp - startTime;
+
+    fctx.clearRect(0,0,fightCanvas.width,fightCanvas.height);
+
+    pos[0].x += pos[0].vx;
+    pos[1].x += pos[1].vx;
+
+    if (Math.abs(pos[0].x - pos[1].x) < 80) {
+      let backFrames = 30;
+      function backLoop() {
+        if (backFrames > 0) {
+          pos[0].x += (originalPos[0].x - pos[0].x) / backFrames;
+          pos[1].x += (originalPos[1].x - pos[1].x) / backFrames;
+          backFrames--;
+          fctx.clearRect(0,0,fightCanvas.width,fightCanvas.height);
+          drawBug(bug1, pos[0].x, pos[0].y, true);
+          drawBug(bug2, pos[1].x, pos[1].y, false);
+          requestAnimationFrame(backLoop);
+        } else {
+          pos[0].vx = 3;
+          pos[1].vx = -3;
+          requestAnimationFrame(fightLoop);
+        }
+      }
+      backLoop();
+      return;
+    }
+
+    drawBug(bug1, pos[0].x, pos[0].y, true);
+    drawBug(bug2, pos[1].x, pos[1].y, false);
+
+    if (elapsed < 10000) {
+      requestAnimationFrame(fightLoop);
+    } else {
+      winner = Math.random() < 0.5 ? bug1 : bug2;
+      const loser = winner === bug1 ? bug2 : bug1;
+      let flyX = loser === bug1 ? pos[0].x : pos[1].x;
+      let flyY = loser === bug1 ? pos[0].y : pos[1].y;
+      let flyVX = Math.random() * 6 - 3;
+      let flyVY = -6;
+      const gravity = 0.4;
+
+      function flyLoop() {
+        fctx.clearRect(0,0,fightCanvas.width,fightCanvas.height);
+        if (winner === bug1) {
+          drawBug(winner, pos[0].x, pos[0].y, true);
+          fctx.save();
+          fctx.translate(flyX, flyY);
+          fctx.scale(-1, 1);
+          fctx.drawImage(loser.img, -loser.img.width/4, -loser.img.height/4, loser.img.width/2, loser.img.height/2);
+          fctx.restore();
+        } else {
+          drawBug(winner, pos[1].x, pos[1].y, false);
+          fctx.save();
+          fctx.translate(flyX, flyY);
+          fctx.drawImage(loser.img, -loser.img.width/4, -loser.img.height/4, loser.img.width/2, loser.img.height/2);
+          fctx.restore();
+        }
+
+        flyX += flyVX;
+        flyY += flyVY;
+        flyVY += gravity;
+
+        if (flyY < fightCanvas.height + 100) {
+          requestAnimationFrame(flyLoop);
+        } else {
+          audio.pause();
+          audio.currentTime = 0;
+          if ((choice==="1" && winner===bug1) || (choice==="2" && winner===bug2)) {
+            money += amount * 2;
+          } else {
+            money -= amount;
+          }
+          updateMoney();
+
+          const resultText = document.createElement("div");
+          resultText.textContent = `${winner.name}の勝利！！`;
+          resultText.style.color = "white";
+          resultText.style.fontSize = "30px";
+          resultText.style.position = "fixed";
+          resultText.style.top = "40%";
+          resultText.style.left = "50%";
+          resultText.style.transform = "translate(-50%, -50%)";
+          resultText.style.zIndex = "2000";
+          overlay.appendChild(resultText);
+
+          const closeBtn = document.createElement("button");
+          closeBtn.textContent = "閉じる";
+          closeBtn.style.fontSize = "20px";
+          closeBtn.style.position = "fixed";
+          closeBtn.style.top = "60%";
+          closeBtn.style.left = "50%";
+          closeBtn.style.transform = "translate(-50%, -50%)";
+          closeBtn.style.zIndex = "2000";
+          closeBtn.onclick = () => overlay.remove();
+          overlay.appendChild(closeBtn);
+        }
+      }
+      flyLoop();
+    }
+  }
+
+  document.body.appendChild(overlay);
+  requestAnimationFrame(fightLoop);
+}
+
     updateMoney();
     setInterval(spawnBug, 10000);
     draw();
