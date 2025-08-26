@@ -412,7 +412,7 @@ const bugs = rawBugs.map(bug => ({
   requestAnimationFrame(draw);
 }
 
-    function startBattle() {
+  function startBattle() {
   if (collection.length < 2) {
     alert("虫が2匹以上必要です");
     return;
@@ -463,16 +463,18 @@ const bugs = rawBugs.map(bug => ({
   let startTime = null;
   let winner = null;
 
-  function drawBug(bug, x, y, targetX, targetY) {
+  function drawBug(bug, x, y, targetX, targetY, flip=false) {
     if (!bug.img) return;
     const scale = bug.scale || 1;
     fctx.save();
     fctx.translate(x, y);
     if (typeof targetX === 'number' && typeof targetY === 'number') {
-      const angle = Math.atan2(targetY - y, targetX - x);
+      let angle = Math.atan2(targetY - y, targetX - x);
+      if (flip) angle += Math.PI;
       fctx.rotate(angle);
     }
-    fctx.drawImage(bug.img, -bug.img.width/2 * scale, -bug.img.height/2 * scale, bug.img.width * scale, bug.img.height * scale);
+    fctx.scale(flip ? -scale : scale, scale);
+    fctx.drawImage(bug.img, -bug.img.width/2, -bug.img.height/2);
     fctx.restore();
   }
 
@@ -493,8 +495,8 @@ const bugs = rawBugs.map(bug => ({
           pos[1].x += (originalPos[1].x - pos[1].x) / backFrames;
           backFrames--;
           fctx.clearRect(0,0,fightCanvas.width,fightCanvas.height);
-          drawBug(bug1, pos[0].x, pos[0].y, pos[1].x, pos[1].y);
-          drawBug(bug2, pos[1].x, pos[1].y, pos[0].x, pos[0].y);
+          drawBug(bug1, pos[0].x, pos[0].y, pos[1].x, pos[1].y, true);
+          drawBug(bug2, pos[1].x, pos[1].y, pos[0].x, pos[0].y, false);
           requestAnimationFrame(backLoop);
         } else {
           pos[0].vx = 3;
@@ -506,8 +508,8 @@ const bugs = rawBugs.map(bug => ({
       return;
     }
 
-    drawBug(bug1, pos[0].x, pos[0].y, pos[1].x, pos[1].y);
-    drawBug(bug2, pos[1].x, pos[1].y, pos[0].x, pos[0].y);
+    drawBug(bug1, pos[0].x, pos[0].y, pos[1].x, pos[1].y, true);
+    drawBug(bug2, pos[1].x, pos[1].y, pos[0].x, pos[0].y, false);
 
     if (elapsed < 10000) {
       requestAnimationFrame(fightLoop);
@@ -522,7 +524,7 @@ const bugs = rawBugs.map(bug => ({
 
       function flyLoop() {
         fctx.clearRect(0,0,fightCanvas.width,fightCanvas.height);
-        drawBug(winner, winner === bug1 ? pos[0].x : pos[1].x, winner === bug1 ? pos[0].y : pos[1].y, loser === bug1 ? pos[1].x : pos[0].x, loser === bug1 ? pos[1].y : pos[0].y);
+        drawBug(winner, winner === bug1 ? pos[0].x : pos[1].x, winner === bug1 ? pos[0].y : pos[1].y, loser === bug1 ? pos[1].x : pos[0].x, loser === bug1 ? pos[1].y : pos[0].y, winner === bug1);
 
         fctx.save();
         fctx.translate(flyX, flyY);
@@ -550,6 +552,7 @@ const bugs = rawBugs.map(bug => ({
           resultText.textContent = `${winner.name}の勝利！！`;
           resultText.style.color = "black";
           resultText.style.fontSize = "30px";
+          resultText.style.textShadow = "0 0 10px yellow, 0 0 20px yellow, 0 0 30px yellow";
           resultText.style.position = "fixed";
           resultText.style.top = "40%";
           resultText.style.left = "50%";
