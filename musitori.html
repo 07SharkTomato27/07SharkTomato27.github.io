@@ -445,8 +445,9 @@ function startBattle() {
   overlay.style.zIndex = "1000";
 
   const fightCanvas = document.createElement("canvas");
-  fightCanvas.width = 800;
-  fightCanvas.height = 600;
+  fightCanvas.width = 700;
+  fightCanvas.height = 400;
+  fightCanvas.style.zIndex = "0";
   overlay.appendChild(fightCanvas);
   const fctx = fightCanvas.getContext("2d");
 
@@ -455,13 +456,24 @@ function startBattle() {
   audio.play();
 
   const originalPos = [
-    { x: 200, y: 300 },
-    { x: 600, y: 300 }
+    { x: 200, y: 250 },
+    { x: 500, y: 250 }
   ];
   const pos = [{...originalPos[0], vx: 3}, {...originalPos[1], vx: -3}];
 
   let startTime = null;
   let winner = null;
+
+  function drawBug(bug, x, y, faceLeft) {
+    const scale = 0.5;
+    const w = bug.img.width * scale;
+    const h = bug.img.height * scale;
+    fctx.save();
+    fctx.translate(x, y);
+    if (faceLeft) fctx.scale(-1, 1);
+    fctx.drawImage(bug.img, -w/2, -h/2, w, h);
+    fctx.restore();
+  }
 
   function fightLoop(timestamp) {
     if (!startTime) startTime = timestamp;
@@ -480,11 +492,8 @@ function startBattle() {
           pos[1].x += (originalPos[1].x - pos[1].x) / backFrames;
           backFrames--;
           fctx.clearRect(0,0,fightCanvas.width,fightCanvas.height);
-          fctx.save();
-          fctx.scale(-1,1);
-          fctx.drawImage(bug1.img, -pos[0].x - bug1.img.width/2, pos[0].y - bug1.img.height/2);
-          fctx.restore();
-          fctx.drawImage(bug2.img, pos[1].x - bug2.img.width/2, pos[1].y - bug2.img.height/2);
+          drawBug(bug1, pos[0].x, pos[0].y, true);
+          drawBug(bug2, pos[1].x, pos[1].y, false);
           requestAnimationFrame(backLoop);
         } else {
           pos[0].vx = 3;
@@ -496,11 +505,8 @@ function startBattle() {
       return;
     }
 
-    fctx.save();
-    fctx.scale(-1,1);
-    fctx.drawImage(bug1.img, -pos[0].x - bug1.img.width/2, pos[0].y - bug1.img.height/2);
-    fctx.restore();
-    fctx.drawImage(bug2.img, pos[1].x - bug2.img.width/2, pos[1].y - bug2.img.height/2);
+    drawBug(bug1, pos[0].x, pos[0].y, true);
+    drawBug(bug2, pos[1].x, pos[1].y, false);
 
     if (elapsed < 10000) {
       requestAnimationFrame(fightLoop);
@@ -515,15 +521,12 @@ function startBattle() {
 
       function flyLoop() {
         fctx.clearRect(0,0,fightCanvas.width,fightCanvas.height);
-        fctx.save();
         if (winner === bug1) {
-          fctx.scale(-1,1);
-          fctx.drawImage(winner.img, -pos[0].x - winner.img.width/2, pos[0].y - winner.img.height/2);
-          fctx.restore();
-          fctx.drawImage(loser.img, flyX - loser.img.width/2, flyY - loser.img.height/2);
+          drawBug(winner, pos[0].x, pos[0].y, true);
+          fctx.drawImage(loser.img, flyX - loser.img.width/4, flyY - loser.img.height/4, loser.img.width/2, loser.img.height/2);
         } else {
-          fctx.drawImage(winner.img, pos[1].x - winner.img.width/2, pos[1].y - winner.img.height/2);
-          fctx.drawImage(loser.img, flyX - loser.img.width/2, flyY - loser.img.height/2);
+          drawBug(winner, pos[1].x, pos[1].y, false);
+          fctx.drawImage(loser.img, flyX - loser.img.width/4, flyY - loser.img.height/4, loser.img.width/2, loser.img.height/2);
         }
 
         flyX += flyVX;
@@ -546,13 +549,21 @@ function startBattle() {
           resultText.textContent = `${winner.name}の勝利！！`;
           resultText.style.color = "white";
           resultText.style.fontSize = "30px";
-          resultText.style.marginTop = "20px";
+          resultText.style.position = "absolute";
+          resultText.style.bottom = "100px";
+          resultText.style.left = "50%";
+          resultText.style.transform = "translateX(-50%)";
+          resultText.style.zIndex = "10";
           overlay.appendChild(resultText);
 
           const closeBtn = document.createElement("button");
           closeBtn.textContent = "閉じる";
           closeBtn.style.fontSize = "20px";
-          closeBtn.style.marginTop = "10px";
+          closeBtn.style.position = "absolute";
+          closeBtn.style.bottom = "40px";
+          closeBtn.style.left = "50%";
+          closeBtn.style.transform = "translateX(-50%)";
+          closeBtn.style.zIndex = "10";
           closeBtn.onclick = () => overlay.remove();
           overlay.appendChild(closeBtn);
         }
