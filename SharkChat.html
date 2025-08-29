@@ -153,7 +153,7 @@ const db = firebase.database();
 let username = localStorage.getItem("username") || "名無し";
 let avatarURL = localStorage.getItem("avatarURL") || "";
 let currentChannel = 0;
-let currentRef = null; // 追加: 現在監視しているFirebase参照
+let currentRef = null;
 
 function applySettings() {
   const font = localStorage.getItem("font") || "sans-serif";
@@ -161,7 +161,6 @@ function applySettings() {
   const color2 = localStorage.getItem("color2") || "#3a3a5c";
   const textColor = localStorage.getItem("textColor") || "white";
   document.body.style.fontFamily = font;
-  // 背景はチャット画面のみに適用
   document.getElementById("chat").style.background = `linear-gradient(to bottom right, ${color1}, ${color2})`;
   document.body.style.color = textColor;
 }
