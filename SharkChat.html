@@ -145,10 +145,17 @@
 
 <script>
 const firebaseConfig = {
-  databaseURL: "https://sharkchat-9a0a5-default-rtdb.firebaseio.com/"
+  apiKey: "AIzaSyCPF0ieugcs05fLXYahHdaE5JCeXgOIw3A",
+  authDomain: "sharkchat-9a0a5.firebaseapp.com",
+  databaseURL: "https://sharkchat-9a0a5-default-rtdb.firebaseio.com",
+  projectId: "sharkchat-9a0a5",
+  storageBucket: "sharkchat-9a0a5.appspot.com",
+  messagingSenderId: "932358584876",
+  appId: "1:932358584876:web:afa8b9f8515c0ac6826f89"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+
 
 let username = localStorage.getItem("username") || "名無し";
 let avatarURL = localStorage.getItem("avatarURL") || "";
