@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ハブ的なやつ</title>
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #1a1f3c, #0d1117);
+      font-family: "Segoe UI", sans-serif;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .start-menu {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      gap: 20px;
+      padding: 30px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    }
+    .app-tile {
+      width: 100px;
+      height: 100px;
+      border-radius: 15px;
+      background: rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      color: white;
+      font-size: 14px;
+      transition: 0.2s;
+      overflow: hidden;
+    }
+    .app-tile:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.05);
+    }
+    .app-tile svg, .app-tile img {
+      width: 32px;
+      height: 32px;
+      margin-bottom: 8px;
+      object-fit: contain;
+    }
+  </style>
+</head>
+<body>
+  <div class="start-menu">
+    <a href="https://07sharktomato27.github.io/" target="_blank" class="app-tile">
+     <img src="image/2/modoru.png" alt="戻る">
+      戻る
+    </a>
+    <a href="https://www.google.com" target="_blank" class="app-tile">
+      <img src="image/2/test.png" alt="a">
+      a
+    </a>
+    <a href="https://github.com" target="_blank" class="app-tile">
+      <img src="image/2/github.png" alt="GitHub">
+      test
+    </a>
+  </div>
+</body>
+</html>
