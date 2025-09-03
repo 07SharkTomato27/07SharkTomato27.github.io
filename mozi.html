@@ -34,6 +34,8 @@
   <input id="size" type="range" min="16" max="160" value="64">
   <label>速度</label>
   <input id="speed" type="range" min="1" max="10" value="5">
+  <label>色</label>
+  <input id="color" type="color" value="#ffffff">
   <button id="start">開始</button>
 </div>
 
@@ -46,49 +48,55 @@
   const mode=document.getElementById('mode')
   const size=document.getElementById('size')
   const speed=document.getElementById('speed')
+  const color=document.getElementById('color')
   const start=document.getElementById('start')
   const overlay=document.getElementById('overlay')
   const stage=document.getElementById('stage')
 
   function clearStage(){stage.innerHTML='';overlay.style.cursor='none'}
 
-  function startRTL(s,t,v){
+  function startRTL(s,t,v,c){
     clearStage()
-    const row=document.createElement('div')
-    row.className='rtlRow'
-    row.style.fontSize=s+'px'
-    const unit=document.createElement('span')
-    unit.textContent=t
-    const gap=document.createElement('span')
-    gap.textContent=' '.repeat(8)
-    const pack=document.createElement('span')
-    pack.appendChild(unit.cloneNode(true))
-    pack.appendChild(gap.cloneNode(true))
-    const bundle=document.createElement('span')
-    for(let i=0;i<200;i++){bundle.appendChild(pack.cloneNode(true))}
-    const track=document.createElement('div')
-    track.style.position='absolute'
-    track.style.inset='0'
-    track.style.display='flex'
-    track.style.alignItems='center'
-    track.style.animation=`rtlMove ${Math.max(1,(11-v))*1.2}s linear infinite`
-    track.appendChild(bundle.cloneNode(true))
-    track.appendChild(bundle.cloneNode(true))
-    row.appendChild(track)
-    stage.appendChild(row)
+    const rowHeight=s*1.5
+    const rows=Math.floor(window.innerHeight/rowHeight)
+    for(let r=0;r<rows;r++){
+      const row=document.createElement('div')
+      row.className='rtlRow'
+      row.style.fontSize=s+'px'
+      row.style.color=c
+      row.style.top=(r*rowHeight)+'px'
+      row.style.position='absolute'
+      const unit=document.createElement('span')
+      unit.textContent=t
+      const gap=document.createElement('span')
+      gap.textContent=' '.repeat(8)
+      const pack=document.createElement('span')
+      pack.appendChild(unit.cloneNode(true))
+      pack.appendChild(gap.cloneNode(true))
+      const bundle=document.createElement('span')
+      for(let i=0;i<50;i++){bundle.appendChild(pack.cloneNode(true))}
+      const track=document.createElement('div')
+      track.style.display='flex'
+      track.style.animation=`rtlMove ${Math.max(1,(11-v))*1.2}s linear infinite`
+      track.appendChild(bundle.cloneNode(true))
+      track.appendChild(bundle.cloneNode(true))
+      row.appendChild(track)
+      stage.appendChild(row)
+    }
   }
 
-  function startZoom(s,t,v){
+  function startZoom(s,t,v,c){
     clearStage()
     const el=document.createElement('div')
     el.className='zoomText'
     el.style.fontSize=s+'px'
+    el.style.color=c
     el.style.animation=`zoomPulse ${Math.max(1,(11-v))*0.8}s ease-in-out infinite`
     el.textContent=t
     stage.appendChild(el)
   }
 
-  function startFall(s,t,v){
+  function startFall(s,t,v,c){
     clearStage()
     const count=200
     const dur=Math.max(1,(11-v))*1.2
@@ -97,8 +105,8 @@
       el.className='drop'
       el.style.left=Math.random()*100+'%'
       el.style.fontSize=(s*0.6+Math.random()*s*0.8)+'px'
+      el.style.color=c
       el.style.animation=`fall ${dur+Math.random()*dur}s linear ${Math.random()*dur}s infinite`
-      el.style.color='rgba(255,255,255,'+(0.5+Math.random()*0.5)+')'
       el.textContent=t
       stage.appendChild(el)
     }
@@ -109,9 +117,9 @@
     if(!t.trim())return
     overlay.style.display='flex'
     document.documentElement.requestFullscreen?.()
-    if(mode.value==='rtl')startRTL(Number(size.value),t,Number(speed.value))
-    else if(mode.value==='zoom')startZoom(Number(size.value),t,Number(speed.value))
-    else startFall(Number(size.value),t,Number(speed.value))
+    if(mode.value==='rtl')startRTL(Number(size.value),t,Number(speed.value),color.value)
+    else if(mode.value==='zoom')startZoom(Number(size.value),t,Number(speed.value),color.value)
+    else startFall(Number(size.value),t,Number(speed.value),color.value)
   }
 
   function closeAll(){
