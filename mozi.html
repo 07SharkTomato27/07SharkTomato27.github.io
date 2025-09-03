@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>テキスト演出</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  .wrap{max-width:720px;margin:24px auto;padding:16px}
+  label{display:block;margin:12px 0 4px}
+  input,select,button{width:100%;padding:10px;font-size:16px}
+  #overlay{position:fixed;inset:0;background:#000;color:#fff;display:none;align-items:center;justify-content:center;overflow:hidden;cursor:none}
+  #close{position:fixed;top:12px;right:12px;font-size:14px;padding:8px 12px;border:0;border-radius:8px;background:#fff;color:#000;cursor:pointer;opacity:.6}
+  #close:hover{opacity:1}
+  .stage{position:relative;width:100%;height:100%}
+  .rtlRow{white-space:nowrap;will-change:transform;display:flex;gap:48px;font-weight:700}
+  @keyframes rtlMove{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  .zoomText{font-weight:900;text-align:center}
+  @keyframes zoomPulse{0%{transform:scale(.9);opacity:.9}50%{transform:scale(1.2);opacity:1}100%{transform:scale(.9);opacity:.9}}
+  .drop{position:absolute;will-change:transform,opacity;white-space:nowrap}
+  @keyframes fall{0%{transform:translateY(-110%);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(110%);opacity:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <label>文字</label>
+  <input id="text" placeholder="表示したい文字を入力" value="HELLO">
+  <label>モード</label>
+  <select id="mode">
+    <option value="rtl">右→左ループ</option>
+    <option value="fall">降る</option>
+    <option value="zoom">拡大縮小</option>
+  </select>
+  <label>サイズ</label>
+  <input id="size" type="range" min="16" max="160" value="64">
+  <label>速度</label>
+  <input id="speed" type="range" min="1" max="10" value="5">
+  <button id="start">開始</button>
+</div>
+
+<div id="overlay">
+  <button id="close">閉じる Esc</button>
+  <div class="stage" id="stage"></div>
+</div>
+
+<script>
+  const txt=document.getElementById('text')
+  const mode=document.getElementById('mode')
+  const size=document.getElementById('size')
+  const speed=document.getElementById('speed')
+  const start=document.getElementById('start')
+  const overlay=document.getElementById('overlay')
+  const stage=document.getElementById('stage')
+  const closeBtn=document.getElementById('close')
+
+  function clearStage(){stage.innerHTML='';overlay.style.cursor='none'}
+
+  function startRTL(s,t,v){
+    clearStage()
+    const row=document.createElement('div')
+    row.className='rtlRow'
+    row.style.fontSize=s+'px'
+    const unit=document.createElement('span')
+    unit.textContent=t
+    const gap=document.createElement('span')
+    gap.textContent=' '.repeat(8)
+    const pack=document.createElement('span')
+    pack.appendChild(unit.cloneNode(true))
+    pack.appendChild(gap.cloneNode(true))
+    const bundle=document.createElement('span')
+    for(let i=0;i<50;i++){bundle.appendChild(pack.cloneNode(true))}
+    const track=document.createElement('div')
+    track.style.position='absolute'
+    track.style.inset='0'
+    track.style.display='flex'
+    track.style.alignItems='center'
+    track.style.animation=`rtlMove ${Math.max(1,(11-v))*1.2}s linear infinite`
+    track.appendChild(bundle.cloneNode(true))
+    track.appendChild(bundle.cloneNode(true))
+    row.appendChild(track)
+    stage.appendChild(row)
+  }
+
+  function startZoom(s,t,v){
+    clearStage()
+    const el=document.createElement('div')
+    el.className='zoomText'
+    el.style.fontSize=s+'px'
+    el.style.animation=`zoomPulse ${Math.max(1,(11-v))*0.8}s ease-in-out infinite`
+    el.style.width='100%'
+    el.textContent=t
+    stage.style.display='flex'
+    stage.style.alignItems='center'
+    stage.style.justifyContent='center'
+    stage.appendChild(el)
+  }
+
+  function startFall(s,t,v){
+    clearStage()
+    const count=60
+    const dur=Math.max(1,(11-v))*1.2
+    for(let i=0;i<count;i++){
+      const el=document.createElement('div')
+      el.className='drop'
+      el.style.left=Math.random()*100+'%'
+      el.style.fontSize=(s*0.6+Math.random()*s*0.8)+'px'
+      el.style.animation=`fall ${dur+Math.random()*dur}s linear ${Math.random()*dur}s infinite`
+      el.style.color='rgba(255,255,255,'+(0.5+Math.random()*0.5)+')'
+      el.textContent=t
+      stage.appendChild(el)
+    }
+  }
+
+  function launch(){
+    const t=txt.value||''
+    if(!t.trim())return
+    overlay.style.display='flex'
+    document.documentElement.requestFullscreen?.()
+    if(mode.value==='rtl')startRTL(Number(size.value),t,Number(speed.value))
+    else if(mode.value==='zoom')startZoom(Number(size.value),t,Number(speed.value))
+    else startFall(Number(size.value),t,Number(speed.value))
+  }
+
+  function closeAll(){
+    overlay.style.display='none'
+    stage.innerHTML=''
+    stage.removeAttribute('style')
+    document.exitFullscreen?.()
+    overlay.style.cursor='auto'
+  }
+
+  start.addEventListener('click',launch)
+  closeBtn.addEventListener('click',closeAll)
+  overlay.addEventListener('dblclick',closeAll)
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll()})
+</script>
+</body>
+</html>
