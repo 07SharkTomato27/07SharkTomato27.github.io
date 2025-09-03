@@ -12,7 +12,9 @@
   input,select,button{width:100%;padding:10px;font-size:16px}
   #overlay{position:fixed;inset:0;background:#000;color:#fff;display:none;align-items:center;justify-content:center;overflow:hidden;cursor:none}
   .stage{position:relative;width:100%;height:100%}
-  .rtlRow{white-space:nowrap;will-change:transform;display:flex;gap:48px;font-weight:700;width:200%}
+  .rtlRow{position:absolute;left:0;right:0;overflow:hidden}
+  .rtlTrack{display:block;position:relative;will-change:transform}
+  .rtlInner{display:flex;white-space:nowrap}
   @keyframes rtlMove{from{transform:translateX(0)}to{transform:translateX(-50%)}}
   .zoomText{font-weight:900;text-align:center;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
   @keyframes zoomPulse{0%{transform:scale(.9);opacity:.9}50%{transform:scale(1.2);opacity:1}100%{transform:scale(.9);opacity:.9}}
@@ -44,96 +46,112 @@
 </div>
 
 <script>
-  const txt=document.getElementById('text')
-  const mode=document.getElementById('mode')
-  const size=document.getElementById('size')
-  const speed=document.getElementById('speed')
-  const color=document.getElementById('color')
-  const start=document.getElementById('start')
-  const overlay=document.getElementById('overlay')
-  const stage=document.getElementById('stage')
+const txt=document.getElementById('text')
+const mode=document.getElementById('mode')
+const size=document.getElementById('size')
+const speed=document.getElementById('speed')
+const color=document.getElementById('color')
+const start=document.getElementById('start')
+const overlay=document.getElementById('overlay')
+const stage=document.getElementById('stage')
 
-  function clearStage(){stage.innerHTML='';overlay.style.cursor='none'}
+function clearStage(){stage.innerHTML='';overlay.style.cursor='none'}
 
-  function startRTL(s,t,v,c){
-    clearStage()
-    const rowHeight=s*1.5
-    const rows=Math.floor(window.innerHeight/rowHeight)
-    for(let r=0;r<rows;r++){
-      const row=document.createElement('div')
-      row.className='rtlRow'
-      row.style.fontSize=s+'px'
-      row.style.color=c
-      row.style.top=(r*rowHeight)+'px'
-      row.style.position='absolute'
+function startRTL(s,t,v,c){
+  clearStage()
+  const rowHeight=Math.max(24,Math.floor(s*1.5))
+  let rows=Math.floor(window.innerHeight/rowHeight)
+  if(rows<1)rows=1
+  for(let r=0;r<rows;r++){
+    const row=document.createElement('div')
+    row.className='rtlRow'
+    row.style.fontSize=s+'px'
+    row.style.color=c
+    row.style.top=(r*rowHeight)+'px'
+    row.style.height=rowHeight+'px'
+    row.style.lineHeight=rowHeight+'px'
+    const track=document.createElement('div')
+    track.className='rtlTrack'
+    const inner=document.createElement('div')
+    inner.className='rtlInner'
+    track.appendChild(inner)
+    row.appendChild(track)
+    stage.appendChild(row)
 
-      const track=document.createElement('div')
-      track.style.display='flex'
-      track.style.whiteSpace='nowrap'
+    const measure=document.createElement('span')
+    measure.style.position='absolute'
+    measure.style.visibility='hidden'
+    measure.style.whiteSpace='nowrap'
+    measure.style.fontSize=s+'px'
+    measure.textContent=t+'    '
+    document.body.appendChild(measure)
+    const unitWidth=Math.max(1,measure.offsetWidth)
+    document.body.removeChild(measure)
 
-      while(track.scrollWidth<window.innerWidth*2){
-        const span=document.createElement('span')
-        span.textContent=t+"    "
-        track.appendChild(span)
-      }
-
-      const pxPerSec = v*50
-      const moveWidth = track.scrollWidth/2
-      const duration = moveWidth/pxPerSec
-
-      track.style.animation=`rtlMove ${duration}s linear infinite`
-      row.appendChild(track)
-      stage.appendChild(row)
+    const targetWidth=window.innerWidth*2
+    const repeats=Math.ceil(targetWidth/unitWidth)+2
+    for(let i=0;i<repeats;i++){
+      const span=document.createElement('span')
+      span.textContent=t+'    '
+      inner.appendChild(span)
     }
+    const clone=inner.cloneNode(true)
+    track.appendChild(clone)
+    const innerWidth=inner.scrollWidth
+    const pxPerSec=Math.max(10,v*50)
+    const duration=innerWidth/pxPerSec
+    track.style.animation=`rtlMove ${duration}s linear infinite`
   }
+}
 
-  function startZoom(s,t,v,c){
-    clearStage()
+function startZoom(s,t,v,c){
+  clearStage()
+  const el=document.createElement('div')
+  el.className='zoomText'
+  el.style.fontSize=s+'px'
+  el.style.color=c
+  el.style.animation=`zoomPulse ${Math.max(1,(11-v))*0.8}s ease-in-out infinite`
+  el.textContent=t
+  stage.appendChild(el)
+}
+
+function startFall(s,t,v,c){
+  clearStage()
+  const count=200
+  const dur=Math.max(1,(11-v))*1.2
+  for(let i=0;i<count;i++){
     const el=document.createElement('div')
-    el.className='zoomText'
-    el.style.fontSize=s+'px'
+    el.className='drop'
+    el.style.left=Math.random()*100+'%'
+    el.style.fontSize=(s*0.6+Math.random()*s*0.8)+'px'
     el.style.color=c
-    el.style.animation=`zoomPulse ${Math.max(1,(11-v))*0.8}s ease-in-out infinite`
+    el.style.top='-20%'
+    el.style.animation=`fall ${dur+Math.random()*dur}s linear ${Math.random()*dur}s infinite`
     el.textContent=t
     stage.appendChild(el)
   }
+}
 
-  function startFall(s,t,v,c){
-    clearStage()
-    const count=200
-    const dur=Math.max(1,(11-v))*1.2
-    for(let i=0;i<count;i++){
-      const el=document.createElement('div')
-      el.className='drop'
-      el.style.left=Math.random()*100+'%'
-      el.style.fontSize=(s*0.6+Math.random()*s*0.8)+'px'
-      el.style.color=c
-      el.style.animation=`fall ${dur+Math.random()*dur}s linear ${Math.random()*dur}s infinite`
-      el.textContent=t
-      stage.appendChild(el)
-    }
-  }
+function launch(){
+  const t=txt.value||''
+  if(!t.trim())return
+  overlay.style.display='flex'
+  document.documentElement.requestFullscreen?.()
+  if(mode.value==='rtl')startRTL(Number(size.value),t,Number(speed.value),color.value)
+  else if(mode.value==='zoom')startZoom(Number(size.value),t,Number(speed.value),color.value)
+  else startFall(Number(size.value),t,Number(speed.value),color.value)
+}
 
-  function launch(){
-    const t=txt.value||''
-    if(!t.trim())return
-    overlay.style.display='flex'
-    document.documentElement.requestFullscreen?.()
-    if(mode.value==='rtl')startRTL(Number(size.value),t,Number(speed.value),color.value)
-    else if(mode.value==='zoom')startZoom(Number(size.value),t,Number(speed.value),color.value)
-    else startFall(Number(size.value),t,Number(speed.value),color.value)
-  }
+function closeAll(){
+  overlay.style.display='none'
+  stage.innerHTML=''
+  document.exitFullscreen?.()
+  overlay.style.cursor='auto'
+}
 
-  function closeAll(){
-    overlay.style.display='none'
-    stage.innerHTML=''
-    document.exitFullscreen?.()
-    overlay.style.cursor='auto'
-  }
-
-  start.addEventListener('click',launch)
-  overlay.addEventListener('dblclick',closeAll)
-  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll()})
+start.addEventListener('click',launch)
+overlay.addEventListener('dblclick',closeAll)
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll()})
 </script>
 </body>
 </html>
