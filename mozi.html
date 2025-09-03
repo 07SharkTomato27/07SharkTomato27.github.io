@@ -23,7 +23,7 @@
 <body>
 <div class="wrap">
   <label>文字</label>
-  <input id="text" placeholder="表示したい文字を入力" value="HELLO">
+  <input id="text" value="HELLO">
   <label>モード</label>
   <select id="mode">
     <option value="rtl">右→左ループ</option>
@@ -66,20 +66,22 @@
       row.style.color=c
       row.style.top=(r*rowHeight)+'px'
       row.style.position='absolute'
-      const unit=document.createElement('span')
-      unit.textContent=t
-      const gap=document.createElement('span')
-      gap.textContent=' '.repeat(8)
-      const pack=document.createElement('span')
-      pack.appendChild(unit.cloneNode(true))
-      pack.appendChild(gap.cloneNode(true))
-      const bundle=document.createElement('span')
-      for(let i=0;i<50;i++){bundle.appendChild(pack.cloneNode(true))}
+
       const track=document.createElement('div')
       track.style.display='flex'
-      track.style.animation=`rtlMove ${Math.max(1,(11-v))*1.2}s linear infinite`
-      track.appendChild(bundle.cloneNode(true))
-      track.appendChild(bundle.cloneNode(true))
+      track.style.whiteSpace='nowrap'
+
+      while(track.scrollWidth<window.innerWidth*2){
+        const span=document.createElement('span')
+        span.textContent=t+"    "
+        track.appendChild(span)
+      }
+
+      const pxPerSec = v*50
+      const moveWidth = track.scrollWidth/2
+      const duration = moveWidth/pxPerSec
+
+      track.style.animation=`rtlMove ${duration}s linear infinite`
       row.appendChild(track)
       stage.appendChild(row)
     }
