@@ -11,12 +11,10 @@
   label{display:block;margin:12px 0 4px}
   input,select,button{width:100%;padding:10px;font-size:16px}
   #overlay{position:fixed;inset:0;background:#000;color:#fff;display:none;align-items:center;justify-content:center;overflow:hidden;cursor:none}
-  #close{position:fixed;top:12px;right:12px;font-size:14px;padding:8px 12px;border:0;border-radius:8px;background:#fff;color:#000;cursor:pointer;opacity:.6}
-  #close:hover{opacity:1}
   .stage{position:relative;width:100%;height:100%}
-  .rtlRow{white-space:nowrap;will-change:transform;display:flex;gap:48px;font-weight:700}
+  .rtlRow{white-space:nowrap;will-change:transform;display:flex;gap:48px;font-weight:700;width:200%}
   @keyframes rtlMove{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-  .zoomText{font-weight:900;text-align:center}
+  .zoomText{font-weight:900;text-align:center;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
   @keyframes zoomPulse{0%{transform:scale(.9);opacity:.9}50%{transform:scale(1.2);opacity:1}100%{transform:scale(.9);opacity:.9}}
   .drop{position:absolute;will-change:transform,opacity;white-space:nowrap}
   @keyframes fall{0%{transform:translateY(-110%);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(110%);opacity:0}}
@@ -40,7 +38,6 @@
 </div>
 
 <div id="overlay">
-  <button id="close">閉じる Esc</button>
   <div class="stage" id="stage"></div>
 </div>
 
@@ -52,7 +49,6 @@
   const start=document.getElementById('start')
   const overlay=document.getElementById('overlay')
   const stage=document.getElementById('stage')
-  const closeBtn=document.getElementById('close')
 
   function clearStage(){stage.innerHTML='';overlay.style.cursor='none'}
 
@@ -69,7 +65,7 @@
     pack.appendChild(unit.cloneNode(true))
     pack.appendChild(gap.cloneNode(true))
     const bundle=document.createElement('span')
-    for(let i=0;i<50;i++){bundle.appendChild(pack.cloneNode(true))}
+    for(let i=0;i<200;i++){bundle.appendChild(pack.cloneNode(true))}
     const track=document.createElement('div')
     track.style.position='absolute'
     track.style.inset='0'
@@ -88,17 +84,13 @@
     el.className='zoomText'
     el.style.fontSize=s+'px'
     el.style.animation=`zoomPulse ${Math.max(1,(11-v))*0.8}s ease-in-out infinite`
-    el.style.width='100%'
     el.textContent=t
-    stage.style.display='flex'
-    stage.style.alignItems='center'
-    stage.style.justifyContent='center'
     stage.appendChild(el)
   }
 
   function startFall(s,t,v){
     clearStage()
-    const count=60
+    const count=200
     const dur=Math.max(1,(11-v))*1.2
     for(let i=0;i<count;i++){
       const el=document.createElement('div')
@@ -125,13 +117,11 @@
   function closeAll(){
     overlay.style.display='none'
     stage.innerHTML=''
-    stage.removeAttribute('style')
     document.exitFullscreen?.()
     overlay.style.cursor='auto'
   }
 
   start.addEventListener('click',launch)
-  closeBtn.addEventListener('click',closeAll)
   overlay.addEventListener('dblclick',closeAll)
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll()})
 </script>
