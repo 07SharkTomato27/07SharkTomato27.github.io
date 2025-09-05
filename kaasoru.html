@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>カーソル</title>
+<style>
+body,html{margin:0;padding:0;height:100%;overflow:hidden;font-family:sans-serif}
+#ui{position:absolute;top:10px;left:10px;z-index:999}
+#canvas{position:absolute;top:0;left:0;width:100%;height:100%}
+</style>
+</head>
+<body>
+<div id="ui">
+<input type="text" id="textInput" placeholder="文字">
+<input type="color" id="textColor" value="#000000">
+<input type="color" id="bgColor" value="#ffffff">
+<button id="startBtn">開始</button>
+</div>
+<canvas id="canvas"></canvas>
+<script>
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+let text="",textColor="#000",bgColor="#fff";
+let running=false;
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+let particles=[];
+document.getElementById("startBtn").onclick=()=>{
+    text=document.getElementById("textInput").value||"★";
+    textColor=document.getElementById("textColor").value;
+    bgColor=document.getElementById("bgColor").value;
+    running=true;
+    document.getElementById("ui").style.display="none";
+    ctx.fillStyle=bgColor;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+canvas.addEventListener("mousemove",e=>{
+    if(!running)return;
+    particles.push({x:e.clientX,y:e.clientY,char:text,life:60});
+});
+window.addEventListener("keydown",e=>{
+    if(e.key==="Escape" && running){
+        running=false;
+        document.getElementById("ui").style.display="block";
+        ctx.fillStyle="#fff";
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        particles=[];
+    }
+});
+function loop(){
+    if(running){
+        ctx.fillStyle=bgColor;
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        for(let i=particles.length-1;i>=0;i--){
+            let p=particles[i];
+            ctx.fillStyle=textColor;
+            ctx.font="20px sans-serif";
+            ctx.fillText(p.char,p.x,p.y);
+            p.life--;
+            if(p.life<=0)particles.splice(i,1);
+        }
+    }
+    requestAnimationFrame(loop);
+}
+loop();
+window.addEventListener("resize",()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;});
+</script>
+</body>
+</html>
