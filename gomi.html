@@ -19,6 +19,9 @@
       background: url('image/ga.png') no-repeat center center;
       background-size: 100% 100%;
     }
+    .red {
+      background: red !important;
+    }
   </style>
 </head>
 <body>
@@ -32,9 +35,9 @@
         e.returnValue = "あのぉ〜閉じないでくれませんか？"
       } else if (attempt === 1) {
         attempt++
-        document.body.style.background = "red"
+        document.body.classList.add("red")
         e.preventDefault()
-        e.returnValue = ""
+        e.returnValue = "もう一度閉じますか？"
       } else {
       
       }
