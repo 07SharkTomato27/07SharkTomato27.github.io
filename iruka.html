@@ -54,14 +54,15 @@ const controls=document.getElementById('controls');
 let isDragging=false,dragOffsetX=0,dragOffsetY=0,autoTalk=true,isAnswering=false;
 let phrases=["こんにちは！助けが必要？","ヒントがほしい？","何でも聞いて"];
 
-function showBubble(text,ms=3000,ask=false){
+function showBubble(text,ms=3000,ask=false,lock=false){
   bubbleText.textContent=text;
   bubble.classList.remove('hidden');
   if(ask){askBox.style.display="flex"}else{askBox.style.display="none"}
-  if(ms>0) setTimeout(()=>{ 
-    if(!isAnswering) bubble.classList.add('hidden'); 
-  },ms);
+  if(!lock && ms>0){
+    setTimeout(()=>{ if(!isAnswering) bubble.classList.add('hidden'); },ms);
+  }
 }
+
 function rand(min,max){return Math.floor(Math.random()*(max-min+1))+min}
 function scheduledTalk(){
   if(!autoTalk||isAnswering) return;
@@ -83,19 +84,24 @@ askBtn.addEventListener('click',()=>{
     .then(r=>r.json())
     .then(data=>{
       if(data.AbstractText){
-        showBubble(data.AbstractText,8000);
+        showBubble(data.AbstractText,0,false,true);
       }else if(data.RelatedTopics && data.RelatedTopics.length>0 && data.RelatedTopics[0].Text){
-        showBubble(data.RelatedTopics[0].Text,8000);
+        showBubble(data.RelatedTopics[0].Text,0,false,true);
       }else{
-        showBubble("ごめん、うまく答えが見つからなかった",4000);
+        showBubble("ごめん、うまく答えが見つからなかった",0,false,true);
       }
     })
     .catch(()=>{
-      showBubble("検索に失敗した",3000);
-    })
-    .finally(()=>{
-      setTimeout(()=>{isAnswering=false;autoTalk=true;},8500);
+      showBubble("検索に失敗した",0,false,true);
     });
+});
+
+dolphin.addEventListener('click',()=>{
+  if(isAnswering){
+    bubble.classList.add('hidden');
+    isAnswering=false;
+    autoTalk=true;
+  }
 });
 
 assistant.addEventListener('mousedown',e=>{
