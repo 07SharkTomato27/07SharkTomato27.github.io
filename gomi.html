@@ -14,21 +14,14 @@
     }
     canvas {
       display: block;
+      width: 100%;
+      height: 100%;
       background: url('image/ga.png') no-repeat center center;
-      background-size: cover;
+      background-size: 100% 100%;
     }
   </style>
 </head>
 <body>
-  <canvas id="bg"></canvas>
-  <script>
-    const canvas = document.getElementById("bg")
-    function resize() {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
-    }
-    window.addEventListener("resize", resize)
-    resize()
-  </script>
+  <canvas></canvas>
 </body>
 </html>
