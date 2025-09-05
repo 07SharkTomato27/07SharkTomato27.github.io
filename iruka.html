@@ -11,7 +11,7 @@ body{margin:0;height:100vh;font-family:sans-serif;background:url("image/95.png")
 .dolphin{width:140px;height:140px;display:block;cursor:grab}
 .bob{animation:bob 2200ms ease-in-out infinite}
 @keyframes bob{0%{transform:translateY(0)}50%{transform:translateY(-8px)}100%{transform:translateY(0)}}
-.bubble{position:absolute;right:160px;bottom:80px;max-width:320px;padding:10px 12px;border-radius:10px;background:#fff;color:#000;box-shadow:0 6px 18px rgba(0,0,0,.25);font-size:13px;line-height:1.2}
+.bubble{position:absolute;right:160px;bottom:80px;max-width:320px;padding:10px 12px;border-radius:10px;background:#fff;color:#000;box-shadow:0 6px 18px rgba(0,0,0,.25);font-size:13px;line-height:1.4}
 .bubble:after{content:"";position:absolute;right:-10px;bottom:14px;width:0;height:0;border-left:10px solid #fff;border-top:8px solid transparent;border-bottom:8px solid transparent}
 .bubble.hidden{display:none}
 .controls{position:absolute;right:8px;top:8px;display:flex;gap:6px}
@@ -43,101 +43,109 @@ body{margin:0;height:100vh;font-family:sans-serif;background:url("image/95.png")
 </div>
 
 <script>
-const assistant=document.getElementById('assistant');
-const dolphin=document.getElementById('dolphin');
-const bubble=document.getElementById('bubble');
-const bubbleText=document.getElementById('bubbleText');
-const askBox=document.getElementById('askBox');
-const askInput=document.getElementById('askInput');
-const askBtn=document.getElementById('askBtn');
-const controls=document.getElementById('controls');
-let isDragging=false,dragOffsetX=0,dragOffsetY=0,autoTalk=true,isAnswering=false;
-let phrases=["こんにちは！助けが必要？","ヒントがほしい？","何でも聞いて"];
+const assistant=document.getElementById('assistant')
+const dolphin=document.getElementById('dolphin')
+const bubble=document.getElementById('bubble')
+const bubbleText=document.getElementById('bubbleText')
+const askBox=document.getElementById('askBox')
+const askInput=document.getElementById('askInput')
+const askBtn=document.getElementById('askBtn')
+const controls=document.getElementById('controls')
+let isDragging=false,dragOffsetX=0,dragOffsetY=0,autoTalk=true,isAnswering=false,isTyping=false
+let phrases=[
+  "こんにちは！今日は何をしてるのかな？気軽に話しかけてみてね。",
+  "ヒントが必要？それとも雑談する？ぼくは色んなことを知ってるよ！",
+  "実はね、ぼくは調べものが得意なんだ。気になることを聞いてみて！",
+  "質問があったら下に入力してね。すぐに答えを探してくるから！"
+]
 
 function showBubble(text,ms=3000,ask=false,lock=false){
-  bubbleText.textContent=text;
-  bubble.classList.remove('hidden');
+  bubbleText.textContent=text
+  bubble.classList.remove('hidden')
   if(ask){askBox.style.display="flex"}else{askBox.style.display="none"}
   if(!lock && ms>0){
-    setTimeout(()=>{ if(!isAnswering) bubble.classList.add('hidden'); },ms);
+    setTimeout(()=>{ if(!isAnswering) bubble.classList.add('hidden') },ms)
   }
 }
 
 function rand(min,max){return Math.floor(Math.random()*(max-min+1))+min}
 function scheduledTalk(){
-  if(!autoTalk||isAnswering) return;
-  let phrase=phrases[rand(0,phrases.length-1)];
-  showBubble(phrase,3500,phrase.includes("聞いて"));
+  if(!autoTalk||isAnswering||isTyping) return
+  let phrase=phrases[rand(0,phrases.length-1)]
+  showBubble(phrase,5000,phrase.includes("入力して"))
 }
-let talkTimer=setInterval(scheduledTalk,7000);
-scheduledTalk();
+let talkTimer=setInterval(scheduledTalk,7000)
+scheduledTalk()
+
+askInput.addEventListener('focus',()=>{isTyping=true})
+askInput.addEventListener('blur',()=>{isTyping=false})
 
 askBtn.addEventListener('click',()=>{
-  let q=askInput.value.trim();
-  if(!q) return;
-  askInput.value="";
-  isAnswering=true;
-  autoTalk=false;
-  bubbleText.textContent="調べてるよ...";
-  askBox.style.display="none";
+  let q=askInput.value.trim()
+  if(!q) return
+  askInput.value=""
+  isAnswering=true
+  autoTalk=false
+  bubbleText.textContent="調べてるよ..."
+  askBox.style.display="none"
   fetch("https://api.duckduckgo.com/?q="+encodeURIComponent(q)+"&format=json&no_redirect=1&no_html=1")
     .then(r=>r.json())
     .then(data=>{
       if(data.AbstractText){
-        showBubble(data.AbstractText,0,false,true);
+        showBubble(data.AbstractText,0,false,true)
       }else if(data.RelatedTopics && data.RelatedTopics.length>0 && data.RelatedTopics[0].Text){
-        showBubble(data.RelatedTopics[0].Text,0,false,true);
+        showBubble(data.RelatedTopics[0].Text,0,false,true)
       }else{
-        showBubble("ごめん、うまく答えが見つからなかった",0,false,true);
+        showBubble("ごめん、うまく答えが見つからなかったよ。もう一度試してみて！",0,false,true)
       }
     })
     .catch(()=>{
-      showBubble("検索に失敗した",0,false,true);
-    });
-});
+      showBubble("検索に失敗したみたい。ネットの調子は大丈夫？",0,false,true)
+    })
+})
 
 dolphin.addEventListener('click',()=>{
   if(isAnswering){
-    bubble.classList.add('hidden');
-    isAnswering=false;
-    autoTalk=true;
+    bubble.classList.add('hidden')
+    isAnswering=false
+    autoTalk=true
   }
-});
+})
 
 assistant.addEventListener('mousedown',e=>{
-  if(e.target.closest('.btn')) return;
-  isDragging=true;
-  const rect=assistant.getBoundingClientRect();
-  dragOffsetX=e.clientX-rect.right;
-  dragOffsetY=e.clientY-rect.bottom;
-});
+  if(e.target.closest('.btn')) return
+  isDragging=true
+  const rect=assistant.getBoundingClientRect()
+  dragOffsetX=e.clientX-rect.right
+  dragOffsetY=e.clientY-rect.bottom
+})
 window.addEventListener('mousemove',e=>{
-  if(!isDragging) return;
-  let x=window.innerWidth-(e.clientX-dragOffsetX)-assistant.offsetWidth;
-  let y=window.innerHeight-(e.clientY-dragOffsetY)-assistant.offsetHeight;
-  assistant.style.right=Math.max(6,Math.min(window.innerWidth-assistant.offsetWidth-6,x))+'px';
-  assistant.style.bottom=Math.max(6,Math.min(window.innerHeight-assistant.offsetHeight-6,y))+'px';
-});
-window.addEventListener('mouseup',()=>{isDragging=false});
+  if(!isDragging) return
+  let x=window.innerWidth-(e.clientX-dragOffsetX)-assistant.offsetWidth
+  let y=window.innerHeight-(e.clientY-dragOffsetY)-assistant.offsetHeight
+  assistant.style.right=Math.max(6,Math.min(window.innerWidth-assistant.offsetWidth-6,x))+'px'
+  assistant.style.bottom=Math.max(6,Math.min(window.innerHeight-assistant.offsetHeight-6,y))+'px'
+})
+window.addEventListener('mouseup',()=>{isDragging=false})
 
 dolphin.addEventListener('dblclick',()=>{
-  if(!isAnswering) showBubble("おっと！ダブルクリックされたね",2500);
-});
+  if(!isAnswering) showBubble("おっと！ダブルクリックされたね。びっくりした！",2500)
+})
 
 assistant.addEventListener('contextmenu',e=>{
-  e.preventDefault();
-  controls.style.display='flex';
-  if(!isAnswering) showBubble("オプションを表示中",1600);
-});
+  e.preventDefault()
+  controls.style.display='flex'
+  if(!isAnswering) showBubble("オプションを表示中だよ。",1600)
+})
 
 document.getElementById('hide').addEventListener('click',()=>{
-  assistant.remove();
-  clearInterval(talkTimer);
-});
+  assistant.remove()
+  clearInterval(talkTimer)
+})
 document.getElementById('min').addEventListener('click',()=>{
-  bubble.classList.toggle('hidden');
-  dolphin.classList.toggle('bob');
-});
+  bubble.classList.toggle('hidden')
+  dolphin.classList.toggle('bob')
+})
 </script>
 </body>
 </html>
