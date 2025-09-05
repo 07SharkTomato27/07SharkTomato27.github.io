@@ -11,7 +11,7 @@ body{margin:0;height:100vh;font-family:sans-serif;background:url("image/95.png")
 .dolphin{width:140px;height:140px;display:block;cursor:grab}
 .bob{animation:bob 2200ms ease-in-out infinite}
 @keyframes bob{0%{transform:translateY(0)}50%{transform:translateY(-8px)}100%{transform:translateY(0)}}
-.bubble{position:absolute;right:160px;bottom:80px;max-width:320px;padding:10px 12px;border-radius:10px;background:#fff;color:#000;box-shadow:0 6px 18px rgba(0,0,0,.25);font-size:13px;line-height:1.4}
+.bubble{position:absolute;right:160px;bottom:80px;max-width:600px;padding:10px 12px;border-radius:10px;background:#fff;color:#000;box-shadow:0 6px 18px rgba(0,0,0,.25);font-size:13px;line-height:1.4;white-space:normal;word-wrap:break-word}
 .bubble:after{content:"";position:absolute;right:-10px;bottom:14px;width:0;height:0;border-left:10px solid #fff;border-top:8px solid transparent;border-bottom:8px solid transparent}
 .bubble.hidden{display:none}
 .controls{position:absolute;right:8px;top:8px;display:flex;gap:6px}
@@ -64,7 +64,7 @@ function showBubble(text,ms=3000,ask=false,lock=false){
   bubble.classList.remove('hidden')
   if(ask){askBox.style.display="flex"}else{askBox.style.display="none"}
   if(!lock && ms>0){
-    setTimeout(()=>{ if(!isAnswering) bubble.classList.add('hidden') },ms)
+    setTimeout(()=>{ if(!isAnswering && !isTyping) bubble.classList.add('hidden') },ms)
   }
 }
 
