@@ -29,6 +29,10 @@
       font-size: 14px;
       cursor: pointer;
       border: none;
+      z-index: 10;
+    }
+    .red {
+      background: red !important;
     }
   </style>
 </head>
@@ -37,15 +41,18 @@
   <button id="closeBtn">✕</button>
   <script>
     let attempt = 0
-    document.getElementById("closeBtn").addEventListener("click", () => {
+    const btn = document.getElementById("closeBtn")
+
+    btn.addEventListener("click", () => {
       if (attempt === 0) {
         attempt++
         alert("あのぉ〜閉じないでくれませんか？")
       } else if (attempt === 1) {
         attempt++
-        document.body.style.background = "red"
-        alert("コイツをボコしますか？")
+        document.documentElement.classList.add("red")
+        alert("本当に閉じますか？")
       } else {
+        window.open("about:blank", "_self")
         window.close()
       }
     })
