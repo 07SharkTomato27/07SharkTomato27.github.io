@@ -51,18 +51,20 @@ const askBox=document.getElementById('askBox');
 const askInput=document.getElementById('askInput');
 const askBtn=document.getElementById('askBtn');
 const controls=document.getElementById('controls');
-let isDragging=false,dragOffsetX=0,dragOffsetY=0,autoTalk=true;
+let isDragging=false,dragOffsetX=0,dragOffsetY=0,autoTalk=true,isAnswering=false;
 let phrases=["こんにちは！助けが必要？","ヒントがほしい？","何でも聞いて"];
 
 function showBubble(text,ms=3000,ask=false){
   bubbleText.textContent=text;
   bubble.classList.remove('hidden');
   if(ask){askBox.style.display="flex"}else{askBox.style.display="none"}
-  if(ms>0) setTimeout(()=>bubble.classList.add('hidden'),ms);
+  if(ms>0) setTimeout(()=>{ 
+    if(!isAnswering) bubble.classList.add('hidden'); 
+  },ms);
 }
 function rand(min,max){return Math.floor(Math.random()*(max-min+1))+min}
 function scheduledTalk(){
-  if(!autoTalk) return;
+  if(!autoTalk||isAnswering) return;
   let phrase=phrases[rand(0,phrases.length-1)];
   showBubble(phrase,3500,phrase.includes("聞いて"));
 }
@@ -73,6 +75,8 @@ askBtn.addEventListener('click',()=>{
   let q=askInput.value.trim();
   if(!q) return;
   askInput.value="";
+  isAnswering=true;
+  autoTalk=false;
   bubbleText.textContent="調べてるよ...";
   askBox.style.display="none";
   fetch("https://api.duckduckgo.com/?q="+encodeURIComponent(q)+"&format=json&no_redirect=1&no_html=1")
@@ -88,6 +92,9 @@ askBtn.addEventListener('click',()=>{
     })
     .catch(()=>{
       showBubble("検索に失敗した",3000);
+    })
+    .finally(()=>{
+      setTimeout(()=>{isAnswering=false;autoTalk=true;},8500);
     });
 });
 
@@ -108,13 +115,13 @@ window.addEventListener('mousemove',e=>{
 window.addEventListener('mouseup',()=>{isDragging=false});
 
 dolphin.addEventListener('dblclick',()=>{
-  showBubble("おっと！ダブルクリックされたね",2500);
+  if(!isAnswering) showBubble("おっと！ダブルクリックされたね",2500);
 });
 
 assistant.addEventListener('contextmenu',e=>{
   e.preventDefault();
   controls.style.display='flex';
-  showBubble("オプションを表示中",1600);
+  if(!isAnswering) showBubble("オプションを表示中",1600);
 });
 
 document.getElementById('hide').addEventListener('click',()=>{
