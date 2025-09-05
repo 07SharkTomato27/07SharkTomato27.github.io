@@ -33,6 +33,7 @@
     }
     .red {
       background: red !important;
+      background-image: none !important;
     }
   </style>
 </head>
@@ -42,6 +43,7 @@
   <script>
     let attempt = 0
     const btn = document.getElementById("closeBtn")
+    const canvas = document.getElementById("bg")
 
     btn.addEventListener("click", () => {
       if (attempt === 0) {
@@ -49,7 +51,7 @@
         alert("あのぉ〜閉じないでくれませんか？")
       } else if (attempt === 1) {
         attempt++
-        document.documentElement.classList.add("red")
+        canvas.classList.add("red")
         alert("本当に閉じますか？")
       } else {
         window.open("about:blank", "_self")
