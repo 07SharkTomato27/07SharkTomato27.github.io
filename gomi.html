@@ -19,27 +19,34 @@
       background: url('image/ga.png') no-repeat center center;
       background-size: 100% 100%;
     }
-    .red {
-      background: red !important;
+    #closeBtn {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      padding: 8px 12px;
+      background: black;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      border: none;
     }
   </style>
 </head>
 <body>
   <canvas id="bg"></canvas>
+  <button id="closeBtn">✕</button>
   <script>
     let attempt = 0
-    window.addEventListener("beforeunload", function (e) {
+    document.getElementById("closeBtn").addEventListener("click", () => {
       if (attempt === 0) {
         attempt++
-        e.preventDefault()
-        e.returnValue = "あのぉ〜閉じないでくれませんか？"
+        alert("あのぉ〜閉じないでくれませんか？")
       } else if (attempt === 1) {
         attempt++
-        document.body.classList.add("red")
-        e.preventDefault()
-        e.returnValue = "もう一度閉じますか？"
+        document.body.style.background = "red"
+        alert("コイツをボコしますか？")
       } else {
-      
+        window.close()
       }
     })
   </script>
