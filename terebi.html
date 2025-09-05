@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>テレビ</title>
+<style>
+body{margin:0;overflow:hidden;background:#88c}
+canvas{display:block}
+</style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+<script>
+const scene=new THREE.Scene()
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000)
+camera.position.set(0,3,8)
+camera.lookAt(0,1,0)
+const renderer=new THREE.WebGLRenderer()
+renderer.setSize(innerWidth,innerHeight)
+document.body.appendChild(renderer.domElement)
+
+const ambient=new THREE.AmbientLight(0xffffff,0.7)
+scene.add(ambient)
+const dir=new THREE.DirectionalLight(0xffffff,0.5)
+dir.position.set(5,10,5)
+scene.add(dir)
+
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(20,20),new THREE.MeshStandardMaterial({color:0x555555}))
+floor.rotation.x=-Math.PI/2
+scene.add(floor)
+const wall=new THREE.Mesh(new THREE.PlaneGeometry(20,10),new THREE.MeshStandardMaterial({color:0x888888}))
+wall.position.z=-10
+wall.position.y=5
+wall.rotation.y=Math.PI
+scene.add(wall)
+
+const tvPartsGeometry=[
+  new THREE.BoxGeometry(2,1.5,1),
+  new THREE.PlaneGeometry(1.6,1.2),
+  new THREE.CylinderGeometry(0.05,0.05,2,6),
+  new THREE.CylinderGeometry(0.05,0.05,2,6)
+]
+const tvPartsMaterial=[
+  new THREE.MeshStandardMaterial({color:0x222222}),
+  new THREE.MeshStandardMaterial({color:0x4444ff,emissive:0x2222ff}),
+  new THREE.MeshStandardMaterial({color:0xaaaaaa}),
+  new THREE.MeshStandardMaterial({color:0xaaaaaa})
+]
+
+let tvs=[]
+function createTV(x=0,z=0){
+  const tvGroup=new THREE.Group()
+  const body=new THREE.Mesh(tvPartsGeometry[0],tvPartsMaterial[0])
+  const screen=new THREE.Mesh(tvPartsGeometry[1],tvPartsMaterial[1])
+  screen.position.z=0.51
+  tvGroup.add(body)
+  tvGroup.add(screen)
+  for(let i=0;i<2;i++){
+    const ant=new THREE.Mesh(tvPartsGeometry[2+i],tvPartsMaterial[2+i])
+    ant.position.set(i===0?-0.5:0.5,1,0)
+    ant.rotation.x=Math.PI/2.5
+    tvGroup.add(ant)
+  }
+  tvGroup.position.set(x,1,z)
+  scene.add(tvGroup)
+  tvs.push({group:tvGroup,velocity:{x:0,y:0,z:0},thrown:false,broken:false,parts:[]})
+}
+
+createTV(0,0)
+
+window.addEventListener("click",()=>{
+  tvs.forEach(tv=>{
+    if(!tv.thrown){
+      tv.velocity={x:(Math.random()-0.5)*0.5,y:0.5,z:-0.8}
+      tv.thrown=true
+    }else if(tv.broken){
+      tv.parts.forEach(p=>{
+        p.vel={x:(Math.random()-0.5)*0.5,y:Math.random()*0.5,z:(Math.random()-0.5)*0.5}
+      })
+    }
+  })
+})
+
+window.addEventListener("keydown",e=>{
+  if(e.key.toLowerCase()==="r") createTV(0,0)
+})
+
+function breakTV(tv){
+  tv.broken=true
+  scene.remove(tv.group)
+  tv.parts=[]
+  for(let i=0;i<tvPartsGeometry.length;i++){
+    const mesh=new THREE.Mesh(tvPartsGeometry[i],tvPartsMaterial[i])
+    mesh.position.set(tv.group.position.x,tv.group.position.y,tv.group.position.z)
+    mesh.vel={x:(Math.random()-0.5)*0.5,y:Math.random()*0.5,z:(Math.random()-0.5)*0.5}
+    scene.add(mesh)
+    tv.parts.push(mesh)
+  }
+}
+
+function animate(){
+  requestAnimationFrame(animate)
+  tvs.forEach(tv=>{
+    if(tv.thrown&&!tv.broken){
+      tv.group.position.x+=tv.velocity.x
+      tv.group.position.y+=tv.velocity.y
+      tv.group.position.z+=tv.velocity.z
+      tv.velocity.y-=0.2
+      if(tv.group.position.y<0.75||tv.group.position.z<-9) breakTV(tv)
+    }else if(tv.broken){
+      tv.parts.forEach(p=>{
+        p.position.x+=p.vel.x
+        p.position.y+=p.vel.y
+        p.position.z+=p.vel.z
+        p.vel.y-=0.1
+        if(p.position.y<0.1)p.vel.y*=-0.5
+      })
+    }
+  })
+  renderer.render(scene,camera)
+}
+animate()
+</script>
+</body>
+</html>
