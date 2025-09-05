@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>カイル君シミュレーター</title>
+<style>
+:root{--bg:#111;--panel:#1a1a1a;--accent:#4ea6ff;--ok:#7de28b;--danger:#ff5f5f}
+html,body{height:100%;margin:0;background:linear-gradient(180deg,#0a0a0a,#101218);font-family:system-ui,-apple-system,Segoe UI,Roboto,'Hiragino Kaku Gothic ProN',Meiryo,sans-serif;color:#e8eef8}
+.app{max-width:960px;margin:28px auto;padding:20px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:12px;box-shadow:0 6px 30px rgba(0,0,0,0.6)}
+.header{display:flex;align-items:center;gap:16px}
+.avatar{width:96px;height:96px;border-radius:14px;background:linear-gradient(180deg,var(--accent),#2b6fb4);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:38px;color:white;box-shadow:inset 0 -6px 20px rgba(0,0,0,0.25)}
+.title{font-size:20px}
+.grid{display:grid;grid-template-columns:260px 1fr;gap:18px;margin-top:18px}
+.panel{background:var(--panel);padding:14px;border-radius:10px}
+.center{display:flex;flex-direction:column;align-items:center;gap:12px}
+.kyle{width:220px;height:220px;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.6);transition:all .3s}
+.kyle img{width:100%;height:100%;object-fit:cover}
+.controls{display:flex;flex-wrap:wrap;gap:8px}
+.button{background:#111;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:8px;color:#e8eef8;cursor:pointer;min-width:84px;text-align:center;user-select:none}
+.button:active{transform:translateY(1px)}
+.stat{display:flex;align-items:center;gap:10px;margin:8px 0}
+.stat .bar{flex:1;height:14px;background:#0f1320;border-radius:8px;overflow:hidden}
+.fill{height:100%;border-radius:8px;background:linear-gradient(90deg,var(--accent),#3fb0ff);width:50%;transition:width .3s}
+.log{height:160px;overflow:auto;background:#090a0d;padding:10px;border-radius:8px;color:#bcd6ff;font-size:13px}
+.small{font-size:12px;color:#9fb1d6}
+.footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px;color:#9fb1d6}
+.badge{background:rgba(255,255,255,0.04);padding:6px 8px;border-radius:8px;font-size:13px}
+.kyle.happy{filter:hue-rotate(40deg) brightness(1.1)}
+.kyle.sleep{filter:grayscale(0.5) brightness(1.2)}
+.kyle.sick{filter:hue-rotate(-30deg) saturate(0.6)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="avatar">K</div>
+    <div>
+      <div class="title">カイル君シミュレーター</div>
+      <div class="small">カイル君をもっと成長させよう！</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <div class="small">状態</div>
+      <div id="stats">
+        <div class="stat"><div class="small">やる気</div><div class="bar"><div id="s-energy" class="fill" style="width:80%"></div></div></div>
+        <div class="stat"><div class="small">幸せ</div><div class="bar"><div id="s-happy" class="fill" style="width:60%"></div></div></div>
+        <div class="stat"><div class="small">空腹</div><div class="bar"><div id="s-hunger" class="fill" style="width:30%"></div></div></div>
+        <div class="stat"><div class="small">健康</div><div class="bar"><div id="s-health" class="fill" style="width:90%"></div></div></div>
+        <div class="stat"><div class="small">経験値</div><div class="bar"><div id="s-exp" class="fill" style="width:0%"></div></div></div>
+      </div>
+
+      <div style="margin-top:12px" class="small">アクション</div>
+      <div style="margin-top:8px" class="controls">
+        <div class="button" id="btn-talk">話す</div>
+        <div class="button" id="btn-play">遊ぶ</div>
+        <div class="button" id="btn-eat">ごはん</div>
+        <div class="button" id="btn-sleep">寝る</div>
+        <div class="button" id="btn-random">ランダム</div>
+        <div class="button" id="btn-reset">リセット</div>
+      </div>
+
+      <div style="margin-top:12px" class="small">メモ</div>
+      <div class="log" id="log"></div>
+    </div>
+
+    <div class="panel center">
+      <div class="kyle" id="kyle"><img src="image/kairu.png" alt="カイル"></div>
+      <div class="small">現在: <span id="mood">普通</span> / Lv.<span id="level">1</span></div>
+      <div style="width:100%" class="controls">
+        <div class="button" id="btn-pet">なでる</div>
+        <div class="button" id="btn-joke">ジョーク</div>
+        <div class="button" id="btn-train">トレーニング</div>
+      </div>
+      <div class="footer" style="width:100%">
+        <div class="badge">日数: <span id="day">1</span></div>
+        <div class="small">保存: ローカル</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const state = {energy:80,happy:60,hunger:30,health:90,exp:0,level:1,day:1}
+const kyleEl=document.getElementById('kyle')
+const logEl=document.getElementById('log')
+const moodEl=document.getElementById('mood')
+const levelEl=document.getElementById('level')
+function save(){localStorage.setItem('kyleStateDX',JSON.stringify(state))}
+function load(){const s=localStorage.getItem('kyleStateDX');if(s){Object.assign(state,JSON.parse(s));updateUI()}}
+function reset(){localStorage.removeItem('kyleStateDX');Object.assign(state,{energy:80,happy:60,hunger:30,health:90,exp:0,level:1,day:1});log('リセットしました');updateUI()}
+function clamp(v){return Math.max(0,Math.min(100,Math.round(v)))}
+function updateUI(){document.getElementById('s-energy').style.width=clamp(state.energy)+'%';document.getElementById('s-happy').style.width=clamp(state.happy)+'%';document.getElementById('s-hunger').style.width=clamp(state.hunger)+'%';document.getElementById('s-health').style.width=clamp(state.health)+'%';document.getElementById('s-exp').style.width=clamp(state.exp)+'%';document.getElementById('day').textContent=state.day;moodEl.textContent=getMood();levelEl.textContent=state.level;applyMoodClass();save()}
+function getMood(){if(state.health<30)return'病気';if(state.energy<20||state.hunger>80)return'しんどい';if(state.happy>75)return'ごきげん';if(state.happy<35)return'さみしい';return'普通'}
+function applyMoodClass(){kyleEl.classList.remove('happy','sleep','sick');const m=getMood();if(m==='ごきげん')kyleEl.classList.add('happy');if(m==='しんどい')kyleEl.classList.add('sleep');if(m==='病気')kyleEl.classList.add('sick')}
+function log(text){const t=new Date().toLocaleTimeString();logEl.innerHTML='<div>['+t+'] '+text+'</div>'+logEl.innerHTML}
+function tick(){state.energy=clamp(state.energy-0.6);state.hunger=clamp(state.hunger+0.5);state.happy=clamp(state.happy-0.2);state.health=clamp(state.health-0.1);updateUI()}
+setInterval(tick,5000)
+function gainExp(v){state.exp+=v;if(state.exp>=100){state.exp=0;state.level++;log('レベルアップ！Lv.'+state.level)}updateUI()}
+function actionTalk(){state.happy=clamp(state.happy+6);state.energy=clamp(state.energy-4);gainExp(5);log('カイルと会話した。幸せが上がった');updateUI()}
+function actionPlay(){state.happy=clamp(state.happy+10);state.energy=clamp(state.energy-12);state.hunger=clamp(state.hunger+8);gainExp(8);log('一緒に遊んだ。疲れたけど楽しかった');updateUI()}
+function actionEat(){state.hunger=clamp(state.hunger-30);state.energy=clamp(state.energy+10);state.health=clamp(state.health+4);log('ごはんをあげた。空腹が減った');updateUI()}
+function actionSleep(){state.energy=clamp(state.energy+40);state.hunger=clamp(state.hunger+12);state.happy=clamp(state.happy+4);state.health=clamp(state.health+6);log('カイルが少し寝た');state.day+=1;updateUI()}
+function actionPet(){state.happy=clamp(state.happy+8);state.energy=clamp(state.energy-3);gainExp(3);log('なでた。気持ちよさそう');updateUI()}
+function actionJoke(){state.happy=clamp(state.happy+5);gainExp(4);log('ジョークで笑った');updateUI()}
+function actionTrain(){state.energy=clamp(state.energy-18);state.happy=clamp(state.happy+12);state.hunger=clamp(state.hunger+10);state.health=clamp(state.health+3);gainExp(12);log('トレーニングした。強くなった気がする');updateUI()}
+function randomEvent(){const r=Math.random();if(r<0.25){state.happy=clamp(state.happy+15);gainExp(10);log('偶然いいことがあった');}else if(r<0.5){state.hunger=clamp(state.hunger+20);state.energy=clamp(state.energy-10);state.health=clamp(state.health-5);log('外で疲れて体調崩した');}else{state.happy=clamp(state.happy-12);log('ちょっと落ち込んでいる')}updateUI()}
+
+document.getElementById('btn-talk').addEventListener('click',actionTalk)
+document.getElementById('btn-play').addEventListener('click',actionPlay)
+document.getElementById('btn-eat').addEventListener('click',actionEat)
+document.getElementById('btn-sleep').addEventListener('click',actionSleep)
+document.getElementById('btn-pet').addEventListener('click',actionPet)
+document.getElementById('btn-joke').addEventListener('click',actionJoke)
+document.getElementById('btn-train').addEventListener('click',actionTrain)
+document.getElementById('btn-random').addEventListener('click',randomEvent)
+document.getElementById('btn-reset').addEventListener('click',reset)
+load()
+</script>
+</body>
+</html>
