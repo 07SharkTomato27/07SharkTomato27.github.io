@@ -287,16 +287,17 @@ currentRef=db.ref("channel"+currentChannel);
 currentRef.on("value",snap=>{
 const container=document.getElementById('messages');
 const data=snap.val()||{};
-container.innerHTML=Object.entries(data).map(([key,m])=>{
-const date=new Date(m.timestamp);
-const dateStr=`${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()} ${date.getHours()}:${date.getMinutes().toString().padStart(2,'0')}`;
-return `<div class="msg">
-<img src="${m.avatar}" width="30" height="30" style="vertical-align: middle; border-radius:50%">
-<b>${m.name}:</b> ${m.text} 
-<span style="font-size:0.8em;color:#aaa">(${dateStr})</span>
-${(m.name===username || username==="SharkTomato")?`<span class="delete" onclick="deleteMsg('${key}','${m.name}')">[削除]</span>`:""}
-</div>`;
-container.scrollTop=container.scrollHeight;
+container.innerHTML = Object.entries(data).map(([key,m])=>{
+  const date=new Date(m.timestamp);
+  const dateStr=`${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()} ${date.getHours()}:${date.getMinutes().toString().padStart(2,'0')}`;
+  return `<div class="msg">
+  <img src="${m.avatar}" width="30" height="30" style="vertical-align: middle; border-radius:50%">
+  <b>${m.name}:</b> ${m.text} 
+  <span style="font-size:0.8em;color:#aaa">(${dateStr})</span>
+  ${(m.name===username || username==="SharkTomato")?`<span class="delete" onclick="deleteMsg('${key}','${m.name}')">[削除]</span>`:""}
+  </div>`;
+}).join("");
+container.scrollTop = container.scrollHeight;
 });
 }
 
