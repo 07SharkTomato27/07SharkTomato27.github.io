@@ -351,51 +351,64 @@ document.getElementById("text-color-setting").addEventListener("change",e=>{loca
 document.getElementById("color1-setting").addEventListener("change",e=>{localStorage.setItem("color1",e.target.value);applySettings();});
 document.getElementById("color2-setting").addEventListener("change",e=>{localStorage.setItem("color2",e.target.value);applySettings();});
 applySettings();
+  
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
+<script>
+  
+let peer = new Peer();
+let localStream = null;
+let connections = [];
 
 document.querySelectorAll(".vc-join-btn").forEach((btn, idx) => {
   const vcChannel = document.querySelectorAll(".vc-channel")[idx];
   const usersDiv = vcChannel.querySelector(".vc-users");
   const micBtn = vcChannel.querySelector(".vc-mic-btn");
+  let inVC = false;
 
   micBtn.addEventListener("click", () => {
-    if (!vcStream) return;
-    micOn = !micOn;
-    vcStream.getAudioTracks().forEach(track => track.enabled = micOn);
-    micBtn.textContent = micOn ? "マイクON" : "マイクOFF";
+    if (!localStream) return;
+    localStream.getAudioTracks().forEach(t => t.enabled = !t.enabled);
+    micBtn.textContent = localStream.getAudioTracks()[0].enabled ? "マイクON" : "マイクOFF";
   });
 
   btn.addEventListener("click", async () => {
-    const channelName = "vc" + idx;
-
     if (!inVC) {
-      vcStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      await db.ref(channelName + "/" + username).set({ name: username, avatar: avatarURL });
-      inVC = true;
-      playEnter();
-    } else {
-      if (vcStream) vcStream.getTracks().forEach(t => t.stop());
-      await db.ref(channelName + "/" + username).remove();
-      inVC = false;
-      playLeave();
-    }
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-    db.ref(channelName).on("value", snap => {
-      const data = snap.val() || {};
-      const prevUsers = Array.from(usersDiv.children).map(img => img.title);
-
-      usersDiv.innerHTML = Object.values(data)
-        .map(u => `<img src="${u.avatar}" title="${u.name}" style="width:36px;height:36px;border-radius:50%">`)
-        .join("");
-
-      if (pageHidden) {
-        Object.values(data).forEach(u => {
-          if (!prevUsers.includes(u.name)) playNotify();
+      peer.on('call', call => {
+        call.answer(localStream);
+        call.on('stream', remoteStream => {
+          const audio = document.createElement('audio');
+          audio.srcObject = remoteStream;
+          audio.autoplay = true;
+          vcChannel.appendChild(audio);
         });
-      }
-    });
+      });
 
-    updateVCDisplay();
+      connections.forEach(c => {
+        const call = peer.call(c.id, localStream);
+        call.on('stream', s => {
+          const audio = document.createElement('audio');
+          audio.srcObject = s;
+          audio.autoplay = true;
+          vcChannel.appendChild(audio);
+        });
+      });
+
+      connections.push({ id: peer.id, name: username, avatar: avatarURL });
+      updateUsersDisplay();
+      inVC = true;
+    } else {
+      if (localStream) localStream.getTracks().forEach(t => t.stop());
+      connections = connections.filter(c => c.id !== peer.id);
+      updateUsersDisplay();
+      inVC = false;
+    }
   });
+
+  function updateUsersDisplay() {
+    usersDiv.innerHTML = connections.map(c => `<img src="${c.avatar}" title="${c.name}" style="width:36px;height:36px;border-radius:50%">`).join("");
+  }
 });
 
 document.addEventListener("visibilitychange",()=>{pageHidden=document.hidden;});
