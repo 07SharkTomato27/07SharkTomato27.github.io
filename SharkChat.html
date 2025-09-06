@@ -213,9 +213,18 @@ let inVC=false;
 let vcStream=null;
 let micOn=true;
 
-const enterAudio=new Audio("media/chat/hairu.mp3");
-const leaveAudio=new Audio("media/chat/deru.mp3");
-const notifyAudio=new Audio("media/chat/tuuti.mp3");
+function playEnter() {
+  const audio = new Audio("media/chat/hairu.mp3");
+  audio.play();
+}
+function playLeave() {
+  const audio = new Audio("media/chat/deru.mp3");
+  audio.play();
+}
+function playNotify() {
+  const audio = new Audio("media/chat/tuuti.mp3");
+  audio.play();
+}
 let pageHidden=false;
 
 function applySettings(){
