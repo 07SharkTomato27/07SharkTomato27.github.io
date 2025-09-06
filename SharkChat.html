@@ -282,7 +282,11 @@ db.ref("channel"+currentChannel).push(msg);
 input.value="";
 }
 
-function deleteMsg(key){db.ref("channel"+currentChannel+"/"+key).remove();}
+function deleteMsg(key){
+  for(let i=0;i<4;i++){
+    db.ref("channel"+i+"/"+key).remove();
+  }
+}
 
 function listenMessages(){
 if(currentRef) currentRef.off();
