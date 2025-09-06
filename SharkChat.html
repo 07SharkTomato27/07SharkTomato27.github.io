@@ -139,6 +139,7 @@ body {
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
 </head>
 <body>
 <div id="login">
@@ -350,10 +351,7 @@ document.getElementById("font-setting").addEventListener("change",e=>{localStora
 document.getElementById("text-color-setting").addEventListener("change",e=>{localStorage.setItem("textColor",e.target.value);applySettings();});
 document.getElementById("color1-setting").addEventListener("change",e=>{localStorage.setItem("color1",e.target.value);applySettings();});
 document.getElementById("color2-setting").addEventListener("change",e=>{localStorage.setItem("color2",e.target.value);applySettings();});
-applySettings();
-  
-<script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
-<script>
+applySettings();5  
   
 let peer = new Peer();
 let localStream = null;
