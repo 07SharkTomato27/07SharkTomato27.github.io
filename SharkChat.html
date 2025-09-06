@@ -228,6 +228,14 @@ document.getElementById("chat").style.background=`linear-gradient(to bottom righ
 document.body.style.color=textColor;
 }
 
+document.addEventListener("DOMContentLoaded",()=>{
+  if("Notification" in window){
+    if(Notification.permission==="default"){
+      Notification.requestPermission();
+    }
+  }
+});
+
 function checkPass(){
 const pass=document.getElementById('password').value;
 if(pass==="0727"){
@@ -282,23 +290,42 @@ function deleteMsg(key, name){
 }
 
 function listenMessages(){
-if(currentRef) currentRef.off();
-currentRef=db.ref("channel"+currentChannel);
-currentRef.on("value",snap=>{
-const container=document.getElementById('messages');
-const data=snap.val()||{};
-container.innerHTML = Object.entries(data).map(([key,m])=>{
-  const date=new Date(m.timestamp);
-  const dateStr=`${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()} ${date.getHours()}:${date.getMinutes().toString().padStart(2,'0')}`;
-  return `<div class="msg">
-  <img src="${m.avatar}" width="30" height="30" style="vertical-align: middle; border-radius:50%">
-  <b>${m.name}:</b> ${m.text} 
-  <span style="font-size:0.8em;color:#aaa">(${dateStr})</span>
-  ${(m.name===username || username==="SharkTomato")?`<span class="delete" onclick="deleteMsg('${key}','${m.name}')">[削除]</span>`:""}
-  </div>`;
-}).join("");
-container.scrollTop = container.scrollHeight;
-});
+  if(currentRef) currentRef.off();
+  currentRef=db.ref("channel"+currentChannel);
+
+  currentRef.on("value",snap=>{
+    const container=document.getElementById('messages');
+    const data=snap.val()||{};
+    const prevIds = Array.from(container.querySelectorAll(".msg")).map(el=>el.dataset.id);
+
+    container.innerHTML=Object.entries(data).map(([key,m])=>{
+      const date=new Date(m.timestamp);
+      const dateStr=`${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()} ${date.getHours()}:${date.getMinutes().toString().padStart(2,'0')}`;
+      return `<div class="msg" data-id="${key}">
+        <img src="${m.avatar}" width="30" height="30" style="vertical-align: middle; border-radius:50%">
+        <b>${m.name}:</b> ${m.text} 
+        <span style="font-size:0.8em;color:#aaa">(${dateStr})</span>
+        ${(m.name===username || username==="SharkTomato")?`<span class="delete" onclick="deleteMsg('${key}','${m.name}')">[削除]</span>`:""}
+      </div>`;
+    }).join("");
+
+    const newIds = Object.keys(data);
+    newIds.forEach(id=>{
+      if(!prevIds.includes(id) && pageHidden){
+        playNotify();
+
+        if("Notification" in window && Notification.permission==="granted"){
+          const m = data[id];
+          new Notification(m.name,{
+            body: m.text,
+            icon: m.avatar || "icon/favicon3.ico"
+          });
+        }
+      }
+    });
+
+    container.scrollTop=container.scrollHeight;
+  });
 }
 
 function updateVCDisplay(){
