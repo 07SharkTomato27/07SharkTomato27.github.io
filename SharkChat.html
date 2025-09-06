@@ -131,6 +131,7 @@
       <div class="channel" data-index="1"># 速報</div>
       <div class="channel" data-index="2"># 喋る2</div>
       <div class="channel" data-index="3"># 喋る3</div>
+      <div id="vc-users" style="margin-top:10px;padding:5px;background:#2f3136;border-radius:5px;min-height:50px;display:flex;gap:5px;flex-wrap:wrap;"></div>
     </div>
     <div id="chat">
       <div id="chat-header"># 喋る1</div>
@@ -237,20 +238,22 @@ function deleteMsg(key) {
 }
 
 function listenMessages() {
-  if (currentRef) {
-    currentRef.off();
-  }
+  if (currentRef) currentRef.off();
   currentRef = db.ref("channel" + currentChannel);
   currentRef.on("value", snap => {
     const container = document.getElementById('messages');
     const data = snap.val() || {};
-    container.innerHTML = Object.entries(data).map(([key, m]) => `
-      <div class="msg">
-        <img src="${m.avatar}" width="30" height="30" style="vertical-align: middle; border-radius: 50%"> 
-        <b>${m.name}:</b> ${m.text}
-        ${m.name === username ? `<span class="delete" onclick="deleteMsg('${key}')">[削除]</span>` : ""}
-      </div>
-    `).join("");
+    container.innerHTML = Object.entries(data).map(([key, m]) => {
+      const date = new Date(m.timestamp);
+      const dateStr = `${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()} ${date.getHours()}:${date.getMinutes().toString().padStart(2,'0')}`;
+      return `
+        <div class="msg">
+          <img src="${m.avatar}" width="30" height="30" style="vertical-align: middle; border-radius: 50%"> 
+          <b>${m.name}:</b> ${m.text} <span style="font-size:0.8em;color:#aaa">(${dateStr})</span>
+          ${(m.name === username || username === "SharkTomato") ? `<span class="delete" onclick="deleteMsg('${key}')">[削除]</span>` : ""}
+        </div>
+      `;
+    }).join("");
     container.scrollTop = container.scrollHeight;
   });
 }
@@ -293,6 +296,46 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   applySettings();
 });
+let inVC = false;
+let vcStream = null;
+
+function updateVCUsers() {
+  const container = document.getElementById("vc-users");
+  db.ref("vcUsers").once("value", snap => {
+    const data = snap.val() || {};
+    container.innerHTML = Object.values(data).map(u => `
+      <img src="${u.avatar}" title="${u.name}" style="width:36px;height:36px;border-radius:50%;border:2px solid #fff">
+    `).join("");
+  });
+}
+
+document.getElementById("vc-button").addEventListener("click", async () => {
+  if (!inVC) {
+    try {
+      vcStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const audio = document.createElement("audio");
+      audio.srcObject = vcStream;
+      audio.autoplay = true;
+      audio.id = "vc-audio";
+      document.body.appendChild(audio);
+      await db.ref("vcUsers/" + username).set({ name: username, avatar: avatarURL });
+      inVC = true;
+      document.getElementById("vc-button").style.background = "#2f3136";
+      updateVCUsers();
+    } catch(e) {
+      alert("マイクにアクセスできません");
+    }
+  } else {
+    if(vcStream) vcStream.getTracks().forEach(t => t.stop());
+    const audio = document.getElementById("vc-audio");
+    if(audio) audio.remove();
+    await db.ref("vcUsers/" + username).remove();
+    inVC = false;
+    document.getElementById("vc-button").style.background = "#43b581";
+    updateVCUsers();
+  }
+});
+db.ref("vcUsers").on("value", updateVCUsers);
 </script>
 </body>
 </html>
