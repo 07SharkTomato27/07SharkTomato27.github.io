@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>イルカ95クローン</title>
+<title>あいつ</title>
 <style>
 body{margin:0;height:100vh;font-family:sans-serif;background:url("image/95.png") center/cover no-repeat}
 #assistant{position:fixed;right:24px;bottom:24px;width:220px;z-index:9999;user-select:none}
@@ -32,8 +32,8 @@ body{margin:0;height:100vh;font-family:sans-serif;background:url("image/95.png")
   <div class="bubble hidden" id="bubble">
     <div id="bubbleText"></div>
     <div id="askBox" style="display:none">
-      <input id="askInput" type="text" placeholder="質問してみて">
-      <button id="askBtn">聞く</button>
+      <input id="askInput" type="text" placeholder="ここで検索">
+      <button id="askBtn">検索</button>
     </div>
   </div>
   <div class="controls" id="controls" style="display:none">
@@ -53,10 +53,10 @@ const askBtn=document.getElementById('askBtn')
 const controls=document.getElementById('controls')
 let isDragging=false,dragOffsetX=0,dragOffsetY=0,autoTalk=true,isAnswering=false,isTyping=false
 let phrases=[
-  "こんにちは！今日は何をしてるのかな？気軽に話しかけてみてね。",
-  "ヒントが必要？それとも雑談する？ぼくは色んなことを知ってるよ！",
-  "実はね、ぼくは調べものが得意なんだ。気になることを聞いてみて！",
-  "質問があったら下に入力してね。すぐに答えを探してくるから！"
+  "こんにちは！",
+  "ヒントが必要？ぼくは色んなことを知ってるよ",
+  "ぼくは調べものが得意なんだ。気になることを聞いてみて",
+  "何について調べますか"
 ]
 
 function showBubble(text,ms=3000,ask=false,lock=false){
@@ -96,7 +96,7 @@ askBtn.addEventListener('click',()=>{
       }else if(data.RelatedTopics && data.RelatedTopics.length>0 && data.RelatedTopics[0].Text){
         showBubble(data.RelatedTopics[0].Text,0,false,true)
       }else{
-        showBubble("ごめん、うまく答えが見つからなかったよ。もう一度試してみて！",0,false,true)
+        showBubble("うまく答えが見つからなかった。もう一度試してみて",0,false,true)
       }
     })
     .catch(()=>{
@@ -135,7 +135,7 @@ dolphin.addEventListener('dblclick',()=>{
 assistant.addEventListener('contextmenu',e=>{
   e.preventDefault()
   controls.style.display='flex'
-  if(!isAnswering) showBubble("オプションを表示中だよ。",1600)
+  if(!isAnswering) showBubble("オプションを表示中だよ",1600)
 })
 
 document.getElementById('hide').addEventListener('click',()=>{
