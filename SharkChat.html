@@ -237,6 +237,14 @@ document.addEventListener("DOMContentLoaded",()=>{
   }
 });
 
+document.addEventListener("visibilitychange",()=>{pageHidden=document.hidden;});
+function showNotification(m){
+  if (!pageHidden) return;
+  if (Notification.permission==="granted"){
+    new Notification(m.name,{body:m.text,icon:m.avatar});
+  }
+}
+
 function checkPass(){
 const pass=document.getElementById('password').value;
 if(pass==="0727"){
@@ -353,15 +361,15 @@ document.getElementById("color1-setting").addEventListener("change",e=>{localSto
 document.getElementById("color2-setting").addEventListener("change",e=>{localStorage.setItem("color2",e.target.value);applySettings();});
 applySettings();5  
   
-let peer = new Peer();
-let localStream = null;
-let connections = [];
+let peer = new Peer(username);
+let localStream;
+let vcStates = {};
 
 document.querySelectorAll(".vc-join-btn").forEach((btn, idx) => {
   const vcChannel = document.querySelectorAll(".vc-channel")[idx];
   const usersDiv = vcChannel.querySelector(".vc-users");
   const micBtn = vcChannel.querySelector(".vc-mic-btn");
-  let inVC = false;
+  const channelName = "vc" + idx;
 
   micBtn.addEventListener("click", () => {
     if (!localStream) return;
@@ -373,40 +381,42 @@ document.querySelectorAll(".vc-join-btn").forEach((btn, idx) => {
     if (!inVC) {
       localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      peer.on('call', call => {
+      peer.on("call", call => {
         call.answer(localStream);
-        call.on('stream', remoteStream => {
-          const audio = document.createElement('audio');
+        call.on("stream", remoteStream => {
+          const audio = document.createElement("audio");
           audio.srcObject = remoteStream;
           audio.autoplay = true;
           vcChannel.appendChild(audio);
         });
       });
+      await db.ref(channelName + "/" + username).set({ name: username, avatar: avatarURL, id: peer.id });
+      db.ref(channelName).on("value", snap => {
+        const data = snap.val() || {};
+        usersDiv.innerHTML = Object.values(data).map(u =>
+          `<img src="${u.avatar}" title="${u.name}" style="width:36px;height:36px;border-radius:50%">`
+        ).join("");
 
-      connections.forEach(c => {
-        const call = peer.call(c.id, localStream);
-        call.on('stream', s => {
-          const audio = document.createElement('audio');
-          audio.srcObject = s;
-          audio.autoplay = true;
-          vcChannel.appendChild(audio);
+        Object.values(data).forEach(u => {
+          if (u.id && u.id !== peer.id) {
+            const call = peer.call(u.id, localStream);
+            call.on("stream", s => {
+              const audio = document.createElement("audio");
+              audio.srcObject = s;
+              audio.autoplay = true;
+              vcChannel.appendChild(audio);
+            });
+          }
         });
       });
 
-      connections.push({ id: peer.id, name: username, avatar: avatarURL });
-      updateUsersDisplay();
       inVC = true;
     } else {
       if (localStream) localStream.getTracks().forEach(t => t.stop());
-      connections = connections.filter(c => c.id !== peer.id);
-      updateUsersDisplay();
+      await db.ref(channelName + "/" + username).remove();
       inVC = false;
     }
   });
-
-  function updateUsersDisplay() {
-    usersDiv.innerHTML = connections.map(c => `<img src="${c.avatar}" title="${c.name}" style="width:36px;height:36px;border-radius:50%">`).join("");
-  }
 });
 
 document.addEventListener("visibilitychange",()=>{pageHidden=document.hidden;});
