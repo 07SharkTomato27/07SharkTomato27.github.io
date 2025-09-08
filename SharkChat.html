@@ -298,25 +298,75 @@ function deleteMsg(key, name){
   }
 }
 
+let allMessages = []
+
 function listenMessages(){
-  if(currentRef) currentRef.off();
-  currentRef=db.ref("channel"+currentChannel);
+  if(currentRef) currentRef.off()
+  currentRef = db.ref("channel"+currentChannel)
+  currentRef.on("value", snap => {
+    const data = snap.val() || {}
+    const oldKeys = allMessages.map(x => x.key)
+    const entries = Object.entries(data).map(([k,v])=>({key:k,m:v}))
+    entries.sort((a,b)=>(a.m.timestamp||0)-(b.m.timestamp||0))
+    allMessages = entries
+    const newKeys = entries.map(e=>e.key).filter(k=>!oldKeys.includes(k))
+    if(newKeys.length){
+      newKeys.forEach(k=>{
+        const e = entries.find(x=>x.key===k)
+        if(!e) return
+        const m = e.m
+        if(m.name===username) return
+        if(pageHidden){
+          playNotify()
+          if("Notification" in window && Notification.permission==="granted"){
+            new Notification(m.name,{body:m.text,icon:m.avatar||"icon/favicon3.ico"})
+          }
+        }
+      })
+    }
+    renderVirtual()
+  })
+}
 
-  currentRef.on("value",snap=>{
-    const container=document.getElementById('messages');
-    const data=snap.val()||{};
-    const prevIds = Array.from(container.querySelectorAll(".msg")).map(el=>el.dataset.id);
+function renderVirtual(){
+  const container = document.getElementById("messages")
+  const rowHeight = 56
+  const buffer = 10
+  const total = allMessages.length
+  const viewHeight = container.clientHeight || 400
+  const scrollTop = container.scrollTop
+  const isAtBottom = (container.scrollHeight - scrollTop - viewHeight) < (rowHeight * 2)
+  const start = Math.max(0, Math.floor(scrollTop / rowHeight) - buffer)
+  const end = Math.min(total, Math.ceil((scrollTop + viewHeight) / rowHeight) + buffer)
+  const visible = allMessages.slice(start, end)
+  const topPadding = start * rowHeight
+  const bottomPadding = (total - end) * rowHeight
+  let html = '<div style="height:' + topPadding + 'px"></div>'
+  visible.forEach(e=>{
+    const key = e.key
+    const m = e.m
+    const date = new Date(m.timestamp || Date.now())
+    const dateStr = date.getFullYear() + '/' + (date.getMonth()+1) + '/' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes().toString().padStart(2,'0')
+    const avatar = m.avatar || "icon/favicon3.ico"
+    const del = (m.name===username || username==="SharkTomato") ? '<span class="delete" onclick="deleteMsg(\''+key+'\',\''+String(m.name).replace(/'/g,"\\'")+'\')">[削除]</span>' : ''
+    html += '<div class="msg" data-id="'+key+'" style="height:'+rowHeight+'px;overflow:hidden">'
+    html += '<img src="'+avatar+'" width="30" height="30" style="vertical-align: middle; border-radius:50%">'
+    html += '<b>'+m.name+':</b> '+m.text
+    html += '<span style="font-size:0.8em;color:#aaa">('+dateStr+')</span>'
+    html += del
+    html += '</div>'
+  })
+  html += '<div style="height:' + bottomPadding + 'px"></div>'
+  container.innerHTML = html
+  if(isAtBottom){
+    container.scrollTop = Math.max(0, total * rowHeight - viewHeight)
+  }
+}
 
-    container.innerHTML=Object.entries(data).map(([key,m])=>{
-      const date=new Date(m.timestamp);
-      const dateStr=`${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()} ${date.getHours()}:${date.getMinutes().toString().padStart(2,'0')}`;
-      return `<div class="msg" data-id="${key}">
-        <img src="${m.avatar}" width="30" height="30" style="vertical-align: middle; border-radius:50%">
-        <b>${m.name}:</b> ${m.text} 
-        <span style="font-size:0.8em;color:#aaa">(${dateStr})</span>
-        ${(m.name===username || username==="SharkTomato")?`<span class="delete" onclick="deleteMsg('${key}','${m.name}')">[削除]</span>`:""}
-      </div>`;
-    }).join("");
+document.addEventListener("DOMContentLoaded",()=>{
+  const c = document.getElementById("messages")
+  if(c) c.addEventListener("scroll", renderVirtual)
+})
 
     const newIds = Object.keys(data);
     newIds.forEach(id=>{
