@@ -245,10 +245,14 @@ function checkPass(){
 }
 
 document.getElementById("resetBtn").onclick=()=>{
-  if(currentChannel){
-    const pass=prompt("このチャンネルをリセットします。パス入力:");
-    if(pass==="0727"){ db.ref("channel"+currentChannel).remove(); alert("リセットしました") }
-    else if(pass!==null){ alert("パス間違い") }
+  if(currentChannel !== null && currentChannel !== undefined){
+    const pass=prompt("このチャンネルをリセットします。リセットするにはパスワードを入力してください。")
+    if(pass==="0727"){
+      db.ref("channel"+currentChannel).remove()
+      alert("チャンネルをリセットしました")
+    }else if(pass!==null){
+      alert("パスワードが違います")
+    }
   }
 }
 
