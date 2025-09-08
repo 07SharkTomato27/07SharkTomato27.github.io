@@ -185,6 +185,7 @@ VC2
 <div id="chat">
 <div id="chat-header"># 喋る1</div>
 <div id="messages"></div>
+<div id="resetBtn" style="position:fixed;left:10px;bottom:10px;font-size:20px;cursor:pointer">🗑️</div>
 <div id="input-box">
 <input id="msg" placeholder="メッセージを入力">
 <button id="send-button">送信</button>
@@ -259,6 +260,18 @@ document.getElementById("color2-setting").value=localStorage.getItem("color2")||
 applySettings();
 listenMessages();
 } else {alert("間違ったパスワード");}
+}
+
+document.getElementById("resetBtn").onclick=()=>{
+  if(currentChannel){
+    const pass=prompt("このチャンネルをリセットします。リセットするにはパスワードを入力してください。")
+    if(pass==="0727"){
+      db.ref("channel"+currentChannel).remove()
+      alert("チャンネルをリセットしました")
+    }else if(pass!==null){
+      alert("パスワードが違います")
+    }
+  }
 }
 
 function setUsername(){
