@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ルーレット</title>
+<style>
+html,body{height:100%;margin:0;font-family:system-ui,Segoe UI,Meiryo,Roboto}
+.container{display:flex;gap:16px;align-items:flex-start;padding:20px}
+.controls{width:320px}
+.controls input{width:100%;box-sizing:border-box;padding:8px;margin-bottom:8px;border:1px solid #222;border-radius:6px}
+.controls button{width:100%;padding:10px;border-radius:6px;border:1px solid #222;cursor:pointer}
+.list{margin-top:12px;max-height:320px;overflow:auto;border:1px solid #222;padding:8px;border-radius:6px}
+.list div{display:flex;justify-content:space-between;align-items:center;padding:6px 4px}
+.canvasWrap{flex:1;display:flex;align-items:center;justify-content:center;position:relative}
+canvas{background:#111;border-radius:12px}
+.arrow{position:absolute;top:0;left:50%;transform:translateX(-50%);width:0;height:0;border-left:20px solid transparent;border-right:20px solid transparent;border-top:32px solid #ffea00;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.6));pointer-events:none}
+.overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.massText{position:absolute;pointer-events:none;font-weight:700;white-space:nowrap}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="controls">
+    <input id="textInput" placeholder="文字を入力してEnterか追加ボタン" />
+    <button id="addBtn">追加</button>
+    <button id="spinBtn">回す</button>
+    <div class="list" id="list"></div>
+  </div>
+  <div class="canvasWrap">
+    <div class="arrow" id="arrow"></div>
+    <canvas id="wheel" width="520" height="520"></canvas>
+  </div>
+</div>
+<div id="overlay" class="overlay hidden"></div>
+<script>
+const input=document.getElementById('textInput')
+const addBtn=document.getElementById('addBtn')
+const spinBtn=document.getElementById('spinBtn')
+const listEl=document.getElementById('list')
+const canvas=document.getElementById('wheel')
+const ctx=canvas.getContext('2d')
+const overlay=document.getElementById('overlay')
+let items=[]
+let angle=0
+let angularVelocity=0
+let spinning=false
+function renderList(){
+  listEl.innerHTML=''
+  items.forEach((t,i)=>{
+    const row=document.createElement('div')
+    const span=document.createElement('span')
+    span.textContent=t
+    const del=document.createElement('button')
+    del.textContent='削除'
+    del.onclick=()=>{items.splice(i,1);renderList();drawWheel()}
+    row.appendChild(span)
+    row.appendChild(del)
+    listEl.appendChild(row)
+  })
+}
+addBtn.addEventListener('click',()=>{const v=input.value.trim();if(!v)return;items.push(v);input.value='';renderList();drawWheel()})
+input.addEventListener('keydown',e=>{if(e.key==='Enter'){addBtn.click()}})
+spinBtn.addEventListener('click',()=>{if(items.length===0) return; if(spinning) return; startSpin()})
+function drawWheel(){
+  const w=canvas.width
+  const h=canvas.height
+  const cx=w/2
+  const cy=h/2
+  const r=Math.min(w,h)/2-8
+  ctx.clearRect(0,0,w,h)
+  ctx.save()
+  ctx.translate(cx,cy)
+  ctx.rotate(angle)
+  if(items.length===0){
+    ctx.fillStyle='#222'
+    ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill()
+    ctx.fillStyle='#fff'
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='20px system-ui'
+    ctx.fillText('左側になんか書け',0,0)
+    ctx.restore()
+    return
+  }
+  const seg=2*Math.PI/items.length
+  for(let i=0;i<items.length;i++){
+    const start=i*seg
+    const end=start+seg
+    ctx.beginPath()
+    ctx.moveTo(0,0)
+    ctx.arc(0,0,r,start,end)
+    ctx.closePath()
+    ctx.fillStyle=((i%2)===0)?'#2b2b2b':'#1a1a1a'
+    ctx.fill()
+    ctx.save()
+    const mid=(start+end)/2
+    ctx.rotate(mid)
+    ctx.fillStyle='#fff'
+    ctx.font='16px system-ui'
+    ctx.textAlign='right'
+    ctx.fillText(items[i],r-12,0)
+    ctx.restore()
+  }
+  ctx.restore()
+}
+function startSpin(){
+  spinning=true
+  angularVelocity=(Math.random()*0.6+0.8)*0.5 + 0.3
+  angularVelocity+=Math.random()*2
+  animate()
+}
+function animate(){
+  if(!spinning) return
+  angle+=angularVelocity
+  angularVelocity*=0.991
+  if(Math.abs(angularVelocity)<0.002){
+    spinning=false
+    angularVelocity=0
+    angle=angle%(Math.PI*2)
+    const picked=getPicked()
+    setTimeout(()=>{explode(picked)},1000)
+    return
+  }
+  drawWheel()
+  requestAnimationFrame(animate)
+}
+function getPicked(){
+  const normalized=(Math.PI*2 - (angle%(Math.PI*2)))%(Math.PI*2)
+  const seg=2*Math.PI/items.length
+  const idx=Math.floor(normalized/seg)%items.length
+  return items[idx]
+}
+function explode(text){
+  overlay.classList.remove('hidden')
+  overlay.innerHTML=''
+  const count=90
+  const w=window.innerWidth
+  const h=window.innerHeight
+  for(let i=0;i<count;i++){
+    const el=document.createElement('div')
+    el.className='massText'
+    el.textContent=text
+    const size= Math.floor(Math.random()*36)+12
+    el.style.fontSize=size+'px'
+    el.style.left=Math.random()* (w-100) + 'px'
+    el.style.top=Math.random()* (h-40) + 'px'
+    overlay.appendChild(el)
+    animateFloat(el)
+  }
+}
+function animateFloat(el){
+  let vx=(Math.random()-0.5)*6
+  let vy=(Math.random()-0.5)*6
+  function step(){
+    const rect=el.getBoundingClientRect()
+    let x=rect.left + vx
+    let y=rect.top + vy
+    if(x<0||x>window.innerWidth-20) vx=-vx
+    if(y<0||y>window.innerHeight-20) vy=-vy
+    el.style.transform=`translate(${x-rect.left}px,${y-rect.top}px)`
+    requestAnimationFrame(step)
+  }
+  requestAnimationFrame(step)
+}
+window.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    overlay.classList.add('hidden')
+    overlay.innerHTML=''
+    drawWheel()
+  }
+})
+window.addEventListener('resize',()=>{canvas.width=Math.min(520,window.innerWidth-160);canvas.height=canvas.width;drawWheel()})
+canvas.width=Math.min(520,window.innerWidth-160);canvas.height=canvas.width
+renderList()
+drawWheel()
+</script>
+</body>
+</html>
