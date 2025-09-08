@@ -196,13 +196,13 @@ VC2
 
 <script>
 const firebaseConfig = {
-apiKey:"AIzaSyCPF0ieugcs05fLXYahHdaE5JCeXgOIw3A",
-authDomain:"sharkchat-9a0a5.firebaseapp.com",
-databaseURL:"https://sharkchat-9a0a5-default-rtdb.firebaseio.com",
-projectId:"sharkchat-9a0a5",
-storageBucket:"sharkchat-9a0a5.appspot.com",
-messagingSenderId:"932358584876",
-appId:"1:932358584876:web:afa8b9f8515c0ac6826f89"
+  apiKey:"AIzaSyCPF0ieugcs05fLXYahHdaE5JCeXgOIw3A",
+  authDomain:"sharkchat-9a0a5.firebaseapp.com",
+  databaseURL:"https://sharkchat-9a0a5-default-rtdb.firebaseio.com",
+  projectId:"sharkchat-9a0a5",
+  storageBucket:"sharkchat-9a0a5.appspot.com",
+  messagingSenderId:"932358584876",
+  appId:"1:932358584876:web:afa8b9f8515c0ac6826f89"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
@@ -212,133 +212,102 @@ let avatarURL = localStorage.getItem("avatarURL")||"";
 let currentChannel=0;
 let currentRef=null;
 let inVC=false;
-let vcStream=null;
-let micOn=true;
-
-function playEnter(){ const a=new Audio("media/chat/hairu.mp3"); a.play(); }
-function playLeave(){ const a=new Audio("media/chat/deru.mp3"); a.play(); }
-function playNotify(){ const a=new Audio("media/chat/tuuti.mp3"); a.play(); }
+let localStream=null;
+let remoteAudios = {};
 let pageHidden=false;
 
-function applySettings(){
-const font=localStorage.getItem("font")||"sans-serif";
-const color1=localStorage.getItem("color1")||"#1e1e2f";
-const color2=localStorage.getItem("color2")||"#3a3a5c";
-const textColor=localStorage.getItem("textColor")||"white";
-document.body.style.fontFamily=font;
-document.getElementById("chat").style.background=`linear-gradient(to bottom right, ${color1}, ${color2})`;
-document.body.style.color=textColor;
-}
-
-document.addEventListener("DOMContentLoaded",()=>{
-  if("Notification" in window){
-    if(Notification.permission==="default"){
-      Notification.requestPermission();
-    }
-  }
-});
-
 document.addEventListener("visibilitychange",()=>{pageHidden=document.hidden;});
-function showNotification(m){
-  if (!pageHidden) return;
-  if (Notification.permission==="granted"){
-    new Notification(m.name,{body:m.text,icon:m.avatar});
-  }
+
+function applySettings(){
+  const font=localStorage.getItem("font")||"sans-serif";
+  const color1=localStorage.getItem("color1")||"#1e1e2f";
+  const color2=localStorage.getItem("color2")||"#3a3a5c";
+  const textColor=localStorage.getItem("textColor")||"white";
+  document.body.style.fontFamily=font;
+  document.getElementById("chat").style.background=`linear-gradient(to bottom right, ${color1}, ${color2})`;
+  document.body.style.color=textColor;
 }
 
 function checkPass(){
-const pass=document.getElementById('password').value;
-if(pass==="0727"){
-document.getElementById('login').style.display="none";
-document.getElementById('app').style.display="block";
-document.getElementById('username').value=username;
-if(avatarURL) document.getElementById('avatar-preview').src=avatarURL;
-document.getElementById("font-setting").value=localStorage.getItem("font")||"";
-document.getElementById("text-color-setting").value=localStorage.getItem("textColor")||"#ffffff";
-document.getElementById("color1-setting").value=localStorage.getItem("color1")||"#1e1e2f";
-document.getElementById("color2-setting").value=localStorage.getItem("color2")||"#3a3a5c";
-applySettings();
-listenMessages();
-} else {alert("間違ったパスワード");}
+  const pass=document.getElementById('password').value;
+  if(pass==="0727"){
+    document.getElementById('login').style.display="none";
+    document.getElementById('app').style.display="block";
+    document.getElementById('username').value=username;
+    if(avatarURL) document.getElementById('avatar-preview').src=avatarURL;
+    document.getElementById("font-setting").value=localStorage.getItem("font")||"";
+    document.getElementById("text-color-setting").value=localStorage.getItem("textColor")||"#ffffff";
+    document.getElementById("color1-setting").value=localStorage.getItem("color1")||"#1e1e2f";
+    document.getElementById("color2-setting").value=localStorage.getItem("color2")||"#3a3a5c";
+    applySettings();
+    listenMessages();
+  } else { alert("間違ったパスワード"); }
 }
 
 document.getElementById("resetBtn").onclick=()=>{
   if(currentChannel){
-    const pass=prompt("このチャンネルをリセットします。リセットするにはパスワードを入力してください。")
-    if(pass==="0727"){
-      db.ref("channel"+currentChannel).remove()
-      alert("チャンネルをリセットしました")
-    }else if(pass!==null){
-      alert("パスワードが違います")
-    }
+    const pass=prompt("このチャンネルをリセットします。パス入力:");
+    if(pass==="0727"){ db.ref("channel"+currentChannel).remove(); alert("リセットしました") }
+    else if(pass!==null){ alert("パス間違い") }
   }
 }
 
 function setUsername(){
-const input=document.getElementById('username').value;
-if(input.trim()!==""){username=input.trim();localStorage.setItem("username",username);}
+  const input=document.getElementById('username').value;
+  if(input.trim()!==""){ username=input.trim(); localStorage.setItem("username",username); }
 }
 
 function setAvatar(){
-const file=document.getElementById('avatar').files[0];
-if(!file)return;
-const reader=new FileReader();
-reader.onload=function(e){avatarURL=e.target.result;document.getElementById('avatar-preview').src=avatarURL;localStorage.setItem("avatarURL",avatarURL);};
-reader.readAsDataURL(file);
+  const file=document.getElementById('avatar').files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    avatarURL=e.target.result;
+    document.getElementById('avatar-preview').src=avatarURL;
+    localStorage.setItem("avatarURL",avatarURL);
+  };
+  reader.readAsDataURL(file);
 }
 
 function switchChannel(index){
-currentChannel=index;
-document.getElementById("chat-header").textContent=["# 喋る1","# 速報","# 喋る2","# 喋る3"][index]||"# 喋る1";
-document.querySelectorAll(".channel").forEach((el,i)=>{el.classList.toggle("active",i===index);});
-listenMessages();
-updateVCDisplay();
+  currentChannel=index;
+  document.getElementById("chat-header").textContent=["# 喋る1","# 速報","# 喋る2","# 喋る3"][index]||"# 喋る1";
+  document.querySelectorAll(".channel").forEach((el,i)=>{el.classList.toggle("active",i===index);});
+  listenMessages();
+  updateVCDisplay();
 }
 
 function sendMsg(){
-const input=document.getElementById('msg');
-if(input.value.trim()==="") return;
-const msg={name:username,avatar:avatarURL,text:input.value.trim(),timestamp:Date.now()};
-db.ref("channel"+currentChannel).push(msg);
-input.value="";
-}
-
-function deleteMsg(key, name){
-  if(name==="SharkTomato" || username==="SharkTomato"){
-    for(let i=0;i<4;i++){
-      db.ref("channel"+i+"/"+key).remove();
-    }
-  }
+  const input=document.getElementById('msg');
+  if(input.value.trim()==="") return;
+  const msg={name:username,avatar:avatarURL,text:input.value.trim(),timestamp:Date.now()};
+  db.ref("channel"+currentChannel).push(msg);
+  input.value="";
 }
 
 let allMessages = []
 
 function listenMessages(){
-  if(currentRef) currentRef.off()
-  currentRef = db.ref("channel"+currentChannel)
+  if(currentRef) currentRef.off();
+  currentRef = db.ref("channel"+currentChannel);
   currentRef.on("value", snap => {
-    const data = snap.val() || {}
-    const oldKeys = allMessages.map(x => x.key)
-    const entries = Object.entries(data).map(([k,v])=>({key:k,m:v}))
-    entries.sort((a,b)=>(a.m.timestamp||0)-(b.m.timestamp||0))
-    allMessages = entries
-    const newKeys = entries.map(e=>e.key).filter(k=>!oldKeys.includes(k))
+    const data = snap.val() || {};
+    const oldKeys = allMessages.map(x => x.key);
+    const entries = Object.entries(data).map(([k,v])=>({key:k,m:v})).sort((a,b)=>(a.m.timestamp||0)-(b.m.timestamp||0));
+    allMessages = entries;
+    const newKeys = entries.map(e=>e.key).filter(k=>!oldKeys.includes(k));
     if(newKeys.length){
       newKeys.forEach(k=>{
-        const e = entries.find(x=>x.key===k)
-        if(!e) return
-        const m = e.m
-        if(m.name===username) return
-        if(pageHidden){
-          playNotify()
+        const m = entries.find(x=>x.key===k).m;
+        if(m.name!==username && pageHidden){
           if("Notification" in window && Notification.permission==="granted"){
-            new Notification(m.name,{body:m.text,icon:m.avatar||"icon/favicon3.ico"})
+            new Notification(m.name,{body:m.text,icon:m.avatar||"icon/favicon3.ico"});
           }
         }
-      })
+      });
     }
-    renderVirtual()
-  })
+    renderVirtual();
+  });
 }
 
 function renderVirtual(){
@@ -356,8 +325,7 @@ function renderVirtual(){
   const bottomPadding = (total - end) * rowHeight
   let html = '<div style="height:' + topPadding + 'px"></div>'
   visible.forEach(e=>{
-    const key = e.key
-    const m = e.m
+    const key = e.key, m = e.m
     const date = new Date(m.timestamp || Date.now())
     const dateStr = date.getFullYear() + '/' + (date.getMonth()+1) + '/' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes().toString().padStart(2,'0')
     const avatar = m.avatar || "icon/favicon3.ico"
@@ -371,124 +339,97 @@ function renderVirtual(){
   })
   html += '<div style="height:' + bottomPadding + 'px"></div>'
   container.innerHTML = html
-  if(isAtBottom){
-    container.scrollTop = Math.max(0, total * rowHeight - viewHeight)
+  if(isAtBottom) container.scrollTop = Math.max(0, total * rowHeight - viewHeight)
+}
+
+function deleteMsg(key, name){
+  if(name==="SharkTomato" || username==="SharkTomato"){
+    for(let i=0;i<4;i++){ db.ref("channel"+i+"/"+key).remove(); }
   }
 }
 
+function updateVCDisplay(){
+  document.querySelectorAll(".vc-channel").forEach((vc,idx)=>{
+    const usersDiv=vc.querySelector(".vc-users");
+    db.ref("vc"+idx).once("value",snap=>{
+      const data=snap.val()||{};
+      usersDiv.innerHTML=Object.values(data).map(u=>`<img src="${u.avatar}" title="${u.name}" style="width:36px;height:36px;border-radius:50%">`).join("");
+    });
+  });
+}
+
 document.addEventListener("DOMContentLoaded",()=>{
-  const c = document.getElementById("messages")
-  if(c) c.addEventListener("scroll", renderVirtual)
-})
+  document.getElementById("enter-button").addEventListener("click",checkPass);
+  document.getElementById("username").addEventListener("change",setUsername);
+  document.getElementById("avatar").addEventListener("change",setAvatar);
+  document.querySelectorAll(".channel").forEach(el=>el.addEventListener("click",()=>switchChannel(parseInt(el.dataset.index))));
+  document.getElementById("password").addEventListener("keydown",e=>{if(e.key==="Enter") checkPass();});
+  document.getElementById("msg").addEventListener("keydown",e=>{if(e.key==="Enter") sendMsg();});
+  document.getElementById("settings-button").addEventListener("click",()=>{const panel=document.getElementById("settings-panel");panel.style.display=panel.style.display==="flex"?"none":"flex";});
+  document.getElementById("font-setting").addEventListener("change",e=>{localStorage.setItem("font",e.target.value);applySettings();});
+  document.getElementById("text-color-setting").addEventListener("change",e=>{localStorage.setItem("textColor",e.target.value);applySettings();});
+  document.getElementById("color1-setting").addEventListener("change",e=>{localStorage.setItem("color1",e.target.value);applySettings();});
+  document.getElementById("color2-setting").addEventListener("change",e=>{localStorage.setItem("color2",e.target.value);applySettings();});
+  applySettings();
 
-    const newIds = Object.keys(data);
-    newIds.forEach(id=>{
-      if(!prevIds.includes(id) && pageHidden){
-        playNotify();
+  const peer = new Peer(username);
+  document.querySelectorAll(".vc-join-btn").forEach((btn, idx)=>{
+    const vcChannel = document.querySelectorAll(".vc-channel")[idx];
+    const usersDiv = vcChannel.querySelector(".vc-users");
+    const micBtn = vcChannel.querySelector(".vc-mic-btn");
+    const channelName = "vc" + idx;
 
-        if("Notification" in window && Notification.permission==="granted"){
-          const m = data[id];
-          new Notification(m.name,{
-            body: m.text,
-            icon: m.avatar || "icon/favicon3.ico"
-          });
-        }
-      }
+    micBtn.addEventListener("click",()=>{
+      if(!localStream) return;
+      localStream.getAudioTracks().forEach(t=>t.enabled=!t.enabled);
+      micBtn.textContent = localStream.getAudioTracks()[0].enabled?"マイクON":"マイクOFF";
     });
 
-    container.scrollTop=container.scrollHeight;
-  });
-}
-
-function updateVCDisplay(){
-document.querySelectorAll(".vc-channel").forEach((vc,idx)=>{
-const usersDiv=vc.querySelector(".vc-users");
-db.ref("vc"+idx).once("value",snap=>{
-const data=snap.val()||{};
-usersDiv.innerHTML=Object.values(data).map(u=>`<img src="${u.avatar}" title="${u.name}" style="width:36px;height:36px;border-radius:50%">`).join("");
-});
-});
-}
-
-document.addEventListener("DOMContentLoaded",()=>{
-document.getElementById("enter-button").addEventListener("click",checkPass);
-document.getElementById("username").addEventListener("change",setUsername);
-document.getElementById("avatar").addEventListener("change",setAvatar);
-document.querySelectorAll(".channel").forEach(el=>{el.addEventListener("click",()=>{switchChannel(parseInt(el.dataset.index));});});
-document.getElementById("password").addEventListener("keydown",e=>{if(e.key==="Enter") checkPass();});
-document.getElementById("msg").addEventListener("keydown",e=>{if(e.key==="Enter") sendMsg();});
-document.getElementById("settings-button").addEventListener("click",()=>{const panel=document.getElementById("settings-panel");panel.style.display=panel.style.display==="flex"?"none":"flex";});
-document.getElementById("font-setting").addEventListener("change",e=>{localStorage.setItem("font",e.target.value);applySettings();});
-document.getElementById("text-color-setting").addEventListener("change",e=>{localStorage.setItem("textColor",e.target.value);applySettings();});
-document.getElementById("color1-setting").addEventListener("change",e=>{localStorage.setItem("color1",e.target.value);applySettings();});
-document.getElementById("color2-setting").addEventListener("change",e=>{localStorage.setItem("color2",e.target.value);applySettings();});
-applySettings();5  
-  
-let peer = new Peer(username);
-let localStream;
-let vcStates = {};
-
-document.querySelectorAll(".vc-join-btn").forEach((btn, idx) => {
-  const vcChannel = document.querySelectorAll(".vc-channel")[idx];
-  const usersDiv = vcChannel.querySelector(".vc-users");
-  const micBtn = vcChannel.querySelector(".vc-mic-btn");
-  const channelName = "vc" + idx;
-
-  micBtn.addEventListener("click", () => {
-    if (!localStream) return;
-    localStream.getAudioTracks().forEach(t => t.enabled = !t.enabled);
-    micBtn.textContent = localStream.getAudioTracks()[0].enabled ? "マイクON" : "マイクOFF";
-  });
-
-  btn.addEventListener("click", async () => {
-    if (!inVC) {
-      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      peer.on("call", call => {
-        call.answer(localStream);
-        call.on("stream", remoteStream => {
-          const audio = document.createElement("audio");
-          audio.srcObject = remoteStream;
-          audio.autoplay = true;
-          vcChannel.appendChild(audio);
-        });
-      });
-
-      await db.ref(channelName + "/" + peer.id).set({
-        name: username,
-        avatar: avatarURL,
-        id: peer.id
-      });
-      db.ref(channelName + "/" + peer.id).onDisconnect().remove();
-
-      db.ref(channelName).on("value", snap => {
-        const data = snap.val() || {};
-        usersDiv.innerHTML = Object.values(data).map(u =>
-          `<img src="${u.avatar}" title="${u.name}" style="width:36px;height:36px;border-radius:50%">`
-        ).join("");
-
-        Object.values(data).forEach(u => {
-          if (u.id && u.id !== peer.id) {
-            const call = peer.call(u.id, localStream);
-            call.on("stream", s => {
+    btn.addEventListener("click", async ()=>{
+      if(!inVC){
+        localStream = await navigator.mediaDevices.getUserMedia({ audio:true });
+        peer.on("call", call=>{
+          call.answer(localStream);
+          call.on("stream", s=>{
+            if(!remoteAudios[call.peer]){
               const audio = document.createElement("audio");
               audio.srcObject = s;
               audio.autoplay = true;
               vcChannel.appendChild(audio);
-            });
-          }
+              remoteAudios[call.peer] = audio;
+            }
+          });
         });
-      });
 
-      inVC = true;
-    } else {
-      if (localStream) localStream.getTracks().forEach(t => t.stop());
-      await db.ref(channelName + "/" + peer.id).remove();
-      inVC = false;
-    }
+        await db.ref(channelName+"/"+peer.id).set({name:username,avatar:avatarURL,id:peer.id});
+        db.ref(channelName+"/"+peer.id).onDisconnect().remove();
+
+        db.ref(channelName).on("value",snap=>{
+          const data=snap.val()||{};
+          usersDiv.innerHTML=Object.values(data).map(u=>`<img src="${u.avatar}" title="${u.name}" style="width:36px;height:36px;border-radius:50%">`).join("");
+          Object.values(data).forEach(u=>{
+            if(u.id && u.id!==peer.id && !remoteAudios[u.id]){
+              const call=peer.call(u.id,localStream);
+              call.on("stream",s=>{
+                const audio=document.createElement("audio");
+                audio.srcObject=s;
+                audio.autoplay=true;
+                vcChannel.appendChild(audio);
+                remoteAudios[u.id]=audio;
+              });
+            }
+          });
+        });
+        inVC=true;
+      } else {
+        if(localStream) localStream.getTracks().forEach(t=>t.stop());
+        Object.values(remoteAudios).forEach(a=>a.remove());
+        remoteAudios={};
+        await db.ref(channelName+"/"+peer.id).remove();
+        inVC=false;
+      }
+    });
   });
-});
-document.addEventListener("visibilitychange",()=>{pageHidden=document.hidden;});
 });
 </script>
 </body>
