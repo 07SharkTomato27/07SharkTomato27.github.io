@@ -390,7 +390,14 @@ document.querySelectorAll(".vc-join-btn").forEach((btn, idx) => {
           vcChannel.appendChild(audio);
         });
       });
-      await db.ref(channelName + "/" + username).set({ name: username, avatar: avatarURL, id: peer.id });
+
+      await db.ref(channelName + "/" + peer.id).set({
+        name: username,
+        avatar: avatarURL,
+        id: peer.id
+      });
+      db.ref(channelName + "/" + peer.id).onDisconnect().remove();
+
       db.ref(channelName).on("value", snap => {
         const data = snap.val() || {};
         usersDiv.innerHTML = Object.values(data).map(u =>
@@ -413,12 +420,11 @@ document.querySelectorAll(".vc-join-btn").forEach((btn, idx) => {
       inVC = true;
     } else {
       if (localStream) localStream.getTracks().forEach(t => t.stop());
-      await db.ref(channelName + "/" + username).remove();
+      await db.ref(channelName + "/" + peer.id).remove();
       inVC = false;
     }
   });
 });
-
 document.addEventListener("visibilitychange",()=>{pageHidden=document.hidden;});
 });
 </script>
