@@ -316,8 +316,8 @@ function listenMessages(){
 
 function renderVirtual(){
   const container = document.getElementById("messages")
-  const rowHeight = 56
-  const buffer = 10
+  const rowHeight = 36
+  const buffer = 5
   const total = allMessages.length
   const viewHeight = container.clientHeight || 400
   const scrollTop = container.scrollTop
@@ -327,14 +327,15 @@ function renderVirtual(){
   const visible = allMessages.slice(start, end)
   const topPadding = start * rowHeight
   const bottomPadding = (total - end) * rowHeight
+
   let html = '<div style="height:' + topPadding + 'px"></div>'
   visible.forEach(e=>{
-    const key = e.key, m = e.m
+    const m = e.m
     const date = new Date(m.timestamp || Date.now())
-    const dateStr = date.getFullYear() + '/' + (date.getMonth()+1) + '/' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes().toString().padStart(2,'0')
+    const dateStr = date.getFullYear()+'/'+(date.getMonth()+1)+'/'+date.getDate()+' '+date.getHours()+':'+date.getMinutes().toString().padStart(2,'0')
     const avatar = m.avatar || "icon/favicon3.ico"
-    const del = (m.name===username || username==="SharkTomato") ? '<span class="delete" onclick="deleteMsg(\''+key+'\',\''+String(m.name).replace(/'/g,"\\'")+'\')">[削除]</span>' : ''
-    html += '<div class="msg" data-id="'+key+'" style="height:'+rowHeight+'px;overflow:hidden">'
+    const del = (m.name===username || username==="SharkTomato") ? '<span class="delete" onclick="deleteMsg(\''+e.key+'\',\''+String(m.name).replace(/'/g,"\\'")+'\')">[削除]</span>' : ''
+    html += '<div class="msg" style="height:'+rowHeight+'px;overflow:hidden;margin-bottom:2px">'
     html += '<img src="'+avatar+'" width="30" height="30" style="vertical-align: middle; border-radius:50%">'
     html += '<b>'+m.name+':</b> '+m.text
     html += '<span style="font-size:0.8em;color:#aaa">('+dateStr+')</span>'
@@ -343,7 +344,9 @@ function renderVirtual(){
   })
   html += '<div style="height:' + bottomPadding + 'px"></div>'
   container.innerHTML = html
-  if(isAtBottom) container.scrollTop = Math.max(0, total * rowHeight - viewHeight)
+  if(isAtBottom){
+    container.scrollTop = container.scrollHeight - viewHeight
+  }
 }
 
 function deleteMsg(key, name){
