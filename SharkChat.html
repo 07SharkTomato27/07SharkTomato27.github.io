@@ -324,7 +324,7 @@ function renderVirtual(){
   const measure = document.createElement("div")
   measure.style.position="absolute"
   measure.style.visibility="hidden"
-  measure.style.width=container.clientWidth+"px"
+  measure.style.width = container.clientWidth+"px"
   document.body.appendChild(measure)
   allMessages.forEach(e=>{
     if(!heights[e.key]){
