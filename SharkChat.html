@@ -369,7 +369,11 @@ function renderMessageHTML(e){
 
 function deleteMsg(key, name){
   if(name==="SharkTomato" || username==="SharkTomato"){
-    for(let i=0;i<4;i++){ db.ref("channel"+i+"/"+key).remove(); }
+    delete heights[key]
+    for(let i=0;i<4;i++){ 
+      db.ref("channel"+i+"/"+key).remove() 
+    }
+    renderVirtual()
   }
 }
 
