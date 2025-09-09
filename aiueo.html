@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Chromebook</title>
+<style>
+body{margin:0;background:black;overflow:hidden;color:#0f0;font-family:monospace}
+#kidou{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);max-width:40%}
+#s{position:absolute;top:50%;left:calc(50% + 100px);transform:translate(-50%,-50%);max-width:20%;display:none}
+#log{position:absolute;top:10px;left:10px;white-space:pre-line;font-size:16px}
+</style>
+</head>
+<body>
+<img id="kidou" src="image/kidou.png">
+<img id="s" src="image/s.png">
+<div id="log"></div>
+<script>
+document.documentElement.requestFullscreen()
+const s=document.getElementById("s")
+const log=document.getElementById("log")
+const lines=[
+"=====================================",
+"SharkOS v2.0",
+"https://07sharktomato27.github.io/",
+"=====================================",
+"loading kernel...",
+"image/a.png",
+"image/b.png",
+"image/c.png",
+"S.txt",
+"checking file...",
+"Done."
+"booting...",
+"Done.",
+"Starting OS"
+
+]
+let i=0
+function addLog(){
+if(i<lines.length){
+log.textContent+=lines[i]+"\n"
+i++
+setTimeout(addLog,100)
+}
+}
+setTimeout(()=>{
+s.style.display="block"
+addLog()
+},9000)
+</script>
+</body>
+</html>
