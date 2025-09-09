@@ -314,39 +314,57 @@ function listenMessages(){
   });
 }
 
+let heights = {}
+let totalHeight = 0
+
 function renderVirtual(){
   const container = document.getElementById("messages")
-  const rowHeight = 36
-  const buffer = 5
-  const total = allMessages.length
   const viewHeight = container.clientHeight || 400
   const scrollTop = container.scrollTop
-  const isAtBottom = (container.scrollHeight - scrollTop - viewHeight) < (rowHeight * 2)
-  const start = Math.max(0, Math.floor(scrollTop / rowHeight) - buffer)
-  const end = Math.min(total, Math.ceil((scrollTop + viewHeight) / rowHeight) + buffer)
-  const visible = allMessages.slice(start, end)
-  const topPadding = start * rowHeight
-  const bottomPadding = (total - end) * rowHeight
-
-  let html = '<div style="height:' + topPadding + 'px"></div>'
-  visible.forEach(e=>{
-    const m = e.m
-    const date = new Date(m.timestamp || Date.now())
-    const dateStr = date.getFullYear()+'/'+(date.getMonth()+1)+'/'+date.getDate()+' '+date.getHours()+':'+date.getMinutes().toString().padStart(2,'0')
-    const avatar = m.avatar || "icon/favicon3.ico"
-    const del = (m.name===username || username==="SharkTomato") ? '<span class="delete" onclick="deleteMsg(\''+e.key+'\',\''+String(m.name).replace(/'/g,"\\'")+'\')">[削除]</span>' : ''
-    html += '<div class="msg" style="height:'+rowHeight+'px;overflow:hidden;margin-bottom:2px">'
-    html += '<img src="'+avatar+'" width="30" height="30" style="vertical-align: middle; border-radius:50%">'
-    html += '<b>'+m.name+':</b> '+m.text
-    html += '<span style="font-size:0.8em;color:#aaa">('+dateStr+')</span>'
-    html += del
-    html += '</div>'
+  const measure = document.createElement("div")
+  measure.style.position="absolute"
+  measure.style.visibility="hidden"
+  measure.style.width=container.clientWidth+"px"
+  document.body.appendChild(measure)
+  allMessages.forEach(e=>{
+    if(!heights[e.key]){
+      measure.innerHTML = renderMessageHTML(e)
+      heights[e.key] = measure.offsetHeight
+    }
   })
-  html += '<div style="height:' + bottomPadding + 'px"></div>'
-  container.innerHTML = html
-  if(isAtBottom){
-    container.scrollTop = container.scrollHeight - viewHeight
+  document.body.removeChild(measure)
+  totalHeight = Object.values(heights).reduce((a,b)=>a+b,0)
+  let start=0, y=0
+  while(start<allMessages.length && y+heights[allMessages[start].key] < scrollTop){
+    y += heights[allMessages[start].key]
+    start++
   }
+  let end=start, shownHeight=0
+  while(end<allMessages.length && shownHeight<viewHeight*1.5){
+    shownHeight += heights[allMessages[end].key]
+    end++
+  }
+  const topPadding = y
+  const bottomPadding = totalHeight - (y+shownHeight)
+  let html = '<div style="height:'+topPadding+'px"></div>'
+  for(let i=start;i<end;i++){
+    html += renderMessageHTML(allMessages[i])
+  }
+  html += '<div style="height:'+bottomPadding+'px"></div>'
+  container.innerHTML = html
+}
+function renderMessageHTML(e){
+  const m = e.m
+  const date = new Date(m.timestamp||Date.now())
+  const dateStr = date.getFullYear()+'/'+(date.getMonth()+1)+'/'+date.getDate()+' '+date.getHours()+':'+date.getMinutes().toString().padStart(2,'0')
+  const avatar = m.avatar || "icon/favicon3.ico"
+  const del = (m.name===username || username==="SharkTomato") ? '<span class="delete" onclick="deleteMsg(\''+e.key+'\',\''+String(m.name).replace(/'/g,"\\'")+'\')">[削除]</span>' : ''
+  return '<div class="msg" style="margin-bottom:2px">'+
+    '<img src="'+avatar+'" width="30" height="30" style="vertical-align: middle; border-radius:50%">'+
+    '<b>'+m.name+':</b> '+m.text+
+    '<span style="font-size:0.8em;color:#aaa">('+dateStr+')</span>'+
+    del+
+  '</div>'
 }
 
 function deleteMsg(key, name){
