@@ -396,6 +396,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   document.getElementById("color1-setting").addEventListener("change",e=>{localStorage.setItem("color1",e.target.value);applySettings();});
   document.getElementById("color2-setting").addEventListener("change",e=>{localStorage.setItem("color2",e.target.value);applySettings();});
   applySettings();
+　document.getElementById("messages").addEventListener("scroll", renderVirtual)
 
   const peer = new Peer(username);
   document.querySelectorAll(".vc-join-btn").forEach((btn, idx)=>{
