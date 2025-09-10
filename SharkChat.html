@@ -368,7 +368,7 @@ function renderMessageHTML(e){
 }
 
 function deleteMsg(key, name){
-  if(name === username || name === "SharkTomato"){
+  if(name === username || username === "SharkTomato"){
     delete heights[key];
     for(let i=0; i<4; i++){ 
       db.ref("channel"+i+"/"+key).remove();
