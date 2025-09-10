@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>通知ならすぅぅ</title>
+<style>
+body{font-family:sans-serif;margin:20px;background:#fff;color:#000}
+label{display:block;margin:8px 0}
+input[type="time"],input[type="text"],input[type="file"]{padding:4px;margin-top:2px}
+button{margin:6px 4px;padding:6px 10px}
+.list{margin-top:12px}
+.item{border:1px solid #ccc;padding:6px;margin:4px 0;display:flex;justify-content:space-between}
+</style>
+</head>
+<body>
+<h1>通知ならすぅぅ     　　　　　　*このサイトを通知許可しないと使えません</h1>
+<label>時刻 <input id="time" type="time"></label>
+<label>タイトル <input id="title" type="text"></label>
+<label>本文 <input id="message" type="text"></label>
+<label>通知音 <input id="sound" type="file" accept="audio/*"></label>
+<label><input id="repeat" type="checkbox"> 毎日繰り返す</label>
+<button id="add">追加</button>
+<div class="list" id="list"></div>
+<script>
+const LS="notifs_simple"
+let schedules=JSON.parse(localStorage.getItem(LS)||"[]")
+let timers=new Map()
+
+Notification.requestPermission().catch(()=>{})
+
+function save(){localStorage.setItem(LS,JSON.stringify(schedules))}
+function show(title,msg,sound){
+  if("Notification" in window && Notification.permission==="granted"){
+    new Notification(title,{body:msg})
+  }else alert(title+"\n"+msg)
+  if(sound){new Audio(sound).play().catch(()=>{})}
+}
+function nextTime(t){
+  let [h,m]=t.split(":").map(Number)
+  let now=new Date()
+  let d=new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,m,0)
+  if(d<=now)d.setDate(d.getDate()+1)
+  return d
+}
+function job(item){
+  let delay=nextTime(item.time)-Date.now()
+  let id=setTimeout(()=>{
+    show(item.title||"通知",item.message||"",item.sound)
+    if(item.repeat)job(item); else remove(item.id)
+  },delay)
+  timers.set(item.id,id)
+}
+function render(){
+  let el=document.getElementById("list")
+  el.innerHTML=""
+  schedules.forEach(s=>{
+    let d=document.createElement("div");d.className="item"
+    d.innerHTML=`<span>${s.time} ${s.title||""}</span>`
+    let b=document.createElement("button");b.textContent="削除";b.onclick=()=>remove(s.id)
+    d.appendChild(b);el.appendChild(d)
+  })
+}
+function add(time,title,msg,sound,repeat){
+  let id=Math.random().toString(36).slice(2)
+  let item={id,time,title,msg,sound,repeat}
+  schedules.push(item);save();job(item);render()
+}
+function remove(id){
+  clearTimeout(timers.get(id));timers.delete(id)
+  schedules=schedules.filter(x=>x.id!==id);save();render()
+}
+document.getElementById("add").onclick=()=>{
+  let t=document.getElementById("time").value
+  if(!t)return
+  let f=document.getElementById("sound").files[0]
+  if(f){
+    let r=new FileReader()
+    r.onload=e=>add(t,document.getElementById("title").value,document.getElementById("message").value,e.target.result,document.getElementById("repeat").checked)
+    r.readAsDataURL(f)
+  }else add(t,document.getElementById("title").value,document.getElementById("message").value,"",document.getElementById("repeat").checked)
+}
+schedules.forEach(job);render()
+</script>
+</body>
+</html>
