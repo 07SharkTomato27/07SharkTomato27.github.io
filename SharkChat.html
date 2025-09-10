@@ -368,12 +368,12 @@ function renderMessageHTML(e){
 }
 
 function deleteMsg(key, name){
-  if(name==="SharkTomato" || username==="SharkTomato"){
-    delete heights[key]
-    for(let i=0;i<4;i++){ 
-      db.ref("channel"+i+"/"+key).remove() 
+  if(name === username || name === "SharkTomato"){
+    delete heights[key];
+    for(let i=0; i<4; i++){ 
+      db.ref("channel"+i+"/"+key).remove();
     }
-    renderVirtual()
+    renderVirtual();
   }
 }
 
