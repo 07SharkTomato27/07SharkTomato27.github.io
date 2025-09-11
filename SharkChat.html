@@ -163,6 +163,9 @@ body {
 <label>文字の色: <input id="text-color-setting" type="color"></label>
 <label>色1: <input id="color1-setting" type="color"></label>
 <label>色2: <input id="color2-setting" type="color"></label>
+<label>自分の文字色: <input type="color" id="my-text-color" value="#ffffff"></label>
+<label>輝くメッセージ: <input type="checkbox" id="glow-enabled"></label>
+<label>輝く色: <input type="color" id="glow-color" value="#ffff00"></label>
 </div>
 <div class="channel active" data-index="0"># 喋る1</div>
 <div class="channel" data-index="1"># 速報</div>
@@ -218,6 +221,12 @@ let pageHidden=false;
 
 document.addEventListener("visibilitychange",()=>{pageHidden=document.hidden;});
 
+const userSettings = {
+ myTextColor: localStorage.getItem("myTextColor") || "#ffffff",
+ glowEnabled: localStorage.getItem("glowEnabled") === "true",
+ glowColor: localStorage.getItem("glowColor") || "#ffff00"
+ };
+
 function applySettings(){
   const font=localStorage.getItem("font")||"sans-serif";
   const color1=localStorage.getItem("color1")||"#1e1e2f";
@@ -227,6 +236,23 @@ function applySettings(){
   document.getElementById("chat").style.background=`linear-gradient(to bottom right, ${color1}, ${color2})`;
   document.body.style.color=textColor;
 }
+document.getElementById("my-text-color").addEventListener("change", e=>{
+  userSettings.myTextColor = e.target.value;
+  localStorage.setItem("myTextColor", e.target.value);
+  renderVirtual();
+});
+
+document.getElementById("glow-color").addEventListener("change", e=>{
+  userSettings.glowColor = e.target.value;
+  localStorage.setItem("glowColor", e.target.value);
+  renderVirtual();
+});
+
+document.getElementById("glow-enabled").addEventListener("change", e=>{
+  userSettings.glowEnabled = e.target.checked;
+  localStorage.setItem("glowEnabled", e.target.checked);
+  renderVirtual();
+});
 
 function checkPass(){
   const pass=document.getElementById('password').value;
@@ -354,17 +380,31 @@ function renderVirtual(){
   container.innerHTML = html
 }
 function renderMessageHTML(e){
-  const m = e.m
-  const date = new Date(m.timestamp||Date.now())
-  const dateStr = date.getFullYear()+'/'+(date.getMonth()+1)+'/'+date.getDate()+' '+date.getHours()+':'+date.getMinutes().toString().padStart(2,'0')
-  const avatar = m.avatar || "icon/favicon3.ico"
-  const del = (m.name===username || username==="SharkTomato") ? '<span class="delete" onclick="deleteMsg(\''+e.key+'\',\''+String(m.name).replace(/'/g,"\\'")+'\')">[削除]</span>' : ''
-  return '<div class="msg" style="margin-bottom:2px">'+
-    '<img src="'+avatar+'" width="30" height="30" style="vertical-align: middle; border-radius:50%">'+
-    '<b>'+m.name+':</b> '+m.text+
-    '<span style="font-size:0.8em;color:#aaa">('+dateStr+')</span>'+
-    del+
-  '</div>'
+  const m = e.m;
+  const date = new Date(m.timestamp||Date.now());
+  const dateStr = date.getFullYear()+'/'+(date.getMonth()+1)+'/'+date.getDate()+' '+date.getHours()+':'+date.getMinutes().toString().padStart(2,'0');
+  const avatar = m.avatar || "icon/favicon3.ico";
+  
+  let style = (m.name === username) 
+    ? `color:${userSettings.myTextColor};` 
+    : `color:${localStorage.getItem("textColor") || "white"};`;
+
+  if(userSettings.glowEnabled && m.name === username){
+    style += `text-shadow:0 0 8px ${userSettings.glowColor};`;
+  }
+
+  const del = (m.name===username || username==="SharkTomato") 
+              ? `<span class="delete" onclick="deleteMsg('${e.key}','${String(m.name).replace(/'/g,"\\'")}')">[削除]</span>` 
+              : '';
+
+  return `
+    <div class="msg" style="margin-bottom:2px; ${style}">
+      <img src="${avatar}" width="30" height="30" style="vertical-align: middle; border-radius:50%">
+      <b>${m.name}:</b> ${m.text}
+      <span style="font-size:0.8em;color:#aaa">(${dateStr})</span>
+      ${del}
+    </div>
+  `;
 }
 
 function deleteMsg(key, name){
