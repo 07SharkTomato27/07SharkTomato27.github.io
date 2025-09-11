@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>ランダム時計集</title>
+<style>
+body{margin:0;overflow:hidden;background:#111;color:#0f0;font-family:sans-serif;width:100%;height:100%}
+canvas{display:block;width:100%;height:100%}
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<script>
+const canvas=document.getElementById("canvas")
+const ctx=canvas.getContext("2d")
+
+function resizeCanvas(){
+  canvas.width=window.innerWidth
+  canvas.height=window.innerHeight
+}
+resizeCanvas()
+window.addEventListener("resize",resizeCanvas)
+
+function getTime(){let d=new Date();return {h:d.getHours(),m:d.getMinutes(),s:d.getSeconds(),ms:d.getMilliseconds()}}
+
+class Clock{
+  constructor(x,y,type){
+    this.x=x
+    this.y=y
+    this.type=type
+    this.drag=false
+    this.offsetX=0
+    this.offsetY=0
+    this.startX=0
+    this.startY=0
+    this.broken=false
+    this.pieces=[]
+    this.size=50+Math.random()*30
+    this.color="#"+Math.floor(Math.random()*0xFFFFFF).toString(16)
+    this.physics=false
+    this.vx=0
+    this.vy=0
+    if(type=="break"){
+      for(let i=0;i<12;i++){
+        this.pieces.push({angle:i/12*2*Math.PI,r:this.size,dx:0,dy:0,vx:0,vy:0})
+      }
+    } else {
+      this.physics=Math.random()<0.5
+      if(this.physics){
+        this.vx=(Math.random()-0.5)*4
+        this.vy=Math.random()*2
+      }
+    }
+  }
+  draw(t){
+    ctx.save()
+    ctx.translate(this.x,this.y)
+    if(!this.drag){
+      if(this.physics || this.broken){
+        this.vy+=0.5
+        this.x+=this.vx
+        this.y+=this.vy
+        if(this.y>canvas.height-this.size){this.y=canvas.height-this.size;this.vy=0}
+        if(this.x<0){this.x=0;this.vx*=-0.5}
+        if(this.x>canvas.width){this.x=canvas.width;this.vx*=-0.5}
+      }
+    }
+
+    if(this.type=="combine"){
+      for(let i=0;i<3;i++){
+        ctx.save()
+        ctx.translate(i*40,i*40)
+        drawClockShape(t,this.size,this.color)
+        ctx.restore()
+      }
+      ctx.restore()
+      return
+    }
+
+    if(this.type=="break"){
+      this.pieces.forEach(p=>{
+        if(this.broken){
+          p.vx*=0.99
+          p.vy+=0.5
+          p.dx+=p.vx
+          p.dy+=p.vy
+          if(this.y+p.dy>canvas.height-this.size){p.dy=canvas.height-this.size-this.y; p.vy=0}
+        }
+      })
+      this.pieces.forEach(p=>{
+        ctx.save()
+        ctx.translate(p.r*Math.cos(p.angle)+p.dx,p.r*Math.sin(p.angle)+p.dy)
+        drawClockShape(t,20,this.color)
+        ctx.restore()
+      })
+    } else if(this.type=="digital"){
+      ctx.fillStyle=this.color
+      ctx.font=`${this.size}px sans-serif`
+      ctx.textAlign="center"
+      ctx.textBaseline="middle"
+      let h=("0"+t.h).slice(-2)
+      let m=("0"+t.m).slice(-2)
+      ctx.fillText(`${h}:${m}`,0,0)
+    } else{
+      drawClockShape(t,this.size,this.color)
+    }
+    ctx.restore()
+  }
+}
+
+function drawClockShape(t,r,color){
+  ctx.save()
+  ctx.beginPath()
+  ctx.arc(0,0,r,0,Math.PI*2)
+  ctx.fillStyle=color
+  ctx.fill()
+  ctx.fillStyle="#000"
+  ctx.textAlign="center"
+  ctx.textBaseline="middle"
+  for(let i=1;i<=12;i++){
+    let ang=i/12*2*Math.PI-Math.PI/2
+    let x=Math.cos(ang)*(r*0.8)
+    let y=Math.sin(ang)*(r*0.8)
+    ctx.fillText(i,x,y)
+  }
+  ctx.strokeStyle="#000"
+  ctx.lineWidth=4
+  ctx.beginPath()
+  ctx.moveTo(0,0)
+  ctx.lineTo(r*0.6*Math.cos((getTime().h%12)/12*2*Math.PI-Math.PI/2),r*0.6*Math.sin((getTime().h%12)/12*2*Math.PI-Math.PI/2))
+  ctx.stroke()
+  ctx.lineWidth=3
+  ctx.beginPath()
+  ctx.moveTo(0,0)
+  ctx.lineTo(r*0.8*Math.cos(getTime().m/60*2*Math.PI-Math.PI/2),r*0.8*Math.sin(getTime().m/60*2*Math.PI-Math.PI/2))
+  ctx.stroke()
+  ctx.lineWidth=2
+  ctx.beginPath()
+  ctx.moveTo(0,0)
+  ctx.lineTo(r*0.9*Math.cos(getTime().s/60*2*Math.PI-Math.PI/2),r*0.9*Math.sin(getTime().s/60*2*Math.PI-Math.PI/2))
+  ctx.stroke()
+  ctx.restore()
+}
+
+const types=["physics","bounce","handOnly","break","combine","digital"]
+const clocks=[]
+for(let i=0;i<20;i++){
+  clocks.push(new Clock(Math.random()*canvas.width,Math.random()*canvas.height,types[Math.floor(Math.random()*types.length)]))
+}
+
+let selectedClock=null
+canvas.addEventListener("mousedown",e=>{
+  let mx=e.clientX,my=e.clientY
+  for(let i=clocks.length-1;i>=0;i--){
+    let c=clocks[i]
+    let radius=c.type=="digital"?c.size/2:c.size
+    if(Math.hypot(mx-c.x,my-c.y)<radius+10){
+      selectedClock=c
+      c.drag=true
+      c.offsetX=mx-c.x
+      c.offsetY=my-c.y
+      c.startX=mx
+      c.startY=my
+      break
+    }
+  }
+})
+canvas.addEventListener("mousemove",e=>{
+  if(selectedClock && selectedClock.drag){
+    selectedClock.x=e.clientX-selectedClock.offsetX
+    selectedClock.y=e.clientY-selectedClock.offsetY
+  }
+})
+canvas.addEventListener("mouseup",e=>{
+  if(selectedClock){
+    let dx=Math.abs(e.clientX-selectedClock.startX)
+    let dy=Math.abs(e.clientY-selectedClock.startY)
+    if(dx<5 && dy<5){
+      if(selectedClock.type=="break" && !selectedClock.broken){
+        selectedClock.broken=true
+        selectedClock.pieces.forEach(p=>{
+          p.vx=(Math.random()-0.5)*10
+          p.vy=(Math.random()-0.5)*10
+        })
+      } else if(selectedClock.type!="break" && !selectedClock.broken){
+        let c1=new Clock(selectedClock.x-selectedClock.size/2,selectedClock.y,selectedClock.type)
+        c1.type="brokenPhysics"
+        c1.size=selectedClock.size/2
+        c1.vx=-3
+        c1.vy=-5
+        c1.color=selectedClock.color
+        let c2=new Clock(selectedClock.x+selectedClock.size/2,selectedClock.y,selectedClock.type)
+        c2.type="brokenPhysics"
+        c2.size=selectedClock.size/2
+        c2.vx=3
+        c2.vy=-5
+        c2.color=selectedClock.color
+        clocks.push(c1,c2)
+        clocks.splice(clocks.indexOf(selectedClock),1)
+      }
+    }
+    selectedClock.drag=false
+    selectedClock=null
+  }
+})
+
+window.addEventListener("keydown",e=>{
+  if(e.key=="r" || e.key=="R"){
+    clocks.push(new Clock(Math.random()*canvas.width,Math.random()*canvas.height,types[Math.floor(Math.random()*types.length)]))
+  }
+})
+
+function loop(){
+  ctx.clearRect(0,0,canvas.width,canvas.height)
+  let t=getTime()
+  clocks.forEach(c=>c.draw(t))
+  requestAnimationFrame(loop)
+}
+loop()
+</script>
+</body>
+</html>
