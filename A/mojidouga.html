@@ -37,7 +37,7 @@ footer{position:fixed;right:12px;bottom:12px;color:#888;font-size:12px}
 </div>
 
 <canvas id="canvas"></canvas>
-<video id="video" hidden playsinline muted></video>
+<video id="video" hidden playsinline></video>
 
 <script>
 const fileInput=document.getElementById('file')
@@ -146,7 +146,7 @@ function togglePlay(){
     video.play()
     if(useVFC) video.requestVideoFrameCallback(drawVFC)
     else drawRAF()
-  }else video.pause()
+  } else video.pause()
 }
 
 function resetAll(){
