@@ -171,15 +171,16 @@ function disconnectVideoChain(){
   videoAudioChain = null
 }
 
-function connectVideoAudioChain(strength){
-  ensureMediaElementSource()
+function connectAudioChain(strength, inputNode){
   disconnectVideoChain()
   const input = audioCtx.createGain()
-  mediaElementSource.connect(input)
+  const source = inputNode || mediaElementSource   // ← 渡されたノードを優先
+  source.connect(input)
   const output = audioCtx.createGain()
   output.gain.value = 1
   const nodes = []
   let node = input
+
   if(audioEffect.value === 'distortion'){
     const pre = audioCtx.createGain()
     pre.gain.value = 1 + strength * 80
@@ -223,11 +224,16 @@ function connectVideoAudioChain(strength){
     node = bi
     nodes.push(bi)
   }
+
   if(node !== output) node.connect(output)
   output.connect(audioCtx.destination)
-  if(!mediaRecorderLiveDest) mediaRecorderLiveDest = audioCtx.createMediaStreamDestination()
+
+  if(!mediaRecorderLiveDest) 
+    mediaRecorderLiveDest = audioCtx.createMediaStreamDestination()
   output.connect(mediaRecorderLiveDest)
+
   videoAudioChain = {input, output, nodes}
+  return output
 }
 
 function drawLoop(){
