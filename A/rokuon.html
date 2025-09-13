@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>リアルタイム音声・動画加工＋個別DL（修正版）</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{font-family:system-ui,Segoe UI,Helvetica,Arial;margin:16px;color:#111}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+select,input,button{padding:6px 8px;font-size:14px}
+#videoWrap{position:relative;margin-top:12px;max-width:100%}
+#video{display:block;width:100%;height:auto;background:#000}
+#canvas{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}
+</style>
+</head>
+<body>
+
+<div class="row">
+  <button id="startRec">録音開始</button>
+  <button id="stopRec" disabled>録音停止</button>
+  <input id="fileInput" type="file" accept="audio/*,video/*">
+  <button id="playBtn" disabled>再生</button>
+  <button id="stopAll" disabled>停止</button>
+  <button id="downloadVideo" disabled>動画＋音声を保存</button>
+  <button id="downloadAudio" disabled>音声のみ保存</button>
+</div>
+
+<div style="margin-top:10px" class="row">
+  <label>音声エフェクト
+    <select id="audioEffect">
+      <option value="none">なし</option>
+      <option value="distortion">音割れ</option>
+      <option value="echo">エコー</option>
+      <option value="low">低音</option>
+      <option value="high">高音</option>
+    </select>
+  </label>
+  <label id="audioSliderLabel" style="display:none">強さ
+    <input id="audioSlider" type="range" min="0" max="100" value="50">
+  </label>
+
+  <label style="margin-left:12px">動画エフェクト
+    <select id="videoEffect">
+      <option value="none">なし</option>
+      <option value="noise">ノイズ</option>
+      <option value="rgbShift">色ズレ</option>
+      <option value="bw">白黒</option>
+      <option value="custom">カスタム色</option>
+    </select>
+  </label>
+  <label id="videoSliderLabel" style="display:none">強さ
+    <input id="videoSlider" type="range" min="0" max="100" value="50">
+  </label>
+  <input id="customColor" type="color" value="#ff0000" style="display:none;margin-left:6px">
+</div>
+
+<div id="videoWrap">
+  <video id="video" crossorigin="anonymous" playsinline></video>
+  <canvas id="canvas"></canvas>
+</div>
+
+<script>
+const startRec = document.getElementById('startRec')
+const stopRec = document.getElementById('stopRec')
+const fileInput = document.getElementById('fileInput')
+const playBtn = document.getElementById('playBtn')
+const stopAll = document.getElementById('stopAll')
+const downloadVideo = document.getElementById('downloadVideo')
+const downloadAudio = document.getElementById('downloadAudio')
+const audioEffect = document.getElementById('audioEffect')
+const videoEffect = document.getElementById('videoEffect')
+const audioSlider = document.getElementById('audioSlider')
+const videoSlider = document.getElementById('videoSlider')
+const audioSliderLabel = document.getElementById('audioSliderLabel')
+const videoSliderLabel = document.getElementById('videoSliderLabel')
+const customColor = document.getElementById('customColor')
+const video = document.getElementById('video')
+const canvas = document.getElementById('canvas')
+const ctx = canvas.getContext('2d')
+
+let audioCtx = new (window.AudioContext||window.webkitAudioContext)()
+let mediaElementSource = null
+let videoAudioChain = null
+let mediaRecorderLiveDest = null
+let recordedBuffer = null
+let fileBuffer = null
+let lastType = null
+let playingBufferSources = []
+let drawHandle = null
+
+audioEffect.addEventListener('change',()=>{ audioSliderLabel.style.display = audioEffect.value==='none'?'none':'inline-block' })
+videoEffect.addEventListener('change',()=>{ videoSliderLabel.style.display = videoEffect.value==='none'?'none':'inline-block'; customColor.style.display = videoEffect.value==='custom'?'inline-block':'none' })
+
+startRec.addEventListener('click',async ()=>{
+  const s = await navigator.mediaDevices.getUserMedia({audio:true})
+  const rec = new MediaRecorder(s)
+  const parts = []
+  rec.ondataavailable = e=>parts.push(e.data)
+  rec.onstop = async ()=>{
+    const b = new Blob(parts)
+    const ab = await b.arrayBuffer()
+    recordedBuffer = await audioCtx.decodeAudioData(ab)
+    lastType = 'audio'
+    playBtn.disabled = false
+    downloadAudio.disabled = false
+  }
+  rec.start()
+  window._localRec = rec
+  startRec.disabled = true
+  stopRec.disabled = false
+})
+
+stopRec.addEventListener('click',()=>{
+  if(window._localRec && window._localRec.state==='recording') window._localRec.stop()
+  startRec.disabled = false
+  stopRec.disabled = true
+})
+
+fileInput.addEventListener('change',async e=>{
+  const f = e.target.files[0]
+  if(!f) return
+  if(f.type.startsWith('video')){
+    const url = URL.createObjectURL(f)
+    video.src = url
+    await video.load()
+    await new Promise(r=>video.onloadedmetadata = r)
+    canvas.width = video.videoWidth/2
+    canvas.height = video.videoHeight/2
+    canvas.style.width = video.clientWidth + 'px'
+    canvas.style.height = video.clientHeight + 'px'
+    lastType = 'video'
+    playBtn.disabled = false
+    downloadVideo.disabled = false
+    downloadAudio.disabled = false
+  } else {
+    const ab = await f.arrayBuffer()
+    fileBuffer = await audioCtx.decodeAudioData(ab)
+    lastType = 'audio'
+    playBtn.disabled = false
+    downloadAudio.disabled = false
+  }
+})
+
+function makeWaveShaper(amount){
+  const n = 16384
+  const curve = new Float32Array(n)
+  const k = Math.max(1, amount)
+  for(let i=0;i<n;i++){
+    const x = (i/(n-1))*2-1
+    curve[i] = Math.tanh(x * k)
+  }
+  const s = audioCtx.createWaveShaper()
+  s.curve = curve
+  s.oversample = '4x'
+  return s
+}
+
+function ensureMediaElementSource(){
+  if(!mediaElementSource) mediaElementSource = audioCtx.createMediaElementSource(video)
+}
+
+function disconnectVideoChain(){
+  if(!videoAudioChain) return
+  try{ videoAudioChain.input.disconnect() }catch(e){}
+  try{ videoAudioChain.output.disconnect() }catch(e){}
+  if(videoAudioChain.nodes){
+    for(const n of videoAudioChain.nodes){
+      try{ n.disconnect() }catch(e){}
+    }
+  }
+  videoAudioChain = null
+}
+
+function connectVideoAudioChain(strength){
+  ensureMediaElementSource()
+  disconnectVideoChain()
+  const input = audioCtx.createGain()
+  mediaElementSource.connect(input)
+  const output = audioCtx.createGain()
+  output.gain.value = 1
+  const nodes = []
+  let node = input
+  if(audioEffect.value === 'distortion'){
+    const pre = audioCtx.createGain()
+    pre.gain.value = 1 + strength * 80
+    node.connect(pre)
+    node = pre
+    const sh = makeWaveShaper(1 + strength * 500)
+    node.connect(sh)
+    node = sh
+    nodes.push(pre, sh)
+  } else if(audioEffect.value === 'echo'){
+    const delay = audioCtx.createDelay()
+    delay.delayTime.value = 0.28
+    const feedback = audioCtx.createGain()
+    feedback.gain.value = Math.min(0.94, 0.01 + strength * 0.009)
+    const wet = audioCtx.createGain()
+    wet.gain.value = Math.min(0.9, strength * 0.8)
+    const dry = audioCtx.createGain()
+    dry.gain.value = Math.max(0.1, 1 - wet.gain.value * 0.6)
+    node.connect(dry)
+    dry.connect(output)
+    node.connect(delay)
+    delay.connect(feedback)
+    feedback.connect(delay)
+    delay.connect(wet)
+    wet.connect(output)
+    nodes.push(delay, feedback, wet, dry)
+  } else if(audioEffect.value === 'low'){
+    const bi = audioCtx.createBiquadFilter()
+    bi.type = 'lowshelf'
+    bi.frequency.value = 800
+    bi.gain.value = 30 * strength
+    node.connect(bi)
+    node = bi
+    nodes.push(bi)
+  } else if(audioEffect.value === 'high'){
+    const bi = audioCtx.createBiquadFilter()
+    bi.type = 'highshelf'
+    bi.frequency.value = 1200
+    bi.gain.value = 30 * strength
+    node.connect(bi)
+    node = bi
+    nodes.push(bi)
+  }
+  if(node !== output) node.connect(output)
+  output.connect(audioCtx.destination)
+  if(!mediaRecorderLiveDest) mediaRecorderLiveDest = audioCtx.createMediaStreamDestination()
+  output.connect(mediaRecorderLiveDest)
+  videoAudioChain = {input, output, nodes}
+}
+
+function drawLoop(){
+  if(video.paused || video.ended) return
+  ctx.drawImage(video,0,0,canvas.width,canvas.height)
+  const effect = videoEffect.value
+  const s = Number(videoSlider.value)/100
+  if(effect !== 'none'){
+    const id = ctx.getImageData(0,0,canvas.width,canvas.height)
+    const d = id.data
+    if(effect === 'bw'){
+      for(let i=0;i<d.length;i+=4){
+        const avg = (d[i]+d[i+1]+d[i+2])/3
+        d[i]=d[i+1]=d[i+2]=avg
+      }
+    } else if(effect === 'noise'){
+      for(let i=0;i<d.length;i+=4){
+        const n = (Math.random()-0.5)*255*s
+        d[i]+=n; d[i+1]+=n; d[i+2]+=n
+      }
+    } else if(effect === 'rgbShift'){
+      const shift = Math.max(1,Math.floor(10*s))
+      const tmp = new Uint8ClampedArray(d)
+      for(let y=0;y<canvas.height;y++){
+        for(let x=0;x<canvas.width;x++){
+          const i = (y*canvas.width + x)*4
+          const sx = Math.min(canvas.width-1, Math.max(0, x + shift))
+          const i2 = (y*canvas.width + sx)*4
+          d[i] = tmp[i2]*s + tmp[i]*(1-s)
+          d[i+1] = tmp[i+1]
+          d[i+2] = tmp[i2+2]*s + tmp[i+2]*(1-s)
+        }
+      }
+    } else if(effect === 'custom'){
+      const c = customColor.value
+      const rC = parseInt(c.substr(1,2),16)
+      const gC = parseInt(c.substr(3,2),16)
+      const bC = parseInt(c.substr(5,2),16)
+      for(let i=0;i<d.length;i+=4){
+        const lum = (0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2]) / 255
+        d[i] = d[i]*(1-s) + (rC*lum)*s
+        d[i+1] = d[i+1]*(1-s) + (gC*lum)*s
+        d[i+2] = d[i+2]*(1-s) + (bC*lum)*s
+      }
+    }
+    ctx.putImageData(id,0,0)
+  }
+  drawHandle = requestAnimationFrame(drawLoop)
+}
+
+playBtn.addEventListener('click',async ()=>{
+  if(lastType==='video'){
+    video.play()
+    connectVideoAudioChain(Number(audioSlider.value)/100)
+    drawLoop()
+    stopAll.disabled=false
+  } else if(lastType==='audio'){
+    const src = audioCtx.createBufferSource()
+    src.buffer = recordedBuffer || fileBuffer
+    src.connect(audioCtx.destination)
+    src.start()
+    playingBufferSources.push(src)
+    stopAll.disabled=false
+  }
+})
+
+stopAll.addEventListener('click',()=>{
+  video.pause()
+  cancelAnimationFrame(drawHandle)
+  drawHandle=null
+  for(const s of playingBufferSources){ try{s.stop()}catch(e){} }
+  playingBufferSources=[]
+  disconnectVideoChain()
+  stopAll.disabled=true
+})
+
+downloadVideo.addEventListener('click',()=>{
+  if(lastType!=='video') return
+  const stream = canvas.captureStream(30)
+  if(videoAudioChain) stream.addTrack(mediaRecorderLiveDest.stream.getAudioTracks()[0])
+  const rec = new MediaRecorder(stream)
+  const chunks=[]
+  rec.ondataavailable = e=>chunks.push(e.data)
+  rec.onstop=()=>{
+    const blob = new Blob(chunks,{type:'video/webm'})
+    const a = document.createElement('a')
+    a.href=URL.createObjectURL(blob)
+    a.download='video.webm'
+    a.click()
+  }
+  rec.start()
+  video.play()
+  setTimeout(()=>{ rec.stop() }, Math.floor(video.duration*1000))
+})
+
+downloadAudio.addEventListener('click',()=>{
+  let buf = recordedBuffer || fileBuffer
+  if(!buf) return
+  const dest = audioCtx.createMediaStreamDestination()
+  const src = audioCtx.createBufferSource()
+  src.buffer = buf
+  src.connect(dest)
+  src.start()
+  const rec = new MediaRecorder(dest.stream)
+  const chunks=[]
+  rec.ondataavailable = e=>chunks.push(e.data)
+  rec.onstop=()=>{
+    const blob = new Blob(chunks,{type:'audio/webm'})
+    const a = document.createElement('a')
+    a.href=URL.createObjectURL(blob)
+    a.download='audio.webm'
+    a.click()
+  }
+  rec.start()
+  setTimeout(()=>rec.stop(), Math.floor(buf.duration*1000))
+})
+</script>
+</body>
+</html>
