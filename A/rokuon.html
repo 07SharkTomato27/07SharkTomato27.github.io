@@ -172,11 +172,11 @@ function disconnectVideoChain(){
   videoAudioChain = null
 }
 
-function connectAudioChain(strength, inputNode){
+function connectVideoAudioChain(strength){
+  ensureMediaElementSource()
   disconnectVideoChain()
   const input = audioCtx.createGain()
-  const source = inputNode || mediaElementSource
-  source.connect(input)
+  mediaElementSource.connect(input)
   const output = audioCtx.createGain()
   output.gain.value = 1
   const nodes = []
@@ -193,13 +193,13 @@ function connectAudioChain(strength, inputNode){
     nodes.push(pre, sh)
   } else if(audioEffect.value === 'echo'){
     const delay = audioCtx.createDelay()
-    delay.delayTime.value = 0.28
+    delay.delayTime.value = 0.1 + strength * 0.6
     const feedback = audioCtx.createGain()
-    feedback.gain.value = Math.min(0.94, 0.01 + strength * 0.009)
+    feedback.gain.value = Math.min(0.95, 0.2 + strength * 0.7)
     const wet = audioCtx.createGain()
-    wet.gain.value = Math.min(0.9, strength * 0.8)
+    wet.gain.value = Math.min(1.0, strength)
     const dry = audioCtx.createGain()
-    dry.gain.value = Math.max(0.1, 1 - wet.gain.value * 0.6)
+    dry.gain.value = 1 - wet.gain.value * 0.5
     node.connect(dry)
     dry.connect(output)
     node.connect(delay)
@@ -228,13 +228,9 @@ function connectAudioChain(strength, inputNode){
 
   if(node !== output) node.connect(output)
   output.connect(audioCtx.destination)
-
-  if(!mediaRecorderLiveDest) 
-    mediaRecorderLiveDest = audioCtx.createMediaStreamDestination()
+  if(!mediaRecorderLiveDest) mediaRecorderLiveDest = audioCtx.createMediaStreamDestination()
   output.connect(mediaRecorderLiveDest)
-
   videoAudioChain = {input, output, nodes}
-  return output
 }
 
 function drawLoop(){
@@ -292,14 +288,13 @@ playBtn.addEventListener('click',async ()=>{
     drawLoop()
     stopAll.disabled=false
   } else if(lastType==='audio'){
-  const src = audioCtx.createBufferSource()
-  src.buffer = recordedBuffer || fileBuffer
-  const chainOutput = connectAudioChain(Number(audioSlider.value)/100, src)
-  chainOutput.connect(audioCtx.destination)
-  src.start()
-  playingBufferSources.push(src)
-  stopAll.disabled = false
-}
+    const src = audioCtx.createBufferSource()
+    src.buffer = recordedBuffer || fileBuffer
+    const chainOutput = connectAudioChain(Number(audioSlider.value)/100, src)
+    src.start()
+    playingBufferSources.push(src)
+    stopAll.disabled = false
+  }
 })
 
 stopAll.addEventListener('click',()=>{
