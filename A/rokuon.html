@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<title>リアルタイム音声・動画加工＋個別DL（修正版）</title>
+<title>音声</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
 body{font-family:system-ui,Segoe UI,Helvetica,Arial;margin:16px;color:#111}
@@ -287,7 +287,7 @@ playBtn.addEventListener('click',async ()=>{
   } else if(lastType==='audio'){
     const src = audioCtx.createBufferSource()
     src.buffer = recordedBuffer || fileBuffer
-    src.connect(audioCtx.destination)
+    connectVideoAudioChain(Number(audioSlider.value)/100, src)
     src.start()
     playingBufferSources.push(src)
     stopAll.disabled=false
