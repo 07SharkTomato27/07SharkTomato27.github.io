@@ -281,16 +281,18 @@ function drawLoop(){
   drawHandle = requestAnimationFrame(drawLoop)
 }
 
-playBtn.addEventListener('click', async ()=>{
+playBtn.addEventListener('click', ()=>{
   if(lastType==='video'){
     video.play()
     connectVideoAudioChain(Number(audioSlider.value)/100)
     drawLoop()
     stopAll.disabled=false
   } else if(lastType==='audio'){
+    const buf = recordedBuffer || fileBuffer
+    if(!buf) return
     const src = audioCtx.createBufferSource()
-    src.buffer = recordedBuffer || fileBuffer
-    const chainOutput = connectAudioChain(Number(audioSlider.value)/100, src)
+    src.buffer = buf
+    connectAudioChain(Number(audioSlider.value)/100, src)
     src.start()
     playingBufferSources.push(src)
     stopAll.disabled=false
