@@ -135,6 +135,7 @@ fileInput.addEventListener('change',async e=>{
   } else {
     const ab = await f.arrayBuffer()
     fileBuffer = await audioCtx.decodeAudioData(ab)
+    recordedBuffer = null
     lastType = 'audio'
     playBtn.disabled = false
     downloadAudio.disabled = false
@@ -174,7 +175,7 @@ function disconnectVideoChain(){
 function connectAudioChain(strength, inputNode){
   disconnectVideoChain()
   const input = audioCtx.createGain()
-  const source = inputNode || mediaElementSource   // ← 渡されたノードを優先
+  const source = inputNode || mediaElementSource
   source.connect(input)
   const output = audioCtx.createGain()
   output.gain.value = 1
