@@ -285,13 +285,14 @@ playBtn.addEventListener('click',async ()=>{
     drawLoop()
     stopAll.disabled=false
   } else if(lastType==='audio'){
-    const src = audioCtx.createBufferSource()
-    src.buffer = recordedBuffer || fileBuffer
-    connectVideoAudioChain(Number(audioSlider.value)/100, src)
-    src.start()
-    playingBufferSources.push(src)
-    stopAll.disabled=false
-  }
+  const src = audioCtx.createBufferSource()
+  src.buffer = recordedBuffer || fileBuffer
+  const chainOutput = connectAudioChain(Number(audioSlider.value)/100, src)
+  chainOutput.connect(audioCtx.destination)
+  src.start()
+  playingBufferSources.push(src)
+  stopAll.disabled = false
+}
 })
 
 stopAll.addEventListener('click',()=>{
