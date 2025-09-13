@@ -281,7 +281,7 @@ function drawLoop(){
   drawHandle = requestAnimationFrame(drawLoop)
 }
 
-playBtn.addEventListener('click',async ()=>{
+playBtn.addEventListener('click', async ()=>{
   if(lastType==='video'){
     video.play()
     connectVideoAudioChain(Number(audioSlider.value)/100)
@@ -293,7 +293,7 @@ playBtn.addEventListener('click',async ()=>{
     const chainOutput = connectAudioChain(Number(audioSlider.value)/100, src)
     src.start()
     playingBufferSources.push(src)
-    stopAll.disabled = false
+    stopAll.disabled=false
   }
 })
 
