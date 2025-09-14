@@ -233,6 +233,55 @@ function connectVideoAudioChain(strength){
   videoAudioChain = {input, output, nodes}
 }
 
+function connectAudioChain(strength, src){
+  const output = audioCtx.createGain()
+  output.gain.value = 1
+  let node = src
+
+  if(audioEffect.value === 'distortion'){
+    const pre = audioCtx.createGain()
+    pre.gain.value = 1 + strength * 80
+    node.connect(pre)
+    node = pre
+    const sh = makeWaveShaper(1 + strength * 500)
+    node.connect(sh)
+    node = sh
+  } else if(audioEffect.value === 'echo'){
+    const delay = audioCtx.createDelay()
+    delay.delayTime.value = 0.1 + strength * 0.6
+    const feedback = audioCtx.createGain()
+    feedback.gain.value = Math.min(0.95, 0.2 + strength * 0.7)
+    const wet = audioCtx.createGain()
+    wet.gain.value = Math.min(1.0, strength)
+    const dry = audioCtx.createGain()
+    dry.gain.value = 1 - wet.gain.value * 0.5
+    node.connect(dry)
+    dry.connect(output)
+    node.connect(delay)
+    delay.connect(feedback)
+    feedback.connect(delay)
+    delay.connect(wet)
+    wet.connect(output)
+  } else if(audioEffect.value === 'low'){
+    const bi = audioCtx.createBiquadFilter()
+    bi.type = 'lowshelf'
+    bi.frequency.value = 800
+    bi.gain.value = 30 * strength
+    node.connect(bi)
+    node = bi
+  } else if(audioEffect.value === 'high'){
+    const bi = audioCtx.createBiquadFilter()
+    bi.type = 'highshelf'
+    bi.frequency.value = 1200
+    bi.gain.value = 30 * strength
+    node.connect(bi)
+    node = bi
+  }
+
+  if(node !== output) node.connect(output)
+  output.connect(audioCtx.destination)
+}
+
 function drawLoop(){
   if(video.paused || video.ended) return
   ctx.drawImage(video,0,0,canvas.width,canvas.height)
@@ -334,6 +383,7 @@ downloadAudio.addEventListener('click',()=>{
   const dest = audioCtx.createMediaStreamDestination()
   const src = audioCtx.createBufferSource()
   src.buffer = buf
+  connectAudioChain(Number(audioSlider.value)/100, src)
   src.connect(dest)
   src.start()
   const rec = new MediaRecorder(dest.stream)
