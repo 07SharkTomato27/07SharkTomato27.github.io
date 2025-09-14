@@ -99,50 +99,49 @@ class Particle{
 function makeExplosion(x,y){
   let type=Math.floor(Math.random()*46)
   let color=getColor()
-  if(type===0){ //基本円
+  if(type===0){
     for(let i=0;i<150;i++){
       const a=Math.random()*Math.PI*2
       const s=Math.random()*6
       particles.push(new Particle(x,y,Math.cos(a)*s,Math.sin(a)*s,color,2,120))
     }
-  }else if(type===1){ //星型
+  }else if(type===1){
     for(let i=0;i<200;i++){
       const a=(i%5)*(Math.PI*2/5)+Math.random()*0.2
       const s=3+Math.random()*4
       particles.push(new Particle(x,y,Math.cos(a)*s,Math.sin(a)*s,color,2,100))
     }
-  }else if(type===2){ //リング
+  }else if(type===2){
     for(let i=0;i<180;i++){
       const a=i*Math.PI/90
       particles.push(new Particle(x,y,Math.cos(a)*4,Math.sin(a)*4,color,2,110))
     }
-  }else if(type===3){ //スパイラル
+  }else if(type===3){
     for(let i=0;i<300;i++){
       const a=i*0.1
       const s=i*0.02
       particles.push(new Particle(x,y,Math.cos(a)*s,Math.sin(a)*s,color,2,120))
     }
-  }else if(type===4){ //ハート
+  }else if(type===4){
     for(let i=0;i<300;i++){
       const t=i/30
       const xx=16*Math.sin(t)**3
       const yy=-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))
       particles.push(new Particle(x+xx*3,y+yy*3,(xx/8),(yy/8),color,2,120))
     }
-  }else if(type===5){ //パチパチ
+  }else if(type===5){
     for(let i=0;i<200;i++){
       const a=Math.random()*Math.PI*2
       const s=Math.random()*5
       particles.push(new Particle(x,y,Math.cos(a)*s,Math.sin(a)*s,color,2,100,true))
     }
-  }else if(type===6){ //フラッシュ
+  }else if(type===6){
     for(let i=0;i<100;i++){
       const a=Math.random()*Math.PI*2
       const s=Math.random()*6
       particles.push(new Particle(x,y,Math.cos(a)*s,Math.sin(a)*s,color,2,80,false,true))
     }
   }else{
-    // ランダム密集花火
     for(let i=0;i<100+Math.random()*200;i++){
       const a=Math.random()*Math.PI*2
       const s=Math.random()*6
