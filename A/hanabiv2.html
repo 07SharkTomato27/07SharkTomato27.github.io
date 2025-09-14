@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>花火MAX</title>
+<style>
+body{margin:0;overflow:hidden;background:#000}
+canvas{display:block}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+const canvas=document.getElementById("c")
+const ctx=canvas.getContext("2d")
+canvas.width=innerWidth
+canvas.height=innerHeight
+
+let fireworks=[]
+let particles=[]
+let running=false
+let timer=0
+let ascentSpeed=1
+let flashingAlpha=0
+let mouseDown=false
+let holdStart=0
+let holdFire=false
+
+const colors=[
+  "red","pink","yellow","orange","lime","green","skyblue",
+  "deepskyblue","blue","purple","magenta"
+]
+
+class Firework{
+  constructor(x=Math.random()*canvas.width,y=canvas.height,
+              tx=Math.random()*canvas.width,ty=Math.random()*canvas.height*0.5){
+    this.x=x
+    this.y=y
+    this.tx=tx
+    this.ty=ty
+    this.vx=(this.tx-this.x)/(40/ascentSpeed)
+    this.vy=(this.ty-this.y)/(40/ascentSpeed)
+    this.done=false
+  }
+  update(){
+    this.x+=this.vx
+    this.y+=this.vy
+    if(Math.abs(this.x-this.tx)<3&&Math.abs(this.y-this.ty)<3){
+      this.done=true
+      makeExplosion(this.tx,this.ty)
+    }
+  }
+  draw(){
+    ctx.fillStyle="white"
+    ctx.fillRect(this.x,this.y,2,2)
+  }
+}
+
+class Particle{
+  constructor(x,y,vx,vy,color,size,life,glitter=false,flash=false){
+    this.x=x
+    this.y=y
+    this.vx=vx
+    this.vy=vy
+    this.color=color
+    this.size=size
+    this.life=life
+    this.maxLife=life
+    this.glitter=glitter
+    this.flash=flash
+  }
+  update(){
+    this.x+=this.vx
+    this.y+=this.vy
+    this.vy+=0.05
+    this.vx*=0.985
+    this.vy*=0.985
+    this.life--
+  }
+  draw(){
+    if(this.flash){
+      flashingAlpha=1
+      this.flash=false
+    }
+    if(this.glitter&&Math.random()<0.3){
+      ctx.fillStyle="white"
+      ctx.globalAlpha=1
+      ctx.fillRect(this.x,this.y,this.size,this.size)
+    }
+    ctx.fillStyle=this.color
+    ctx.globalAlpha=this.life/this.maxLife
+    ctx.beginPath()
+    ctx.arc(this.x,this.y,this.size,0,Math.PI*2)
+    ctx.fill()
+    ctx.globalAlpha=1
+  }
+}
+
+function makeExplosion(x,y){
+  let type=Math.floor(Math.random()*46)
+  let color=getColor()
+  if(type===0){ //基本円
+    for(let i=0;i<150;i++){
+      const a=Math.random()*Math.PI*2
+      const s=Math.random()*6
+      particles.push(new Particle(x,y,Math.cos(a)*s,Math.sin(a)*s,color,2,120))
+    }
+  }else if(type===1){ //星型
+    for(let i=0;i<200;i++){
+      const a=(i%5)*(Math.PI*2/5)+Math.random()*0.2
+      const s=3+Math.random()*4
+      particles.push(new Particle(x,y,Math.cos(a)*s,Math.sin(a)*s,color,2,100))
+    }
+  }else if(type===2){ //リング
+    for(let i=0;i<180;i++){
+      const a=i*Math.PI/90
+      particles.push(new Particle(x,y,Math.cos(a)*4,Math.sin(a)*4,color,2,110))
+    }
+  }else if(type===3){ //スパイラル
+    for(let i=0;i<300;i++){
+      const a=i*0.1
+      const s=i*0.02
+      particles.push(new Particle(x,y,Math.cos(a)*s,Math.sin(a)*s,color,2,120))
+    }
+  }else if(type===4){ //ハート
+    for(let i=0;i<300;i++){
+      const t=i/30
+      const xx=16*Math.sin(t)**3
+      const yy=-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))
+      particles.push(new Particle(x+xx*3,y+yy*3,(xx/8),(yy/8),color,2,120))
+    }
+  }else if(type===5){ //パチパチ
+    for(let i=0;i<200;i++){
+      const a=Math.random()*Math.PI*2
+      const s=Math.random()*5
+      particles.push(new Particle(x,y,Math.cos(a)*s,Math.sin(a)*s,color,2,100,true))
+    }
+  }else if(type===6){ //フラッシュ
+    for(let i=0;i<100;i++){
+      const a=Math.random()*Math.PI*2
+      const s=Math.random()*6
+      particles.push(new Particle(x,y,Math.cos(a)*s,Math.sin(a)*s,color,2,80,false,true))
+    }
+  }else{
+    // ランダム密集花火
+    for(let i=0;i<100+Math.random()*200;i++){
+      const a=Math.random()*Math.PI*2
+      const s=Math.random()*6
+      particles.push(new Particle(x,y,Math.cos(a)*s,Math.sin(a)*s,getColor(),2,80+Math.random()*60,Math.random()<0.2))
+    }
+  }
+}
+
+function getColor(){
+  if(Math.random()<0.1)return `hsl(${Math.random()*360},100%,60%)`
+  return colors[Math.floor(Math.random()*colors.length)]
+}
+
+function loop(){
+  requestAnimationFrame(loop)
+  ctx.fillStyle="rgba(0,0,0,0.15)"
+  ctx.fillRect(0,0,canvas.width,canvas.height)
+  if(flashingAlpha>0){
+    ctx.fillStyle=`rgba(255,255,255,${flashingAlpha})`
+    ctx.fillRect(0,0,canvas.width,canvas.height)
+    flashingAlpha-=0.1
+  }
+  if(running){
+    if(timer<=0){
+      fireworks.push(new Firework())
+      timer=20+Math.random()*40
+    }else timer--
+  }
+  if(holdFire){
+    fireworks.push(new Firework(canvas.width/2,canvas.height,lastMouseX,lastMouseY))
+  }
+  fireworks.forEach((f,i)=>{
+    f.update();f.draw()
+    if(f.done)fireworks.splice(i,1)
+  })
+  particles.forEach((p,i)=>{
+    p.update();p.draw()
+    if(p.life<=0)particles.splice(i,1)
+  })
+}
+loop()
+
+let lastMouseX=0,lastMouseY=0
+canvas.onmousedown=e=>{
+  mouseDown=true
+  holdStart=Date.now()
+  lastMouseX=e.clientX
+  lastMouseY=e.clientY
+}
+canvas.onmouseup=()=>{
+  mouseDown=false
+  holdFire=false
+}
+canvas.onmousemove=e=>{
+  lastMouseX=e.clientX
+  lastMouseY=e.clientY
+}
+setInterval(()=>{
+  if(mouseDown&&Date.now()-holdStart>1000){
+    holdFire=true
+  }
+},100)
+
+onkeydown=e=>{
+  if(e.key==="b")running=!running
+  if(e.key==="g")ascentSpeed+=0.2
+  if(e.key==="h")ascentSpeed=Math.max(0.2,ascentSpeed-0.2)
+}
+onresize=()=>{
+  canvas.width=innerWidth
+  canvas.height=innerHeight
+}
+canvas.onclick=e=>{
+  fireworks.push(new Firework(canvas.width/2,canvas.height,e.clientX,e.clientY))
+}
+</script>
+</body>
+</html>
