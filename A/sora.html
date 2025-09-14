@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>空</title>
+<style>
+body{margin:0;overflow:hidden;}
+canvas{display:block;}
+</style>
+</head>
+<body>
+<canvas id="summer"></canvas>
+<script>
+const canvas=document.getElementById('summer')
+const ctx=canvas.getContext('2d')
+let W,H
+
+function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight}
+window.addEventListener('resize',resize)
+resize()
+
+class Cloud{
+  constructor(x,y,size,speed){
+    this.x=x;this.y=y;this.size=size;this.speed=speed
+    this.circles=[]
+    for(let i=0;i<14;i++){
+      this.circles.push({
+        rx:Math.random()*size*1.6-size*0.8,
+        ry:Math.random()*size*0.6-size*0.3,
+        r:size*0.25+Math.random()*size*0.35
+      })
+    }
+  }
+  update(dt){
+    this.x+=this.speed*dt
+    if(this.x-this.size>W)this.x=-this.size
+  }
+  draw(){
+    ctx.fillStyle='rgba(255,255,255,0.5)'
+    ctx.beginPath()
+    this.circles.forEach(c=>{
+      ctx.moveTo(this.x+c.rx+c.r,this.y+c.ry)
+      ctx.arc(this.x+c.rx,this.y+c.ry,c.r,0,Math.PI*2)
+    })
+    ctx.fill()
+  }
+}
+
+const clouds=[]
+for(let i=0;i<15;i++){
+  const size=40+Math.random()*60
+  clouds.push(new Cloud(Math.random()*(W-size*0.5),Math.random()*H*0.5,size,0.008+Math.random()*0.004))
+}
+
+function drawSky(phase){
+  const grad=ctx.createLinearGradient(0,0,W,H)
+  grad.addColorStop(0,'#7ec0ee')
+  grad.addColorStop(1,'#a0d8ff')
+  ctx.fillStyle=grad
+  ctx.fillRect(0,0,W,H)
+}
+
+function drawSun(phase){
+  const sunX=W*0.8
+  const sunY=H*0.2
+  const baseRadius=50
+  for(let i=0;i<6;i++){
+    const r=baseRadius + i*15 + Math.sin(phase*0.02+i)*0.8
+    const alpha=0.15/(i+1)
+    ctx.fillStyle='rgba(255,255,200,'+alpha+')'
+    ctx.beginPath()
+    ctx.arc(sunX+Math.random()*2-1,sunY+Math.random()*2-1,r,0,Math.PI*2)
+    ctx.fill()
+  }
+}
+
+let lastTime=0
+function animate(time){
+  const dt=(time-lastTime)/16.67
+  lastTime=time
+  ctx.clearRect(0,0,W,H)
+  drawSky(time/1000)
+  drawSun(time/1000)
+  clouds.forEach(c=>{c.update(dt);c.draw()})
+  requestAnimationFrame(animate)
+}
+
+animate(0)
+</script>
+</body>
+</html>
