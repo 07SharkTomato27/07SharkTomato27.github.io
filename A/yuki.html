@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>雪の日の放置画面</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body {
+  margin: 0;
+  overflow: hidden;
+  height: 100vh;
+  background: linear-gradient(to bottom, #555 0%, #777 100%);
+  position: relative;
+}
+.snowflake {
+  position: absolute;
+  top: 0;
+  background: white;
+  border-radius: 50%;
+  pointer-events: none;
+}
+</style>
+</head>
+<body>
+<script>
+const snowCount = 200;
+const snowflakes = [];
+
+for(let i = 0; i < snowCount; i++){
+  const s = document.createElement('div');
+  s.className = 'snowflake';
+  const depth = Math.random();
+  s.size = depth * 3 + 1;
+  s.speed = depth * 1.5 + 0.2;
+  s.wind = Math.random() * 0.5 - 0.25;
+  s.style.width = s.size + 'px';
+  s.style.height = s.size + 'px';
+  s.style.left = Math.random() * window.innerWidth + 'px';
+  s.style.top = Math.random() * window.innerHeight + 'px';
+  s.style.opacity = 0.3 + depth * 0.7;
+  document.body.appendChild(s);
+  snowflakes.push(s);
+}
+
+function animate() {
+  snowflakes.forEach(s => {
+    s.style.top = (parseFloat(s.style.top) + s.speed) + 'px';
+    s.style.left = (parseFloat(s.style.left) + s.wind) + 'px';
+    if(parseFloat(s.style.top) > window.innerHeight){
+      s.style.top = '-5px';
+      s.style.left = Math.random() * window.innerWidth + 'px';
+    }
+    if(parseFloat(s.style.left) < 0) s.style.left = window.innerWidth + 'px';
+    if(parseFloat(s.style.left) > window.innerWidth) s.style.left = '0px';
+  });
+  requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+</body>
+</html>
