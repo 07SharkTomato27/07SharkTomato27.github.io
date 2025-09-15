@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>雨</title>
+<style>
+body{margin:0;overflow:hidden;background:#6b7a8f;}
+canvas{display:block;}
+</style>
+<body>
+<canvas id="rain"></canvas>
+<script>
+const canvas=document.getElementById('rain')
+const ctx=canvas.getContext('2d')
+let W,H
+
+function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight}
+window.addEventListener('resize',resize)
+resize()
+
+const rainAngle = Math.PI/180 * 2
+
+class RainDrop{
+  constructor(){
+    this.reset()
+  }
+  reset(){
+    this.len=15+Math.random()*25
+    this.speed=15+Math.random()*20
+    this.x=Math.random()*W
+    this.y=-Math.random()*H
+    this.width=Math.random()*1.2+0.8
+    this.alpha=0.3+Math.random()*0.4
+  }
+  update(dt){
+    this.x += Math.sin(rainAngle)*this.speed*dt
+    this.y += Math.cos(rainAngle)*this.speed*dt
+    if(this.y>H)this.reset()
+    if(this.x>W)this.x-=W
+    if(this.x<0)this.x+=W
+  }
+  draw(){
+    ctx.strokeStyle='rgba(200,200,255,'+this.alpha+')'
+    ctx.lineWidth=this.width
+    ctx.beginPath()
+    ctx.moveTo(this.x,this.y)
+    ctx.lineTo(this.x+Math.sin(rainAngle)*this.len,this.y+Math.cos(rainAngle)*this.len)
+    ctx.stroke()
+  }
+}
+
+const raindrops=[]
+for(let i=0;i<600;i++)raindrops.push(new RainDrop())
+
+let lastTime=0
+function animate(time){
+  const dt=(time-lastTime)/16.67
+  lastTime=time
+  const grad=ctx.createLinearGradient(0,0,W,H)
+  grad.addColorStop(0,'#5e6b80')
+  grad.addColorStop(1,'#6b7a8f')
+  ctx.fillStyle=grad
+  ctx.fillRect(0,0,W,H)
+  raindrops.forEach(r=>{r.update(dt);r.draw()})
+  requestAnimationFrame(animate)
+}
+
+animate(0)
+</script>
+</body>
+</html>
