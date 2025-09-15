@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>音</title>
+<style>
+body, html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: #111;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: sans-serif;
+  cursor: pointer;
+  user-select: none;
+}
+canvas {
+  position: absolute;
+  top:0;
+  left:0;
+}
+#message {
+  position: absolute;
+  text-align: center;
+  font-size: 24px;
+  color: #fff;
+}
+</style>
+</head>
+<body>
+<div id="message">クリックして</div>
+<canvas id="c"></canvas>
+<script>
+const canvas = document.getElementById('c')
+const ctx = canvas.getContext('2d')
+canvas.width = window.innerWidth
+canvas.height = window.innerHeight
+
+let circles = []
+let hueOffset = 0
+let lastExplosion = 0
+
+class Circle {
+  constructor(radius, hue, life){
+    this.radius = radius
+    this.hue = hue
+    this.life = life
+  }
+  update(){
+    this.radius += 5
+    this.life--
+  }
+  draw(ctx){
+    ctx.globalAlpha = Math.max(this.life/60,0)
+    ctx.strokeStyle = `hsl(${this.hue},100%,50%)`
+    ctx.beginPath()
+    ctx.arc(canvas.width/2,canvas.height/2,this.radius,0,Math.PI*2)
+    ctx.stroke()
+    ctx.globalAlpha = 1
+  }
+}
+
+function explode(intensity){
+  const now = performance.now()
+  if(intensity<0.25 || now - lastExplosion < 150) return
+  lastExplosion = now
+  const count = Math.floor(5 + intensity*5)
+  for(let i=0;i<count;i++){
+    circles.push(new Circle(20,hueOffset,60))
+    hueOffset = (hueOffset + 10)%360
+  }
+}
+
+function animate(){
+  ctx.fillStyle='#111'
+  ctx.fillRect(0,0,canvas.width,canvas.height)
+  for(let i=circles.length-1;i>=0;i--){
+    circles[i].update()
+    circles[i].draw(ctx)
+    if(circles[i].life<=0) circles.splice(i,1)
+  }
+  requestAnimationFrame(animate)
+}
+
+animate()
+
+let audioCtx, analyser, dataArray
+
+async function initMic(){
+  const stream = await navigator.mediaDevices.getUserMedia({audio:true})
+  audioCtx = new AudioContext()
+  const source = audioCtx.createMediaStreamSource(stream)
+  analyser = audioCtx.createAnalyser()
+  source.connect(analyser)
+  analyser.fftSize = 256
+  dataArray = new Uint8Array(analyser.frequencyBinCount)
+}
+
+document.body.addEventListener('click', async ()=>{
+  document.getElementById('message').style.display='none'
+  if(!audioCtx) await initMic()
+  function updateParticles(){
+    analyser.getByteFrequencyData(dataArray)
+    const volume = dataArray.reduce((a,b)=>a+b)/dataArray.length/255
+    explode(volume)
+    requestAnimationFrame(updateParticles)
+  }
+  updateParticles()
+})
+
+window.addEventListener('resize',()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight})
+</script>
+</body>
+</html>
