@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Audio Visualizer</title>
+<style>
+body{margin:0;background:#000;color:#fff;font-family:sans-serif;overflow:hidden}
+#controls{position:fixed;top:10px;left:10px;z-index:10;background:rgba(0,0,0,0.5);padding:10px;border-radius:8px}
+canvas{display:block;width:100vw;height:100vh}
+label{display:block;margin:4px 0}
+</style>
+</head>
+<body>
+<div id="controls">
+  <label>背景色 <input type="color" id="bgColor" value="#000000"></label>
+  <label>線の色 <input type="color" id="lineColor" value="#00ffcc">
+    <input type="checkbox" id="lineRGB">RGB</label>
+  <label>モード 
+    <select id="mode">
+      <option value="center">中央から左右</option>
+      <option value="sides">左右</option>
+      <option value="circle">円</option>
+    </select>
+  </label>
+  <button id="micBtn">マイク開始</button>
+  <input type="file" id="fileInput" accept="audio/*,video/*">
+  <button id="startBtn">開始</button>
+</div>
+<canvas id="canvas"></canvas>
+<audio id="player" controls style="display:none"></audio>
+<video id="videoPlayer" controls style="display:none"></video>
+<script>
+const canvas=document.getElementById("canvas")
+const ctx=canvas.getContext("2d")
+let audioCtx,source,analyser,dataArray
+let playing=false
+let hue=0
+let rotation=0
+let isVideo=false
+
+function resize(){canvas.width=innerWidth;canvas.height=innerHeight}
+resize()
+addEventListener("resize",resize)
+
+function setupSource(streamOrEl){
+  if(audioCtx) audioCtx.close()
+  audioCtx=new AudioContext()
+  analyser=audioCtx.createAnalyser()
+  analyser.fftSize=4096
+  dataArray=new Uint8Array(analyser.frequencyBinCount)
+  if(streamOrEl instanceof MediaStream){
+    source=audioCtx.createMediaStreamSource(streamOrEl)
+    isVideo=false
+  }else{
+    source=audioCtx.createMediaElementSource(streamOrEl)
+    isVideo=streamOrEl.tagName==="VIDEO"
+  }
+  source.connect(analyser)
+  analyser.connect(audioCtx.destination)
+}
+
+function draw(){
+  if(!playing) return
+  requestAnimationFrame(draw)
+  analyser.getByteFrequencyData(dataArray)
+  let bg=document.getElementById("bgColor").value
+  let line=document.getElementById("lineColor").value
+  if(document.getElementById("lineRGB").checked){
+    line=`hsl(${hue},100%,50%)`
+  }
+  ctx.fillStyle=bg
+  ctx.fillRect(0,0,canvas.width,canvas.height)
+  const mode=document.getElementById("mode").value
+
+  if(mode==="center"){
+    const barWidth=canvas.width/(dataArray.length*2)
+    for(let i=0;i<dataArray.length;i++){
+      let val=dataArray[i]
+      let barHeight=(val/255)*canvas.height/2
+      ctx.fillStyle=line
+      ctx.fillRect(canvas.width/2-barWidth*i,canvas.height/2-barHeight,barWidth,barHeight*2)
+      ctx.fillRect(canvas.width/2+barWidth*i,canvas.height/2-barHeight,barWidth,barHeight*2)
+    }
+  }else if(mode==="sides"){
+    const half=Math.floor(dataArray.length/2)
+    const segments=Math.min(120, half)
+    const step=Math.floor(half/segments)
+    const barHeight=canvas.height/segments
+    for(let i=0;i<segments;i++){
+      let valL=dataArray[i*step]
+      let valR=dataArray[i*step + half]
+      let barLenL=(valL/255)*canvas.width/2
+      let barLenR=(valR/255)*canvas.width/2
+      ctx.fillStyle=line
+      ctx.fillRect(0,barHeight*i,barLenL,barHeight-1)
+      ctx.fillRect(canvas.width-barLenR,barHeight*i,barLenR,barHeight-1)
+    }
+  }else if(mode==="circle"){
+    const radius=Math.min(canvas.width,canvas.height)/4
+    ctx.save()
+    ctx.translate(canvas.width/2,canvas.height/2)
+    ctx.rotate(rotation)
+    if(isVideo){
+      const v=document.getElementById("videoPlayer")
+      const vw=v.videoWidth, vh=v.videoHeight
+      if(vw>0&&vh>0){
+        const size=Math.min(vw,vh)
+        const sx=(vw-size)/2, sy=(vh-size)/2
+        ctx.save()
+        ctx.beginPath()
+        ctx.arc(0,0,radius,0,Math.PI*2)
+        ctx.clip()
+        ctx.drawImage(v,sx,sy,size,size,-radius,-radius,radius*2,radius*2)
+        ctx.restore()
+      }
+    }else{
+      ctx.beginPath()
+      ctx.arc(0,0,radius,0,Math.PI*2)
+      ctx.strokeStyle=line
+      ctx.lineWidth=4
+      ctx.stroke()
+    }
+    const bars=180
+    const step=Math.floor(dataArray.length/bars)
+    ctx.strokeStyle=line
+    for(let i=0;i<bars;i++){
+      const val=dataArray[i*step]
+      const barLen=(val/255)*radius
+      const angle=(i/bars)*Math.PI*2
+      const x1=Math.cos(angle)*radius
+      const y1=Math.sin(angle)*radius
+      const x2=Math.cos(angle)*(radius+barLen)
+      const y2=Math.sin(angle)*(radius+barLen)
+      ctx.beginPath()
+      ctx.moveTo(x1,y1)
+      ctx.lineTo(x2,y2)
+      ctx.stroke()
+    }
+    ctx.restore()
+    rotation+=0.002
+  }
+  hue=(hue+0.5)%360
+}
+
+document.getElementById("micBtn").onclick=async()=>{
+  const stream=await navigator.mediaDevices.getUserMedia({audio:true})
+  setupSource(stream)
+  playing=true
+  draw()
+}
+
+document.getElementById("fileInput").onchange=e=>{
+  const file=e.target.files[0]
+  if(!file) return
+  const url=URL.createObjectURL(file)
+  if(file.type.startsWith("video")){
+    const v=document.getElementById("videoPlayer")
+    v.src=url
+    v.play()
+    setupSource(v)
+  }else{
+    const a=document.getElementById("player")
+    a.src=url
+    a.play()
+    setupSource(a)
+  }
+  playing=true
+  draw()
+}
+
+document.getElementById("startBtn").onclick=()=>{
+  document.getElementById("controls").style.display="none"
+  if(document.documentElement.requestFullscreen){
+    document.documentElement.requestFullscreen()
+  }
+  if(!playing){playing=true;draw()}
+}
+
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){
+    document.getElementById("controls").style.display="block"
+    if(document.fullscreenElement) document.exitFullscreen()
+    playing=false
+  }
+})
+</script>
+</body>
+</html>
