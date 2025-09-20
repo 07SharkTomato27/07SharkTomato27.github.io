@@ -308,11 +308,19 @@ function switchChannel(index){
 }
 
 function sendMsg(){
-  const input=document.getElementById('msg');
-  if(input.value.trim()==="") return;
-  const msg={name:username,avatar:avatarURL,text:input.value.trim(),timestamp:Date.now()};
+  const input = document.getElementById("msg");
+  if(!input || input.value.trim() === "") return;
+  const msg = {
+    name: username,
+    avatar: avatarURL,
+    text: input.value.trim(),
+    timestamp: Date.now(),
+    textColor: userSettings.myTextColor,
+    glowEnabled: userSettings.glowEnabled ? "true" : "false",
+    glowColor: userSettings.glowColor
+  };
   db.ref("channel"+currentChannel).push(msg);
-  input.value="";
+  input.value = "";
 }
 
 let allMessages = []
@@ -381,22 +389,16 @@ function renderVirtual(){
 }
 function renderMessageHTML(e){
   const m = e.m;
-  const date = new Date(m.timestamp||Date.now());
-  const dateStr = date.getFullYear()+'/'+(date.getMonth()+1)+'/'+date.getDate()+' '+date.getHours()+':'+date.getMinutes().toString().padStart(2,'0');
+  const date = new Date(m.timestamp || Date.now());
+  const dateStr = date.getFullYear()+'/'+(date.getMonth()+1)+'/'+date.getDate()+' '+date.getHours()+':'+String(date.getMinutes()).padStart(2,'0');
   const avatar = m.avatar || "icon/favicon3.ico";
-  
-  let style = (m.name === username) 
-    ? `color:${userSettings.myTextColor};` 
-    : `color:${localStorage.getItem("textColor") || "white"};`;
-
-  if(userSettings.glowEnabled && m.name === username){
-    style += `text-shadow:0 0 8px ${userSettings.glowColor};`;
+  let style = `color:${m.textColor || "white"};`;
+  if(m.glowEnabled==="true" || m.glowEnabled===true){
+    style += `text-shadow:0 0 8px ${m.glowColor||"#ffff00"};`;
   }
-
   const del = (m.name===username || username==="SharkTomato") 
-              ? `<span class="delete" onclick="deleteMsg('${e.key}','${String(m.name).replace(/'/g,"\\'")}')">[削除]</span>` 
-              : '';
-
+    ? `<span class="delete" onclick="deleteMsg('${e.key}','${String(m.name).replace(/'/g,"\\'")}')">[削除]</span>` 
+    : '';
   return `
     <div class="msg" style="margin-bottom:2px; ${style}">
       <img src="${avatar}" width="30" height="30" style="vertical-align: middle; border-radius:50%">
