@@ -168,4 +168,14 @@ function resetGame() {
 
 console.log("script.js 読み込まれた");
 
+document.addEventListener("keydown", (e) => {
+  if (e.code === "Space") {
+    e.preventDefault()
+    score += tenaActive ? 4 : 1
+    updateScore()
+    clickSound.currentTime = 0
+    clickSound.play()
+  }
+})
+
 updateScore();
