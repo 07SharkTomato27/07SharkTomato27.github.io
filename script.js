@@ -178,4 +178,10 @@ document.addEventListener("keydown", (e) => {
   }
 })
 
+for (const id in upgrades) {
+  const btn = document.getElementById("upgrade" + id)
+  btn.addEventListener("click", () => buyUpgrade(parseInt(id)))
+}
+
+
 updateScore();
