@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>よけろ</title>
+<style>
+body{margin:0;background:#fff;overflow:hidden;font-family:monospace}
+canvas{display:block}
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<script>
+const canvas = document.getElementById("canvas")
+const ctx = canvas.getContext("2d")
+canvas.width = window.innerWidth
+canvas.height = window.innerHeight
+
+const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+let rain = []
+
+for(let i=0;i<200;i++){
+  rain.push({x:Math.random()*canvas.width, y:Math.random()*canvas.height, speed:Math.random()*2+1, color:"#000", healing:false})
+}
+
+function addHealingLetter(){
+  const r = {x:Math.random()*canvas.width, y:-20, speed:Math.random()*2+1, color:"#00ff00", healing:true}
+  rain.push(r)
+}
+
+let soul = {x:canvas.width/2, y:canvas.height-50, size:16}
+let hp = 99
+let alive = true
+
+const keys = {}
+document.addEventListener("keydown", e => keys[e.key] = true)
+document.addEventListener("keyup", e => keys[e.key] = false)
+
+function checkCollision(r){
+  const hitSize = soul.size
+  return soul.x < r.x + 16 && soul.x + hitSize > r.x && soul.y < r.y && soul.y + hitSize > r.y
+}
+
+function draw(){
+  if(!alive){
+    ctx.fillStyle = "red"
+    ctx.fillRect(0,0,canvas.width,canvas.height)
+    return
+  }
+
+  ctx.fillStyle = "rgba(255,255,255,0.1)"
+  ctx.fillRect(0,0,canvas.width,canvas.height)
+
+  rain.forEach(r=>{
+    const char = letters[Math.floor(Math.random()*letters.length)]
+    ctx.fillStyle = r.color
+    ctx.font = "16px monospace"
+    ctx.fillText(char, r.x, r.y)
+
+    if(checkCollision(r)){
+      if(r.healing){
+        hp += 5
+      } else {
+        hp -= 1
+      }
+      r.y = -20
+    }
+    r.y += r.speed
+    if(r.y > canvas.height) r.y = 0
+  })
+
+  let speed = 5
+  if(keys["Shift"] || keys["x"]) speed = 2
+  if(keys["ArrowLeft"] && soul.x - speed > 0) soul.x -= speed
+  if(keys["ArrowRight"] && soul.x + soul.size + speed < canvas.width) soul.x += speed
+  if(keys["ArrowUp"] && soul.y - speed > 0) soul.y -= speed
+  if(keys["ArrowDown"] && soul.y + soul.size + speed < canvas.height) soul.y += speed
+
+  ctx.font = soul.size+"px monospace"
+  ctx.fillText("❤️", soul.x, soul.y)
+
+  ctx.fillStyle = "#000"
+  ctx.font = "20px monospace"
+  ctx.fillText("HP: "+hp, 10, 30)
+
+  if(Math.random() < 0.001) addHealingLetter()
+
+  if(hp <= 0) alive = false
+
+  requestAnimationFrame(draw)
+}
+
+window.addEventListener("resize", ()=>{
+  canvas.width = window.innerWidth
+  canvas.height = window.innerHeight
+})
+
+draw()
+</script>
+</body>
+</html>
