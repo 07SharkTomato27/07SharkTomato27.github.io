@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>れいんぼーなせん</title>
+<style>
+body{margin:0;background:#fff;overflow:hidden}
+canvas{display:block}
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<script>
+const canvas = document.getElementById("canvas")
+const ctx = canvas.getContext("2d")
+canvas.width = window.innerWidth
+canvas.height = window.innerHeight
+
+function rand(min,max){return Math.random()*(max-min)+min}
+
+canvas.addEventListener("mousemove", e=>{
+  for(let i=0;i<5;i++){
+    ctx.strokeStyle = `hsl(${Math.random()*360},100%,50%)`
+    ctx.beginPath()
+    ctx.moveTo(e.clientX, e.clientY)
+    ctx.lineTo(e.clientX+rand(-50,50), e.clientY+rand(-50,50))
+    ctx.stroke()
+  }
+})
+
+window.addEventListener("resize", ()=>{
+  canvas.width = window.innerWidth
+  canvas.height = window.innerHeight
+})
+</script>
+</body>
+</html>
