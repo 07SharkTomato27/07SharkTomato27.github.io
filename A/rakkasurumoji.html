@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>落下する文字</title>
+<style>
+body{margin:0;font-family:monospace;overflow:hidden}
+#ui{position:absolute;top:10px;left:10px;z-index:10;background:#fff;padding:10px;border-radius:5px;}
+canvas{display:block}
+label{display:block;margin-top:5px;}
+</style>
+</head>
+<body>
+<div id="ui">
+背景の色: <input type="color" id="bgColor" value="#ffffff">
+文字の色: <input type="color" id="textColor" value="#000000">
+落とす文字: <input type="text" id="userText" value="ABC123">
+文字が変わる速度: <input type="range" id="charSpeed" min="50" max="500" value="200">
+落下速度: <input type="range" id="fallSpeed" min="1" max="10" value="2">
+<button id="startBtn">開始</button>
+</div>
+<canvas id="canvas"></canvas>
+<script>
+const canvas=document.getElementById("canvas")
+const ctx=canvas.getContext("2d")
+canvas.width=window.innerWidth
+canvas.height=window.innerHeight
+
+let bgColor="#fff",textColor="#000",charSpeed=200,fallSpeed=2,running=false,userText="ABC123"
+let rain=[],lastCharUpdate=0
+
+function initRain(){
+rain=[]
+for(let i=0;i<200;i++)rain.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,speed:fallSpeed,index:0})
+}
+
+function draw(time){
+ctx.fillStyle=bgColor
+ctx.fillRect(0,0,canvas.width,canvas.height)
+if(running){
+if(time-lastCharUpdate>charSpeed){rain.forEach(r=>r.index=(r.index+1)%userText.length);lastCharUpdate=time}
+rain.forEach(r=>{
+ctx.fillStyle=textColor
+ctx.font="16px monospace"
+ctx.fillText(userText[r.index],r.x,r.y)
+r.y+=r.speed
+if(r.y>canvas.height)r.y=0
+})
+}
+requestAnimationFrame(draw)
+}
+
+draw()
+
+document.getElementById("startBtn").addEventListener("click",()=>{
+bgColor=document.getElementById("bgColor").value
+textColor=document.getElementById("textColor").value
+charSpeed=parseInt(document.getElementById("charSpeed").value)
+fallSpeed=parseFloat(document.getElementById("fallSpeed").value)
+userText=document.getElementById("userText").value||"A"
+initRain()
+running=true
+document.getElementById("ui").style.display="none"
+if(canvas.requestFullscreen)canvas.requestFullscreen()
+})
+
+window.addEventListener("resize",()=>{
+canvas.width=window.innerWidth
+canvas.height=window.innerHeight
+})
+
+document.addEventListener("keydown",e=>{
+if(e.key==="Escape"){running=false;rain=[];ctx.fillStyle=bgColor;ctx.fillRect(0,0,canvas.width,canvas.height);document.getElementById("ui").style.display="block"}
+})
+
+document.getElementById("charSpeed").addEventListener("input",e=>{charSpeed=parseInt(e.target.value)})
+document.getElementById("fallSpeed").addEventListener("input",e=>{fallSpeed=parseFloat(e.target.value);rain.forEach(r=>r.speed=fallSpeed)})
+document.getElementById("bgColor").addEventListener("input",e=>{bgColor=e.target.value})
+document.getElementById("textColor").addEventListener("input",e=>{textColor=e.target.value})
+</script>
+</body>
+</html>
