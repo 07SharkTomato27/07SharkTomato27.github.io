@@ -503,6 +503,533 @@ document.addEventListener("DOMContentLoaded",()=>{
     });
   });
 });
+let hiddenUI = false
+
+document.addEventListener("keydown", e=>{
+  if(e.key.toLowerCase()==="h" && e.shiftKey){
+    hiddenUI = !hiddenUI
+    document.getElementById("channels").style.display = hiddenUI ? "none" : "flex"
+    document.getElementById("chat-header").style.display = hiddenUI ? "none" : "block"
+  }
+})
+
+</script>
+</body>
+</html><!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>SharkChat</title>
+<link rel="icon" href="icon/favicon3.ico" type="image/x-icon">
+<style>
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  background: linear-gradient(to bottom right, #1e1e2f, #3a3a5c);
+  color: white;
+}
+#login {
+  display: flex;
+  height: 100vh;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+#app {
+  display: none;
+  height: 100vh;
+}
+#main {
+  display: flex;
+  height: 100%;
+}
+#channels {
+  width: 220px;
+  background: #2f3136;
+  padding: 10px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.channel {
+  padding: 5px;
+  cursor: pointer;
+}
+.channel:hover {
+  background: #40444b;
+}
+.active {
+  background: #5865f2;
+}
+#chat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #36393f;
+}
+#chat-header {
+  padding: 10px;
+  background: #202225;
+  border-bottom: 1px solid #444;
+}
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+#input-box {
+  display: flex;
+  border-top: 1px solid #444;
+}
+#input-box input {
+  flex: 1;
+  padding: 10px;
+  border: none;
+}
+#input-box button {
+  padding: 10px;
+  background: #7289da;
+  border: none;
+  color: white;
+}
+.msg {
+  margin-bottom: 5px;
+}
+.msg:hover .delete {
+  display: inline;
+}
+.delete {
+  display: none;
+  color: red;
+  cursor: pointer;
+  margin-left: 10px;
+}
+#user-settings {
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+#avatar-preview {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+#settings-panel {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+}
+.vc-channel {
+  background: #2f3136;
+  padding: 5px;
+  border-radius: 5px;
+  margin-top: 5px;
+}
+.vc-users {
+  display: flex;
+  gap: 5px;
+  margin-top: 5px;
+  flex-wrap: wrap;
+}
+.vc-join-btn {
+  margin-top: 5px;
+  padding: 3px 6px;
+  background: #43b581;
+  border: none;
+  color: white;
+  cursor: pointer;
+  border-radius: 3px;
+}
+.vc-mic-btn {
+  margin-top: 5px;
+  padding: 3px 6px;
+  background: #faa61a;
+  border: none;
+  color: white;
+  cursor: pointer;
+  border-radius: 3px;
+}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
+</head>
+<body>
+<div id="login">
+<h2>PASS</h2>
+<input type="password" id="password" placeholder="パスワード">
+<button id="enter-button">入る</button>
+</div>
+
+<div id="app">
+<div id="main">
+<div id="channels">
+<h3>SharkChat</h3>
+<div id="user-settings">
+<input id="username" placeholder="名前を入力">
+<input type="file" id="avatar" accept="image/*">
+<img id="avatar-preview" src="" alt="avatar">
+<button id="settings-button">⚙</button>
+</div>
+<div id="settings-panel">
+<label>フォント: <input id="font-setting" placeholder="例: sans-serif"></label>
+<label>文字の色: <input id="text-color-setting" type="color"></label>
+<label>色1: <input id="color1-setting" type="color"></label>
+<label>色2: <input id="color2-setting" type="color"></label>
+<label>自分の文字色: <input type="color" id="my-text-color" value="#ffffff"></label>
+<label>輝くメッセージ: <input type="checkbox" id="glow-enabled"></label>
+<label>輝く色: <input type="color" id="glow-color" value="#ffff00"></label>
+</div>
+<div class="channel active" data-index="0"># 喋る1</div>
+<div class="channel" data-index="1"># 速報</div>
+<div class="channel" data-index="2"># 喋る2</div>
+<div class="channel" data-index="3"># 喋る3</div>
+<div class="vc-channel" data-index="0">
+VC1
+<button class="vc-join-btn">入る/出る</button>
+<button class="vc-mic-btn">マイクON</button>
+<div class="vc-users"></div>
+</div>
+<div class="vc-channel" data-index="1">
+VC2
+<button class="vc-join-btn">入る/出る</button>
+<button class="vc-mic-btn">マイクON</button>
+<div class="vc-users"></div>
+</div>
+</div>
+
+<div id="chat">
+<div id="chat-header"># 喋る1</div>
+<div id="messages"></div>
+<div id="resetBtn" style="position:fixed;left:10px;bottom:10px;font-size:20px;cursor:pointer">🗑️</div>
+<div id="input-box">
+<input id="msg" placeholder="メッセージを入力">
+<button id="send-button">enterで送信</button>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey:"AIzaSyCPF0ieugcs05fLXYahHdaE5JCeXgOIw3A",
+  authDomain:"sharkchat-9a0a5.firebaseapp.com",
+  databaseURL:"https://sharkchat-9a0a5-default-rtdb.firebaseio.com",
+  projectId:"sharkchat-9a0a5",
+  storageBucket:"sharkchat-9a0a5.appspot.com",
+  messagingSenderId:"932358584876",
+  appId:"1:932358584876:web:afa8b9f8515c0ac6826f89"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let username = localStorage.getItem("username")||"名無し";
+let avatarURL = localStorage.getItem("avatarURL")||"";
+let currentChannel=0;
+let currentRef=null;
+let inVC=false;
+let localStream=null;
+let remoteAudios = {};
+let pageHidden=false;
+
+document.addEventListener("visibilitychange",()=>{pageHidden=document.hidden;});
+
+const userSettings = {
+ myTextColor: localStorage.getItem("myTextColor") || "#ffffff",
+ glowEnabled: localStorage.getItem("glowEnabled") === "true",
+ glowColor: localStorage.getItem("glowColor") || "#ffff00"
+ };
+
+function applySettings(){
+  const font=localStorage.getItem("font")||"sans-serif";
+  const color1=localStorage.getItem("color1")||"#1e1e2f";
+  const color2=localStorage.getItem("color2")||"#3a3a5c";
+  const textColor=localStorage.getItem("textColor")||"white";
+  document.body.style.fontFamily=font;
+  document.getElementById("chat").style.background=`linear-gradient(to bottom right, ${color1}, ${color2})`;
+  document.body.style.color=textColor;
+}
+document.getElementById("my-text-color").addEventListener("change", e=>{
+  userSettings.myTextColor = e.target.value;
+  localStorage.setItem("myTextColor", e.target.value);
+  renderVirtual();
+});
+
+document.getElementById("glow-color").addEventListener("change", e=>{
+  userSettings.glowColor = e.target.value;
+  localStorage.setItem("glowColor", e.target.value);
+  renderVirtual();
+});
+
+document.getElementById("glow-enabled").addEventListener("change", e=>{
+  userSettings.glowEnabled = e.target.checked;
+  localStorage.setItem("glowEnabled", e.target.checked);
+  renderVirtual();
+});
+
+function checkPass(){
+  const pass=document.getElementById('password').value;
+  if(pass==="707107"){
+    document.getElementById('login').style.display="none";
+    document.getElementById('app').style.display="block";
+    document.getElementById('username').value=username;
+    if(avatarURL) document.getElementById('avatar-preview').src=avatarURL;
+    document.getElementById("font-setting").value=localStorage.getItem("font")||"";
+    document.getElementById("text-color-setting").value=localStorage.getItem("textColor")||"#ffffff";
+    document.getElementById("color1-setting").value=localStorage.getItem("color1")||"#1e1e2f";
+    document.getElementById("color2-setting").value=localStorage.getItem("color2")||"#3a3a5c";
+    applySettings();
+    listenMessages();
+  } else { alert("間違ったパスワード"); }
+}
+
+document.getElementById("resetBtn").onclick=()=>{
+  if(currentChannel !== null && currentChannel !== undefined){
+    const pass=prompt("このチャンネルをリセットします。リセットするにはパスワードを入力してください。")
+    if(pass==="0727"){
+      db.ref("channel"+currentChannel).remove()
+      alert("チャンネルをリセットしました")
+    }else if(pass!==null){
+      alert("パスワードが違います")
+    }
+  }
+}
+
+function setUsername(){
+  const input=document.getElementById('username').value;
+  if(input.trim()!==""){ username=input.trim(); localStorage.setItem("username",username); }
+}
+
+function setAvatar(){
+  const file=document.getElementById('avatar').files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    avatarURL=e.target.result;
+    document.getElementById('avatar-preview').src=avatarURL;
+    localStorage.setItem("avatarURL",avatarURL);
+  };
+  reader.readAsDataURL(file);
+}
+
+function switchChannel(index){
+  currentChannel=index;
+  document.getElementById("chat-header").textContent=["# 喋る1","# 速報","# 喋る2","# 喋る3"][index]||"# 喋る1";
+  document.querySelectorAll(".channel").forEach((el,i)=>{el.classList.toggle("active",i===index);});
+  listenMessages();
+  updateVCDisplay();
+}
+
+function sendMsg(){
+  const input = document.getElementById("msg");
+  if(!input || input.value.trim() === "") return;
+  const msg = {
+    name: username,
+    avatar: avatarURL,
+    text: input.value.trim(),
+    timestamp: Date.now(),
+    textColor: userSettings.myTextColor,
+    glowEnabled: userSettings.glowEnabled ? "true" : "false",
+    glowColor: userSettings.glowColor
+  };
+  db.ref("channel"+currentChannel).push(msg);
+  input.value = "";
+}
+
+let allMessages = []
+
+function listenMessages(){
+  if(currentRef) currentRef.off();
+  currentRef = db.ref("channel"+currentChannel);
+  currentRef.on("value", snap => {
+    const data = snap.val() || {};
+    const oldKeys = allMessages.map(x => x.key);
+    const entries = Object.entries(data).map(([k,v])=>({key:k,m:v})).sort((a,b)=>(a.m.timestamp||0)-(b.m.timestamp||0));
+    allMessages = entries;
+    const newKeys = entries.map(e=>e.key).filter(k=>!oldKeys.includes(k));
+    if(newKeys.length){
+      newKeys.forEach(k=>{
+        const m = entries.find(x=>x.key===k).m;
+        if(m.name!==username && pageHidden){
+          if("Notification" in window && Notification.permission==="granted"){
+            new Notification(m.name,{body:m.text,icon:m.avatar||"icon/favicon3.ico"});
+          }
+        }
+      });
+    }
+    renderVirtual();
+  });
+}
+
+let heights = {}
+let totalHeight = 0
+
+function renderVirtual(){
+  const container = document.getElementById("messages")
+  const viewHeight = container.clientHeight || 400
+  const scrollTop = container.scrollTop
+  const measure = document.createElement("div")
+  measure.style.position="absolute"
+  measure.style.visibility="hidden"
+  measure.style.width = container.clientWidth+"px"
+  document.body.appendChild(measure)
+  allMessages.forEach(e=>{
+    if(!heights[e.key]){
+      measure.innerHTML = renderMessageHTML(e)
+      heights[e.key] = measure.offsetHeight
+    }
+  })
+  document.body.removeChild(measure)
+  totalHeight = Object.values(heights).reduce((a,b)=>a+b,0)
+  let start=0, y=0
+  while(start<allMessages.length && y+heights[allMessages[start].key] < scrollTop){
+    y += heights[allMessages[start].key]
+    start++
+  }
+  let end=start, shownHeight=0
+  while(end<allMessages.length && shownHeight<viewHeight*1.5){
+    shownHeight += heights[allMessages[end].key]
+    end++
+  }
+  const topPadding = y
+  const bottomPadding = totalHeight - (y+shownHeight)
+  let html = '<div style="height:'+topPadding+'px"></div>'
+  for(let i=start;i<end;i++){
+    html += renderMessageHTML(allMessages[i])
+  }
+  html += '<div style="height:'+bottomPadding+'px"></div>'
+  container.innerHTML = html
+}
+function renderMessageHTML(e){
+  const m = e.m;
+  const date = new Date(m.timestamp || Date.now());
+  const dateStr = date.getFullYear()+'/'+(date.getMonth()+1)+'/'+date.getDate()+' '+date.getHours()+':'+String(date.getMinutes()).padStart(2,'0');
+  const avatar = m.avatar || "icon/favicon3.ico";
+  let style = `color:${m.textColor || "white"};`;
+  if(m.glowEnabled==="true" || m.glowEnabled===true){
+    style += `text-shadow:0 0 8px ${m.glowColor||"#ffff00"};`;
+  }
+  const del = (m.name===username || username==="SharkTomato") 
+    ? `<span class="delete" onclick="deleteMsg('${e.key}','${String(m.name).replace(/'/g,"\\'")}')">[削除]</span>` 
+    : '';
+  return `
+    <div class="msg" style="margin-bottom:2px; ${style}">
+      <img src="${avatar}" width="30" height="30" style="vertical-align: middle; border-radius:50%">
+      <b>${m.name}:</b> ${m.text}
+      <span style="font-size:0.8em;color:#aaa">(${dateStr})</span>
+      ${del}
+    </div>
+  `;
+}
+
+function deleteMsg(key, name){
+  if(name === username || username === "SharkTomato"){
+    delete heights[key];
+    for(let i=0; i<4; i++){ 
+      db.ref("channel"+i+"/"+key).remove();
+    }
+    renderVirtual();
+  }
+}
+
+function updateVCDisplay(){
+  document.querySelectorAll(".vc-channel").forEach((vc,idx)=>{
+    const usersDiv=vc.querySelector(".vc-users");
+    db.ref("vc"+idx).once("value",snap=>{
+      const data=snap.val()||{};
+      usersDiv.innerHTML=Object.values(data).map(u=>`<img src="${u.avatar}" title="${u.name}" style="width:36px;height:36px;border-radius:50%">`).join("");
+    });
+  });
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+  document.getElementById("enter-button").addEventListener("click",checkPass);
+  document.getElementById("username").addEventListener("change",setUsername);
+  document.getElementById("avatar").addEventListener("change",setAvatar);
+  document.querySelectorAll(".channel").forEach(el=>el.addEventListener("click",()=>switchChannel(parseInt(el.dataset.index))));
+  document.getElementById("password").addEventListener("keydown",e=>{if(e.key==="Enter") checkPass();});
+  document.getElementById("msg").addEventListener("keydown",e=>{if(e.key==="Enter") sendMsg();});
+  document.getElementById("settings-button").addEventListener("click",()=>{const panel=document.getElementById("settings-panel");panel.style.display=panel.style.display==="flex"?"none":"flex";});
+  document.getElementById("font-setting").addEventListener("change",e=>{localStorage.setItem("font",e.target.value);applySettings();});
+  document.getElementById("text-color-setting").addEventListener("change",e=>{localStorage.setItem("textColor",e.target.value);applySettings();});
+  document.getElementById("color1-setting").addEventListener("change",e=>{localStorage.setItem("color1",e.target.value);applySettings();});
+  document.getElementById("color2-setting").addEventListener("change",e=>{localStorage.setItem("color2",e.target.value);applySettings();});
+  applySettings();
+　document.getElementById("messages").addEventListener("scroll", renderVirtual)
+
+  const peer = new Peer(username);
+  document.querySelectorAll(".vc-join-btn").forEach((btn, idx)=>{
+    const vcChannel = document.querySelectorAll(".vc-channel")[idx];
+    const usersDiv = vcChannel.querySelector(".vc-users");
+    const micBtn = vcChannel.querySelector(".vc-mic-btn");
+    const channelName = "vc" + idx;
+
+    micBtn.addEventListener("click",()=>{
+      if(!localStream) return;
+      localStream.getAudioTracks().forEach(t=>t.enabled=!t.enabled);
+      micBtn.textContent = localStream.getAudioTracks()[0].enabled?"マイクON":"マイクOFF";
+    });
+
+    btn.addEventListener("click", async ()=>{
+      if(!inVC){
+        localStream = await navigator.mediaDevices.getUserMedia({ audio:true });
+        peer.on("call", call=>{
+          call.answer(localStream);
+          call.on("stream", s=>{
+            if(!remoteAudios[call.peer]){
+              const audio = document.createElement("audio");
+              audio.srcObject = s;
+              audio.autoplay = true;
+              vcChannel.appendChild(audio);
+              remoteAudios[call.peer] = audio;
+            }
+          });
+        });
+
+        await db.ref(channelName+"/"+peer.id).set({name:username,avatar:avatarURL,id:peer.id});
+        db.ref(channelName+"/"+peer.id).onDisconnect().remove();
+
+        db.ref(channelName).on("value",snap=>{
+          const data=snap.val()||{};
+          usersDiv.innerHTML=Object.values(data).map(u=>`<img src="${u.avatar}" title="${u.name}" style="width:36px;height:36px;border-radius:50%">`).join("");
+          Object.values(data).forEach(u=>{
+            if(u.id && u.id!==peer.id && !remoteAudios[u.id]){
+              const call=peer.call(u.id,localStream);
+              call.on("stream",s=>{
+                const audio=document.createElement("audio");
+                audio.srcObject=s;
+                audio.autoplay=true;
+                vcChannel.appendChild(audio);
+                remoteAudios[u.id]=audio;
+              });
+            }
+          });
+        });
+        inVC=true;
+      } else {
+        if(localStream) localStream.getTracks().forEach(t=>t.stop());
+        Object.values(remoteAudios).forEach(a=>a.remove());
+        remoteAudios={};
+        await db.ref(channelName+"/"+peer.id).remove();
+        inVC=false;
+      }
+    });
+  });
+});
+let hiddenUI = false
+
+document.addEventListener("keydown", e=>{
+  if(e.key.toLowerCase()==="h" && e.shiftKey){
+    hiddenUI = !hiddenUI
+    document.getElementById("channels").style.display = hiddenUI ? "none" : "flex"
+    document.getElementById("chat-header").style.display = hiddenUI ? "none" : "block"
+  }
+})
+
 </script>
 </body>
 </html>
