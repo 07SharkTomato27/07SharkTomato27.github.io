@@ -310,10 +310,19 @@ function switchChannel(index){
 function sendMsg(){
   const input = document.getElementById("msg");
   if(!input || input.value.trim() === "") return;
+  const val = input.value.trim();
+
+  if(val.startsWith("/")){
+    if(command(val)){ 
+      input.value = "";
+      return;
+    }
+  }
+
   const msg = {
     name: username,
     avatar: avatarURL,
-    text: input.value.trim(),
+    text: val,
     timestamp: Date.now(),
     textColor: userSettings.myTextColor,
     glowEnabled: userSettings.glowEnabled ? "true" : "false",
@@ -512,6 +521,113 @@ document.addEventListener("keydown", e=>{
     document.getElementById("chat-header").style.display = hiddenUI ? "none" : "block"
   }
 })
+function command(cmd){
+  if(cmd==="/nizi"){
+    const rainbow=["🟥","🟧","🟨","🟩","🟦","🟪"]
+    rainbow.forEach((c,i)=>{
+      setTimeout(()=>{
+        db.ref("channel"+currentChannel).push({
+          name:"システム",
+          avatar:"",
+          text:c,
+          timestamp:Date.now(),
+          textColor:"#ffffff",
+          glowEnabled:"false",
+          glowColor:"#ffff00"
+        })
+      }, i*120)
+    })
+    return true
+  }
+  if(cmd==="/hello"){
+    db.ref("channel"+currentChannel).push({
+      name:"システム",
+      avatar:"",
+      text:"Hello World!",
+      timestamp:Date.now(),
+      textColor:"#00ff00",
+      glowEnabled:"false",
+      glowColor:"#ffff00"
+    })
+    return true
+  }
+  if(cmd==="/sumimasen"){
+    const sumimasen=["た","い","へ","ん","も","う","し","わ","け","ご","ざ","い","ま","せ","ん","で","た"]
+    sumimasen.forEach((c,i)=>{
+      setTimeout(()=>{
+        db.ref("channel"+currentChannel).push({
+          name:"システム",
+          avatar:"",
+          text:c,
+          timestamp:Date.now(),
+          textColor:"#ffffff",
+          glowEnabled:"false",
+          glowColor:"#ffff00"
+        })
+      }, i*120)
+    })
+    return true
+  }
+  if(cmd==="/unko"){
+    db.ref("channel"+currentChannel).push({
+      name:"システム",
+      avatar:"",
+      text:"buriburi💩💩💩",
+      timestamp:Date.now(),
+      textColor:"#ffffff",
+      glowEnabled:"false",
+      glowColor:"#ffff00"
+    })
+    return true
+  }
+  if(cmd==="/naniwo"){
+    db.ref("channel"+currentChannel).push({
+      name:"システム",
+      avatar:"",
+      text:"何を四天王",
+      timestamp:Date.now(),
+      textColor:"#ffffff",
+      glowEnabled:"false",
+      glowColor:"#ffff00"
+    })
+    return true
+  }
+  if(cmd==="/tairyounanio"){
+    const tana=["何を四天王","何を四天王？","何を四天王","何を四天王？","何を四天王","何を四天王？","何を四天王","何を四天王？","何を四天王","何を四天王？"]
+    tana.forEach((c,i)=>{
+      setTimeout(()=>{
+        db.ref("channel"+currentChannel).push({
+          name:"システム",
+          avatar:"",
+          text:c,
+          timestamp:Date.now(),
+          textColor:"#ffffff",
+          glowEnabled:"false",
+          glowColor:"#ffff00"
+        })
+      }, i*120)
+    })
+    return true
+  }
+  if(cmd==="/pafeiwasi"){
+    const pa=["ハマチ","中トロ","甘エビロール","サーモン","ハンバーグ","いなり","サラダ","サーモン炙り","パフェ","いわし"]
+    pa.forEach((c,i)=>{
+      setTimeout(()=>{
+        db.ref("channel"+currentChannel).push({
+          name:"きゅうり寿司",
+          avatar:"",
+          text:c,
+          timestamp:Date.now(),
+          textColor:"#ffffff",
+          glowEnabled:"false",
+          glowColor:"#ffff00"
+        })
+      }, i*120)
+    })
+    return true
+  }
+  return false
+}
 
 </script>
 </body>
