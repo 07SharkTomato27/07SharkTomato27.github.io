@@ -626,6 +626,44 @@ function command(cmd){
     })
     return true
   }
+  if(cmd==="/saikoro"){
+  const num = Math.floor(Math.random() * 6) + 1
+  db.ref("channel"+currentChannel).push({
+    name:"システム",
+    avatar:"",
+    text:"サイコロの目: "+num,
+    timestamp:Date.now(),
+    textColor:"#ffffff",
+    glowEnabled:"false",
+    glowColor:"#ffff00"
+  })
+  return true
+}
+if(cmd==="/sanes"){
+  db.ref("channel"+currentChannel).push({
+    name:"システム",
+    avatar:"",
+    text:'<img src="https://media.tenor.com/r0GIKcYiA3kAAAAi/sans-dance.gif" alt="a black and white drawing of sans from undertale"/>',
+    timestamp:Date.now(),
+    textColor:"#ffffff",
+    glowEnabled:"false",
+    glowColor:"#ffff00"
+  })
+  return true
+}
+if(cmd==="/fuck"){
+  db.ref("channel"+currentChannel).push({
+    name:"システム",
+    avatar:"",
+    text:'<img src="https://media1.tenor.com/m/KlOvFD0acnsAAAAC/fuck-you-fuck.gif" alt="a green uno card with three middle fingers pointing in opposite directions"/>',
+    timestamp:Date.now(),
+    textColor:"#ffffff",
+    glowEnabled:"false",
+    glowColor:"#ffff00"
+  })
+  return true
+}
+
   return false
 }
 
