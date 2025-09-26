@@ -539,7 +539,7 @@ function command(cmd){
     db.ref("channel"+currentChannel).push({
       name:"システム",
       avatar:"",
-      text:"/nizi  /hello  /help  /unko  /naniwo  /sumimasen  /tairyounaniwo  /fuck  /sanes  /pafeiwasi  /saikoro",
+      text:"/nizi  /hello  /help  /unko  /naniwo  /sumimasen  /tairyounaniwo  /fuck  /sanes  /pafeiwasi  /saikoro  /nyancat  /tairyounizi",
       timestamp:Date.now(),
       textColor:"#00ff00",
       glowEnabled:"false",
@@ -550,6 +550,23 @@ function command(cmd){
   if(cmd==="/nizi"){
     const rainbow=["🟥","🟧","🟨","🟩","🟦","🟪"]
     rainbow.forEach((c,i)=>{
+      setTimeout(()=>{
+        db.ref("channel"+currentChannel).push({
+          name:"システム",
+          avatar:"",
+          text:c,
+          timestamp:Date.now(),
+          textColor:"#ffffff",
+          glowEnabled:"false",
+          glowColor:"#ffff00"
+        })
+      }, i*120)
+    })
+    return true
+  }
+  if(cmd==="/tairyounizi"){
+    const tairyourainbow=["🟥","🟧","🟨","🟩","🟦","🟪","🟥","🟧","🟨","🟩","🟦","🟪","🟥","🟧","🟨","🟩","🟦","🟪","🟥","🟧","🟨","🟩","🟦","🟪","🟥","🟧","🟨","🟩","🟦","🟪"]
+    tairyourainbow.forEach((c,i)=>{
       setTimeout(()=>{
         db.ref("channel"+currentChannel).push({
           name:"システム",
@@ -681,6 +698,18 @@ if(cmd==="/fuck"){
     name:"システム",
     avatar:"",
     text:'<img src="https://media1.tenor.com/m/KlOvFD0acnsAAAAC/fuck-you-fuck.gif" alt="a green uno card with three middle fingers pointing in opposite directions"/>',
+    timestamp:Date.now(),
+    textColor:"#ffffff",
+    glowEnabled:"false",
+    glowColor:"#ffff00"
+  })
+  return true
+}
+  if(cmd==="/nyancat"){
+  db.ref("channel"+currentChannel).push({
+    name:"システム",
+    avatar:"",
+    text:"•.,¸,.•*`•.,¸¸,.•*¯ ╭━━━━╮","•.,¸,.•*¯`•.,¸,.•*¯.|:::::::::: /\___/\","•.,¸,.•*¯`•.,¸,.•* <|:::::::::(｡ ●ω●｡)","•.,¸,.•¯•.,¸,.•╰ * し------し---   Ｊ",
     timestamp:Date.now(),
     textColor:"#ffffff",
     glowEnabled:"false",
