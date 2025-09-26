@@ -408,15 +408,24 @@ function renderMessageHTML(e){
   const del = (m.name===username || username==="SharkTomato") 
     ? `<span class="delete" onclick="deleteMsg('${e.key}','${String(m.name).replace(/'/g,"\\'")}')">[削除]</span>` 
     : '';
+
+  let contentHTML;
+  if(/\.(gif|png|jpeg|mp4|webm)(\?.*)?$/i.test(m.text)){
+    contentHTML = `<img src="${m.text}" style="max-width:200px">`;
+  } else {
+    contentHTML = m.text;
+  }
+
   return `
     <div class="msg" style="margin-bottom:2px; ${style}">
       <img src="${avatar}" width="30" height="30" style="vertical-align: middle; border-radius:50%">
-      <b>${m.name}:</b> ${m.text}
+      <b>${m.name}:</b> ${contentHTML}
       <span style="font-size:0.8em;color:#aaa">(${dateStr})</span>
       ${del}
     </div>
   `;
 }
+
 
 function deleteMsg(key, name){
   if(name === username || username === "SharkTomato"){
@@ -516,11 +525,15 @@ let hiddenUI = false
 
 document.addEventListener("keydown", e=>{
   if(e.key.toLowerCase()==="h" && e.shiftKey){
+    const active = document.activeElement
+    if(active && ["input","textarea"].includes(active.tagName.toLowerCase())) return
+    if(active && active.isContentEditable) return
     hiddenUI = !hiddenUI
     document.getElementById("channels").style.display = hiddenUI ? "none" : "flex"
     document.getElementById("chat-header").style.display = hiddenUI ? "none" : "block"
   }
 })
+
 function command(cmd){
   if(cmd==="/nizi"){
     const rainbow=["🟥","🟧","🟨","🟩","🟦","🟪"]
