@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>宇宙ふらつき背景</title>
+<style>
+body{margin:0;overflow:hidden;background:black}
+canvas{display:block}
+</style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script>
+const scene=new THREE.Scene()
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,2000)
+const renderer=new THREE.WebGLRenderer({antialias:true})
+renderer.setSize(innerWidth,innerHeight)
+document.body.appendChild(renderer.domElement)
+const starsGeometry=new THREE.BufferGeometry()
+const starCount=5000
+const positions=new Float32Array(starCount*3)
+for(let i=0;i<starCount*3;i+=3){
+  const r=200+800*Math.random()
+  const theta=2*Math.PI*Math.random()
+  const phi=Math.acos(2*Math.random()-1)
+  positions[i]=r*Math.sin(phi)*Math.cos(theta)
+  positions[i+1]=r*Math.sin(phi)*Math.sin(theta)
+  positions[i+2]=r*Math.cos(phi)
+}
+starsGeometry.setAttribute("position",new THREE.BufferAttribute(positions,3))
+const starTexture=new THREE.TextureLoader().load("data:image/svg+xml;base64,"+btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><circle cx="32" cy="32" r="32" fill="white"/></svg>`))
+const starsMaterial=new THREE.PointsMaterial({map:starTexture,transparent:true,size:2,sizeAttenuation:true})
+const stars=new THREE.Points(starsGeometry,starsMaterial)
+scene.add(stars)
+camera.position.set(0,0,0)
+let rx=0,ry=0,rz=0
+function animate(){
+  requestAnimationFrame(animate)
+  rx+=0.0015
+  ry+=0.001
+  rz+=0.0007
+  camera.rotation.set(Math.sin(rx)*0.6,Math.sin(ry)*0.8,Math.sin(rz)*0.4)
+  renderer.render(scene,camera)
+}
+animate()
+addEventListener("resize",()=>{
+  camera.aspect=innerWidth/innerHeight
+  camera.updateProjectionMatrix()
+  renderer.setSize(innerWidth,innerHeight)
+})
+</script>
+</body>
+</html>
