@@ -535,6 +535,18 @@ document.addEventListener("keydown", e=>{
 })
 
 function command(cmd){
+  if(cmd==="/help"){
+    db.ref("channel"+currentChannel).push({
+      name:"システム",
+      avatar:"",
+      text:"/nizi  /hello  /help  /unko  /naniwo  /sumimasen  /tairyounaniwo  /fuck  /sanes  /pafeiwasi  /saikoro",
+      timestamp:Date.now(),
+      textColor:"#00ff00",
+      glowEnabled:"false",
+      glowColor:"#ffff00"
+    })
+    return true
+  }
   if(cmd==="/nizi"){
     const rainbow=["🟥","🟧","🟨","🟩","🟦","🟪"]
     rainbow.forEach((c,i)=>{
