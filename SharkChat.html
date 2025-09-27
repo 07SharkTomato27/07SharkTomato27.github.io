@@ -413,8 +413,9 @@ function renderMessageHTML(e){
   if(/\.(gif|png|jpeg|mp4|webm)(\?.*)?$/i.test(m.text)){
     contentHTML = `<img src="${m.text}" style="max-width:200px">`;
   } else {
-    contentHTML = m.text;
-  }
+  contentHTML = m.text.replace(/\n/g, "<br>");
+}
+
 
   return `
     <div class="msg" style="margin-bottom:2px; ${style}">
