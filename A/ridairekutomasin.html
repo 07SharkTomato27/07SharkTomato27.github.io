@@ -30,7 +30,10 @@ const params = new URLSearchParams(location.search)
 let i = parseInt(params.get("i") || "0")
 
 setTimeout(()=>{
-  location.href = location.pathname + "?i=" + ((i+1) % sites.length) + "&go=" + encodeURIComponent(sites[i])
+  const rand = Math.floor(Math.random()*1000000)
+  const base = sites[i]
+  const url = base + (base.includes("?") ? "&" : "?") + "t=" + rand
+  location.href = location.pathname + "?i=" + ((i+1) % sites.length) + "&go=" + encodeURIComponent(url)
 }, 1000)
 </script>
 </body>
