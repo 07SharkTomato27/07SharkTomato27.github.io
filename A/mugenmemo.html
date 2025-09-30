@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>無限メモ</title>
+<style>
+body{margin:0;padding:20px;font-family:sans-serif;background:#111;color:#fff}
+#memo{width:100%;height:80vh;background:#222;color:#fff;border:none;outline:none;resize:none;font-size:16px;padding:10px}
+button{margin:5px;padding:10px;font-size:14px}
+</style>
+</head>
+<body>
+<textarea id="memo" placeholder="ここに何文字でも入力できます"></textarea><br>
+<button id="toggle">ローカル保存: オフ</button>
+<button id="save">保存</button>
+<button id="clear">削除</button>
+<script>
+let saveOn=false
+const memo=document.getElementById("memo")
+const toggle=document.getElementById("toggle")
+const save=document.getElementById("save")
+const clear=document.getElementById("clear")
+if(localStorage.getItem("memo")){memo.value=localStorage.getItem("memo")}
+toggle.onclick=()=>{saveOn=!saveOn;toggle.textContent="ローカル保存: "+(saveOn?"オン":"オフ")}
+save.onclick=()=>{if(saveOn)localStorage.setItem("memo",memo.value)}
+clear.onclick=()=>{localStorage.removeItem("memo");memo.value=""}
+</script>
+</body>
+</html>
