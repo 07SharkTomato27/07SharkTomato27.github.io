@@ -2,9 +2,10 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>Redirect Machine</title>
+<title>destroy history</title>
 </head>
 <body>
+<button id="start">Start</button>
 <script>
 const sites = [
   "https://example.com",
@@ -26,15 +27,27 @@ const sites = [
   "https://duckduckgo.com/"
 ]
 
-const params = new URLSearchParams(location.search)
-let i = parseInt(params.get("i") || "0")
+function appendQuery(url){
+  const tag = "t=" + Date.now() + "-" + Math.floor(Math.random()*100000)
+  return url.includes("?") ? url + "&" + tag : url + "?" + tag
+}
 
-setTimeout(()=>{
-  const rand = Math.floor(Math.random()*1000000)
-  const base = sites[i]
-  const url = base + (base.includes("?") ? "&" : "?") + "t=" + rand
-  location.href = location.pathname + "?i=" + ((i+1) % sites.length) + "&go=" + encodeURIComponent(url)
-}, 1000)
+async function loop(){
+  let i = 0
+  while(true){
+    const url = appendQuery(sites[i % sites.length])
+    const w = window.open(url,"_blank")
+    if(w){
+      setTimeout(()=>{ try{ w.close() }catch(e){} },1000)
+    }
+    i++
+    await new Promise(r=>setTimeout(r,2500))
+  }
+}
+
+document.getElementById("start").addEventListener("click",()=>{
+  loop()
+})
 </script>
 </body>
 </html>
