@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Redirect Machine</title>
+</head>
+<body>
+<script>
+const sites = [
+  "https://example.com",
+  "https://google.com",
+  "https://yahoo.co.jp",
+  "https://wikipedia.org",
+  "https://classroom.google.com/"
+  "https://docs.google.com/presentation/"
+  "https://drive.google.com/drive/"
+  "https://www.google.com/imghp?hl=ja&tab=ri&ogbl"
+  "https://docs.google.com/spreadsheets/u/0/?tgif=d"
+  "https://docs.google.com/document/u/0/?tgif=d"
+  "https://sites.google.com/new"
+  "https://calendar.google.com/calendar/u/0/r?pli=1"
+  "https://docs.google.com/forms/u/0/?tgif=d"
+  "https://groups.google.com/"
+  "https://contacts.google.com/"
+  "https://keep.google.com/"
+  "https://duckduckgo.com/"
+]
+
+const params = new URLSearchParams(location.search)
+let i = parseInt(params.get("i") || "0")
+
+if(i < sites.length){
+  setTimeout(()=>{
+    location.href = location.pathname + "?i=" + (i+1) + "&go=" + encodeURIComponent(sites[i])
+  }, 1000)
+}else{
+  i = 0
+  setTimeout(()=>{
+    location.href = location.pathname + "?i=" + (i+1) + "&go=" + encodeURIComponent(sites[i])
+  }, 2000)
+}
+</script>
+</body>
+</html>
