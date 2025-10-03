@@ -410,7 +410,7 @@ function renderMessageHTML(e){
     : '';
 
   let contentHTML;
-  if(/\.(gif|png|jpeg|mp4|webm|webp)(\?.*)?$/i.test(m.text)){
+  if(/\.(gif|png|jpeg|jpg|mp4|webm|webp)(\?.*)?$/i.test(m.text)){
     contentHTML = `<img src="${m.text}" style="max-width:200px">`;
   } else {
   contentHTML = m.text.replace(/\n/g, "<br>");
