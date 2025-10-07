@@ -52,19 +52,19 @@
     }
 
     .top-left-button-alt {
-      left: 200px;
+      left: 180px;
     }
 
     .top-left-button-chat {
-      left: 500px;
+      left: 470px;
     }
     
     .top-left-button-marbleball {
-      left: 690px;
+      left: 630px;
     }
     
     .top-left-button-habutekinayatu {
-      left: 890px;
+      left: 840px;
     }
 
     h1#a {
@@ -79,7 +79,7 @@
       margin-bottom: 30px;
     }
 
-    .Home_banner__WnS5R {
+    .Home_banner__shark {
       width: 100%;
       max-width: 1200px;
       height: auto;
@@ -178,25 +178,53 @@
       width: 64px;
       height: 64px;
     }
+    .anim-box.popup.is-animated {
+    animation: popup 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+ 
+    @keyframes popup {
+    0% {
+    transform: translateY(40px) scale(0.8);
+    opacity: 0;
+    }
+    100% {
+    transform: translateY(0) scale(1.0);
+    }
+    80%, 100% {
+    opacity: 1;
+    }
+    }
+    .anim-box.poyopoyo {
+    animation: poyopoyo 2s ease-out infinite;
+    opacity: 1;
+    }
+    @keyframes poyopoyo {
+    0%, 40%, 60%, 80% {
+    transform: scale(1.0);
+    }
+    50%, 70% {
+    transform: scale(0.95);
+    }
+    }
   </style>
 </head>
 <body>
-  <a class="top-left-button" href="AU-room.html">AUの部屋</a>
-  <a class="top-left-button-alt" href="spacekey.html">スペースキークリッカー</a>
-  <a class="top-left-button-chat" href="SharkChat.html">SharkChat</a>
-  <a class="top-left-button-marbleball" href="marbleball.html">まーぶるぼーる</a>
-  <a class="top-left-button-habutekinayatu" href="habutekinayatu.html">ハブ的なやつ</a>
+  <a class="top-left-button anim-box popup" href="AU-room.html">AUの部屋</a>
+  <a class="top-left-button-alt anim-box popup" href="spacekey.html">スペースキークリッカー</a>
+  <a class="top-left-button-chat anim-box popup" href="SharkChat.html">SharkChat</a>
+  <a class="top-left-button-marbleball anim-box popup" href="marbleball.html">まーぶるぼーる</a>
+  <a class="top-left-button-habutekinayatu anim-box popup" href="habutekinayatu.html">ハブ的なやつ</a>
   <h1 id="a">SharkTomato net</h1>
-  <img class="Home_banner__WnS5R" src="banner.webp" alt="banner">
-  <p class="subtitle">: )</p>
+  <img class="Home_banner__shark anim-box poyopoyo" src="banner.webp" alt="sharknet">
+  <p class="subtitle anim-box poyopoyo">: )</p>
 
-  <a class="button" style="background-color:#00fa31;color:#0000fa" href="https://github.com/07SharkTomato27/haihu">配布</a>
-  <a class="button" style="background-color:#7e520f;color:#31f106" href="https://classic.minecraft.net/">classic minecraft</a>
-  <a class="button" style="background-color:#7e520f;color:#31f106" href="https://swordslasher.com/games/minecraft/game.html">minecraft 1.5.2</a>
-  <a class="button" style="background-color:#7e520f;color:#31f106" href="https://eaglercraft.com/mc/1.8.8/">minecraft 1.8.8</a>
-  <a class="button" style="background-color:#7e520f;color:#31f106" href="https://eaglercraft.com/mc/1.12.2/">minecraft 1.12.2</a>
-  <a class="button" style="background-color:#d7dfd5;color:#5f5f5e" href="https://07sharktomato27.github.io/s-a-n-s/">sans</a>
-  <a class="button" style="background-color:#7e520f;color:#31f106" href="https://07sharktomato27.github.io/Shark-Minecraft/">sharkcraft</a>
+  <a class="button anim-box popup" style="background-color:#00fa31;color:#0000fa" href="https://github.com/07SharkTomato27/haihu">配布</a>
+  <a class="button anim-box popup" style="background-color:#7e520f;color:#31f106" href="https://classic.minecraft.net/">classic minecraft</a>
+  <a class="button anim-box popup" style="background-color:#7e520f;color:#31f106" href="https://swordslasher.com/games/minecraft/game.html">minecraft 1.5.2</a>
+  <a class="button anim-box popup" style="background-color:#7e520f;color:#31f106" href="https://eaglercraft.com/mc/1.8.8/">minecraft 1.8.8</a>
+  <a class="button anim-box popup" style="background-color:#7e520f;color:#31f106" href="https://eaglercraft.com/mc/1.12.2/">minecraft 1.12.2</a>
+  <a class="button anim-box popup" style="background-color:#d7dfd5;color:#5f5f5e" href="https://07sharktomato27.github.io/s-a-n-s/">sans</a>
+  <a class="button anim-box popup" style="background-color:#7e520f;color:#31f106" href="https://07sharktomato27.github.io/Shark-Minecraft/">sharkcraft</a>
 
   <div id="night-warning">
     <img id="nero-img" src="image/nero.gif" alt="nero">
@@ -305,6 +333,18 @@
         neroTexts.length = 0;
       };
     }
+    document.addEventListener('DOMContentLoaded', () => {
+    const boxes = document.querySelectorAll('.anim-box.popup');
+    boxes.forEach((box, index) => {
+    setTimeout(() => {
+    box.classList.add('is-animated');
+    }, index * 150);
+    });
+    })
+    window.addEventListener('DOMContentLoaded', () => {
+    const box = document.querySelector('.anim-box.poyopoyo')
+    box.classList.add('is-animated')
+    })
   </script>
 </body>
 </html>
