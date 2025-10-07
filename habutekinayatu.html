@@ -46,10 +46,22 @@
       margin-bottom: 8px;
       object-fit: contain;
     }
+    .anim-box.fadein.is-animated {
+    animation: fadeIn 5s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+    }
+ 
+    @keyframes fadeIn {
+    0% {
+    opacity: 0;
+    }
+    100% {
+    opacity: 1;
+    }
+    }
   </style>
 </head>
 <body>
-  <div class="start-menu">
+  <div class="start-menu anim-box fadein">
     <a href="https://07sharktomato27.github.io/" target="_blank" class="app-tile">
       <img src="image/2/modoru.png" alt="戻る">
       戻る
@@ -189,13 +201,21 @@
     <a href="https://07sharktomato27.github.io/A/mugenmemo" target="_blank" class="app-tile">
       <img src="image/mugenmemo.png" alt="mugenmemo">
       無限メモ
+    </a>
     <a href="https://07sharktomato27.github.io/A/rirekimasin" class="app-tile">
      <img src="image/hi.png" alt="hi">
      履歴埋める
+    </a>
       <a href="https://07sharktomato27.github.io/gomi" target="_blank" class="app-tile">
       <img src="image/ga.png" alt="ga">
       ？？？
     </a>
   </div>
+ <script>
+  window.addEventListener('load', () => {
+  const box = document.querySelector('.anim-box.fadein')
+  box.classList.add('is-animated')
+  })
+ </script>
 </body>
 </html>
