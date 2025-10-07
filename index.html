@@ -194,16 +194,30 @@
     opacity: 1;
     }
     }
-    .anim-box.poyopoyo {
-    animation: poyopoyo 2s ease-out infinite;
-    opacity: 1;
+    .anim-box.poyopoyo.is-animated {
+    animation: poyopoyo 1s ease-in-out forwards;
     }
+ 
     @keyframes poyopoyo {
-    0%, 40%, 60%, 80% {
-    transform: scale(1.0);
+    0%  {
+    transform: scale(1.0, 1.0) translate(0, 0);
     }
-    50%, 70% {
-    transform: scale(0.95);
+    15% {
+    transform: scale(0.98, 0.9) translate(0, 5px);
+    }
+    30% {
+    transform: scale(1.02, 1.0) translate(0, 8px);
+    }
+    50% {transform: scale(0.98, 1.05) translate(0, -8px);
+    }
+    70% {
+    transform: scale(1.0, 0.9) translate(0, 5px);
+    }
+    100% {
+    transform: scale(1.0, 1.0) translate(0, 0);
+    }
+    0%, 100% {
+    opacity: 1;
     }
     }
   </style>
