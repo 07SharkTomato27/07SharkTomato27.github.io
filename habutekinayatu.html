@@ -58,10 +58,26 @@
     opacity: 1;
     }
     }
+    .anim-box.slidein.is-animated {
+    animation: slideIn 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+ 
+    @keyframes slideIn {
+    0% {
+    transform: translateX(180px);
+    opacity: 0;
+    }
+    100% {
+    transform: translateX(0);
+    }
+    40%,100% {
+    opacity: 1;
+    }
+    }
   </style>
 </head>
 <body>
-  <div class="start-menu anim-box fadein">
+  <div class="start-menu anim-box fadein anim-box slidein">
     <a href="https://07sharktomato27.github.io/" target="_blank" class="app-tile">
       <img src="image/2/modoru.png" alt="戻る">
       戻る
@@ -212,8 +228,12 @@
     </a>
   </div>
  <script>
-  window.addEventListener('load', () => {
+  window.addEventListener('DOMContentLoaded', () => {
   const box = document.querySelector('.anim-box.fadein')
+  box.classList.add('is-animated')
+  })
+  window.addEventListener('DOMContentLoaded', () => {
+  const box = document.querySelector('.anim-box.slidein')
   box.classList.add('is-animated')
   })
  </script>
