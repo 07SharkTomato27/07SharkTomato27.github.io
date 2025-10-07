@@ -22,25 +22,70 @@ img{
   max-height:60vh;
   border-radius:12px;
   box-shadow:0 0 20px rgba(0,0,0,0.3);
-  margin-bottom:20px;
+  margin-top:20px;
+  opacity:0;
 }
 a{
   color:#00e0ff;
   text-decoration:none;
-  font-size:18px;
+  font-size:15px;
+  margin-top:10px;
+}
+
+.anim-box.zoomin.is-animated {
+  animation: zoomIn 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes zoomIn {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.anim-box.haneru.is-animated {
+  animation: haneru 0.5s cubic-bezier(0.12, 0, 0.39, 0) 1 forwards;
+}
+
+@keyframes haneru {
+  0% {
+    transform: translateX(140px);
+    opacity: 0;
+  }
+  50% {
+    transform: translateX(0);
+  }
+  65% {
+    transform: translateX(30px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+  20%,100% {
+    opacity: 1;
+  }
 }
 </style>
 </head>
 <body>
-<img id="randomImage">
-<div>Page not Found</div>
-<div>こんなページないよ</div>
-<a href="/">トップに戻る</a>
+<div class="anim-box haneru">Page not Found</div>
+<div class="anim-box haneru">こんなページないよ</div>
+<img id="randomImage" class="anim-box zoomin">
+<a href="/" class="anim-box haneru">トップに戻る</a>
 <script>
 const imgs=["1.png","2.png","3.png","4.png","5.png","6.png"]
 const img=document.getElementById("randomImage")
 const pick=imgs[Math.floor(Math.random()*imgs.length)]
 img.src="image/404/"+pick
+img.classList.add("is-animated")
+
+document.querySelectorAll('.anim-box.haneru').forEach(el=>{
+  el.classList.add('is-animated')
+})
 </script>
 </body>
 </html>
