@@ -136,6 +136,54 @@ body {
   cursor: pointer;
   border-radius: 3px;
 }
+.msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+  max-width: 600px;
+}
+
+.msg:hover {
+  background: rgba(255,255,255,0.05);
+}
+
+.msg > img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  image-rendering: auto;
+  object-fit: cover;
+  object-position: center;
+}
+
+.msg-content {
+  flex: 1;
+  min-width: 0;
+  word-wrap: break-word;
+}
+
+.msg-embed {
+  margin-top: 6px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #202225;
+  display: inline-block;
+  width: 100%;
+}
+
+.msg-embed video,
+.msg-embed iframe {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -397,36 +445,45 @@ function renderVirtual(){
   container.innerHTML = html
 }
 function renderMessageHTML(e){
-  const m = e.m;
-  const date = new Date(m.timestamp || Date.now());
-  const dateStr = date.getFullYear()+'/'+(date.getMonth()+1)+'/'+date.getDate()+' '+date.getHours()+':'+String(date.getMinutes()).padStart(2,'0');
-  const avatar = m.avatar || "icon/favicon3.ico";
-  let style = `color:${m.textColor || "white"};`;
+  const m = e.m
+  const date = new Date(m.timestamp || Date.now())
+  const dateStr = date.getFullYear()+'/'+(date.getMonth()+1)+'/'+date.getDate()+' '+date.getHours()+':'+String(date.getMinutes()).padStart(2,'0')
+  const avatar = m.avatar || "icon/favicon3.ico"
+  let style = `color:${m.textColor || "white"};`
   if(m.glowEnabled==="true" || m.glowEnabled===true){
-    style += `text-shadow:0 0 8px ${m.glowColor||"#ffff00"};`;
+    style += `text-shadow:0 0 8px ${m.glowColor||"#ffff00"};`
   }
-  const del = (m.name===username || username==="SharkTomato") 
-    ? `<span class="delete" onclick="deleteMsg('${e.key}','${String(m.name).replace(/'/g,"\\'")}')">[削除]</span>` 
-    : '';
+  const del = (m.name===username || username==="SharkTomato")
+    ? `<span class="delete" onclick="deleteMsg('${e.key}','${String(m.name).replace(/'/g,"\\'")}')">[削除]</span>`
+    : ''
 
-  let contentHTML;
-  if(/\.(gif|png|jpeg|jpg|avi|avif|mp4|webm|webp)(\?.*)?$/i.test(m.text)){
-    contentHTML = `<img src="${m.text}" style="max-width:200px">`;
-  } else {
-  contentHTML = m.text.replace(/\n/g, "<br>");
-}
+  let contentHTML = m.text.replace(/\n/g, "<br>")
+  let embedHTML = ""
 
+  if(/\.(gif|png|jpeg|jpg|webp|avif)(\?.*)?$/i.test(m.text)){
+    embedHTML = `<div class="msg-embed"><img src="${m.text}"></div>`
+  }
+  else if(/\.(mp4|webm|ogg)(\?.*)?$/i.test(m.text)){
+    embedHTML = `<div class="msg-embed"><video src="${m.text}" controls></video></div>`
+  }
+  else if(/(youtube\.com\/watch\?v=|youtu\.be\/)/i.test(m.text)){
+    let id = ""
+    if(m.text.includes("watch?v=")) id = m.text.split("watch?v=")[1].split("&")[0]
+    else if(m.text.includes("youtu.be/")) id = m.text.split("youtu.be/")[1].split("?")[0]
+    embedHTML = `<div class="msg-embed"><iframe src="https://www.youtube.com/embed/${id}" allowfullscreen></iframe></div>`
+  }
 
   return `
-    <div class="msg" style="margin-bottom:2px; ${style}">
-      <img src="${avatar}" width="30" height="30" style="vertical-align: middle; border-radius:50%">
-      <b>${m.name}:</b> ${contentHTML}
-      <span style="font-size:0.8em;color:#aaa">(${dateStr})</span>
-      ${del}
+    <div class="msg" data-key="${e.key}">
+      <img src="${avatar}" width="36" height="36">
+      <div class="msg-content">
+        <div><b>${m.name}</b> <span style="font-size:0.8em;color:#aaa;">${dateStr}</span> ${del}</div>
+        <div style="${style}">${contentHTML}</div>
+        ${embedHTML}
+      </div>
     </div>
-  `;
+  `
 }
-
 
 function deleteMsg(key, name){
   if(name === username || username === "SharkTomato"){
