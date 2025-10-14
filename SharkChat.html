@@ -460,10 +460,12 @@ function renderMessageHTML(e){
   let contentHTML = m.text.replace(/\n/g, "<br>")
   let embedHTML = ""
 
-  if(/\.(gif|png|jpeg|jpg|webp|avif)(\?.*)?$/i.test(m.text)){
+  let url = m.text.split(/[ ?&]/)[0]
+
+  if(/\.(gif|png|jpeg|jpg|webp|avif)$/i.test(url)){
     embedHTML = `<div class="msg-embed"><img src="${m.text}"></div>`
   }
-  else if(/\.(mp4|webm|ogg)(\?.*)?$/i.test(m.text)){
+  else if(/\.(mp4|webm|ogg|mp3)$/i.test(url)){
     embedHTML = `<div class="msg-embed"><video src="${m.text}" controls></video></div>`
   }
   else if(/(youtube\.com\/watch\?v=|youtu\.be\/)/i.test(m.text)){
