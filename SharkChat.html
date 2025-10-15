@@ -151,13 +151,22 @@ body {
 }
 
 .msg > img {
-  width: 40px;
-  height: 40px;
+  width: 47px;
+  height: 47px;
   border-radius: 50%;
   flex-shrink: 0;
   image-rendering: auto;
   object-fit: cover;
   object-position: center;
+}
+
+.msg-image {
+  width: auto;
+  height: auto;
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 8px;
+  object-fit: contain;
 }
 
 .msg-content {
@@ -170,9 +179,19 @@ body {
   margin-top: 6px;
   border-radius: 8px;
   overflow: hidden;
-  background: #202225;
+  background: none;
   display: inline-block;
-  width: 100%;
+  width: auto;
+}
+.msg-embed img {
+  display: inline-block;
+  background: none;
+  max-width: 200px;
+  max-height: 200px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
 }
 
 .msg-embed video,
@@ -457,16 +476,20 @@ function renderMessageHTML(e){
     ? `<span class="delete" onclick="deleteMsg('${e.key}','${String(m.name).replace(/'/g,"\\'")}')">[削除]</span>`
     : ''
 
-  let contentHTML = m.text.replace(/\n/g, "<br>")
-  let embedHTML = ""
+  let contentHTML = m.text
+  .replace(/\n/g, "<br>")
+  .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" style="color:#00aaff;text-decoration:underline;">$1</a>')
+let embedHTML = ""
 
   let url = m.text.split(/[ ?&]/)[0]
 
   if(/\.(gif|png|jpeg|jpg|webp|avif)$/i.test(url)){
-    embedHTML = `<div class="msg-embed"><img src="${m.text}"></div>`
-  }
+  embedHTML = `<div class="msg-embed"><img src="${m.text}" class="msg-image"></div>`
+  contentHTML = ""
+}
   else if(/\.(mp4|webm|ogg|mp3)$/i.test(url)){
     embedHTML = `<div class="msg-embed"><video src="${m.text}" controls></video></div>`
+    contentHTML = ""
   }
   else if(/(youtube\.com\/watch\?v=|youtu\.be\/)/i.test(m.text)){
     let id = ""
