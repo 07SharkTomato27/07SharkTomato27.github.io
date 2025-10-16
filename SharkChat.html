@@ -492,13 +492,16 @@ let embedHTML = ""
     contentHTML = ""
   }
   else if(/(youtube\.com\/watch\?v=|youtu\.be\/|youtube-nocookie\.com\/embed\/)/i.test(m.text)){
-   let id = ""
-   if(m.text.includes("watch?v=")) id = m.text.split("watch?v=")[1].split("&")[0]
-   else if(m.text.includes("youtu.be/")) id = m.text.split("youtu.be/")[1].split("?")[0]
-   else if(m.text.includes("youtube-nocookie.com/embed/")) id = m.text.split("youtube-nocookie.com/embed/")[1].split("?")[0]
-  embedHTML = `<div class="msg-embed"><iframe src="https://www.youtube.com/embed/${id}" allowfullscreen></iframe></div>`
+  let id = ""
+  let base = "https://www.youtube.com/embed/"
+  if(m.text.includes("watch?v=")) id = m.text.split("watch?v=")[1].split("&")[0]
+  else if(m.text.includes("youtu.be/")) id = m.text.split("youtu.be/")[1].split("?")[0]
+  else if(m.text.includes("youtube-nocookie.com/embed/")){
+    id = m.text.split("youtube-nocookie.com/embed/")[1].split("?")[0]
+    base = "https://www.youtube-nocookie.com/embed/"
+  }
+  embedHTML = `<div class="msg-embed"><iframe src="${base}${id}" allowfullscreen></iframe></div>`
 }
-
 
   return `
     <div class="msg" data-key="${e.key}">
