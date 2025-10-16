@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SharkTube</title>
+<style>
+:root{
+  --bg:#0f0f12;
+  --card:#141416;
+  --accent:#555;
+  --accent-hover:#666;
+  --text:#e6e6e6;
+  --text-light:#fff;
+  --shadow:0 6px 24px rgba(0,0,0,0.7);
+  --radius:12px;
+  --transition:.25s ease;
+  --hover-bg:rgba(255,255,255,0.05);
+  --scrollbar-bg:#141416;
+  --scrollbar-thumb:#333;
+}
+
+html,body{
+  height:100%;
+  margin:0;
+  font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  display:flex;
+  justify-content:center;
+  padding:24px;
+  overflow-y:scroll;
+}
+
+body::-webkit-scrollbar{
+  width:10px;
+}
+
+body::-webkit-scrollbar-track{
+  background:var(--scrollbar-bg);
+  border-radius:var(--radius);
+}
+
+body::-webkit-scrollbar-thumb{
+  background:var(--scrollbar-thumb);
+  border-radius:var(--radius);
+}
+
+body::-webkit-scrollbar-thumb:hover{
+  background:#444;
+}
+
+.app{
+  width:1100px;
+  max-width:96%;
+  display:grid;
+  grid-template-columns:700px 1fr;
+  gap:20px;
+}
+
+.player{
+  background:var(--card);
+  padding:16px;
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  display:flex;
+  flex-direction:column;
+  transition:transform var(--transition);
+}
+
+.player:hover{
+  transform:scale(1.005);
+}
+
+video, iframe{
+  width:100%;
+  height:420px;
+  background:black;
+  border-radius:var(--radius);
+  box-shadow:0 4px 20px rgba(0,0,0,0.6);
+  transition:box-shadow var(--transition);
+}
+
+video:hover, iframe:hover{
+  box-shadow:0 6px 28px rgba(0,0,0,0.8);
+}
+
+.controls{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  margin-top:12px;
+  flex-wrap:wrap;
+}
+
+button,input[type="file"]{
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.1);
+  padding:8px 12px;
+  border-radius:var(--radius);
+  color:var(--text);
+  cursor:pointer;
+  font-weight:500;
+  transition:all var(--transition);
+}
+
+button:hover,input[type="file"]:hover{
+  background:var(--hover-bg);
+  border-color:rgba(255,255,255,0.15);
+}
+
+.input{
+  flex:1;
+  padding:8px 10px;
+  border-radius:var(--radius);
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.02);
+  color:var(--text);
+  transition:all var(--transition);
+}
+
+.input:focus{
+  outline:none;
+  border-color:var(--accent-hover);
+  background:rgba(255,255,255,0.04);
+}
+
+.meta{
+  margin-top:14px;
+}
+
+.meta #nowTitle{
+  font-size:17px;
+  font-weight:600;
+  color:var(--text-light);
+}
+
+.meta .small{
+  color:#aaa;
+  font-size:13px;
+}
+
+.playlist{
+  background:var(--card);
+  padding:14px;
+  border-radius:var(--radius);
+  height:540px;
+  overflow:auto;
+  box-shadow:var(--shadow);
+  display:flex;
+  flex-direction:column;
+}
+
+.search{
+  display:flex;
+  gap:8px;
+  margin-bottom:10px;
+}
+
+.item{
+  padding:10px;
+  border-radius:var(--radius);
+  margin-bottom:8px;
+  display:flex;
+  gap:8px;
+  align-items:center;
+  cursor:pointer;
+  transition:all var(--transition);
+  background:rgba(255,255,255,0.01);
+}
+
+.item:hover{
+  background:var(--hover-bg);
+}
+
+.thumb{
+  width:100px;
+  height:56px;
+  background:#000;
+  border-radius:8px;
+  flex:0 0 100px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:12px;
+  color:#888;
+  box-shadow:inset 0 0 3px rgba(255,255,255,0.1);
+}
+
+.title{
+  font-size:14px;
+  font-weight:500;
+  color:var(--text-light);
+}
+
+.small{
+  font-size:12px;
+  color:#aaa;
+  word-break:break-all;
+}
+
+.empty{
+  color:#777;
+  padding:10px;
+  text-align:center;
+  font-style:italic;
+}
+
+.playlist::-webkit-scrollbar{
+  width:8px;
+}
+
+.playlist::-webkit-scrollbar-track{
+  background:rgba(0,0,0,0.15);
+  border-radius:var(--radius);
+}
+
+.playlist::-webkit-scrollbar-thumb{
+  background:#333;
+  border-radius:var(--radius);
+}
+
+.playlist::-webkit-scrollbar-thumb:hover{
+  background:#444;
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="player">
+    <video id="video" controls playsinline></video>
+    <div class="controls">
+      <button id="prev">前へ</button>
+      <button id="play">再生/一時停止</button>
+      <button id="next">次へ</button>
+      <input id="file" type="file" accept="video/*" multiple>
+      <input id="urlInput" class="input" placeholder="YouTube埋め込みURLやMP4の直接URLをここに貼る">
+      <button id="addUrl">追加</button>
+    </div>
+    <div class="meta">
+      <div id="nowTitle">再生する動画を追加してください</div>
+      <div class="small" id="nowInfo"></div>
+    </div>
+  </div>
+  <div class="playlist">
+    <div class="search">
+      <input id="search" class="input" placeholder="タイトルでフィルタ">
+      <button id="clear">クリア</button>
+    </div>
+    <div id="list"></div>
+  </div>
+</div>
+
+<script>
+const video = document.getElementById('video')
+const fileInput = document.getElementById('file')
+const listEl = document.getElementById('list')
+const nowTitle = document.getElementById('nowTitle')
+const nowInfo = document.getElementById('nowInfo')
+const playBtn = document.getElementById('play')
+const prevBtn = document.getElementById('prev')
+const nextBtn = document.getElementById('next')
+const urlInput = document.getElementById('urlInput')
+const addUrlBtn = document.getElementById('addUrl')
+const search = document.getElementById('search')
+const clear = document.getElementById('clear')
+
+let playlist = []
+let index = -1
+
+const dbName = 'localtubeDB'
+let db
+
+function openDB(){
+  const req = indexedDB.open(dbName,1)
+  req.onupgradeneeded = e => {
+    db = e.target.result
+    if(!db.objectStoreNames.contains('videos')){
+      db.createObjectStore('videos',{keyPath:'id',autoIncrement:true})
+    }
+  }
+  req.onsuccess = e => {
+    db = e.target.result
+    loadSavedVideos()
+  }
+  req.onerror = e => console.error('DB open error', e)
+}
+
+function saveVideo(file){
+  const reader = new FileReader()
+  reader.onload = e=>{
+    const blob = e.target.result
+    const tx = db.transaction('videos','readwrite')
+    const store = tx.objectStore('videos')
+    store.add({title:file.name, blob})
+  }
+  reader.readAsArrayBuffer(file)
+}
+
+function loadSavedVideos(){
+  const tx = db.transaction('videos','readonly')
+  const store = tx.objectStore('videos')
+  const req = store.getAll()
+  req.onsuccess = ()=>{
+    for(const rec of req.result){
+      const url = URL.createObjectURL(new Blob([rec.blob]))
+      playlist.push({title:rec.title, src:url, type:'local'})
+    }
+    renderList()
+    if(index === -1 && playlist.length) playIndex(0)
+  }
+}
+
+function addFileList(files){
+  for(const f of files){
+    const url = URL.createObjectURL(f)
+    playlist.push({title:f.name,src:url,type:'local'})
+    saveVideo(f)
+  }
+  renderList()
+  if(index === -1 && playlist.length) playIndex(0)
+}
+
+fileInput.addEventListener('change', e=> addFileList(e.target.files))
+
+addUrlBtn.addEventListener('click', async ()=>{
+  const v = urlInput.value.trim()
+  if(!v) return
+  if(v.includes('youtube.com') || v.includes('youtu.be')){
+    const id = extractYouTubeID(v)
+    if(id){
+      const title = await fetchYouTubeTitle(id)
+      const embed = 'https://www.youtube-nocookie.com/embed/' + id
+      playlist.push({title:title||'YouTube: '+id,src:embed,type:'youtube',id})
+      renderList()
+      urlInput.value = ''
+      if(index === -1) playIndex(0)
+      return
+    }
+  }
+  playlist.push({title:getNameFromURL(v),src:v,type:'direct'})
+  renderList()
+  urlInput.value = ''
+  if(index === -1) playIndex(0)
+})
+
+function extractYouTubeID(u){
+  try{
+    const url = new URL(u)
+    if(url.hostname.includes('youtu.be')) return url.pathname.slice(1)
+    if(url.searchParams.get('v')) return url.searchParams.get('v')
+    if(url.pathname.startsWith('/watch')) return url.searchParams.get('v')
+    const parts = url.pathname.split('/')
+    return parts.pop() || parts.pop()
+  }catch(e){return null}
+}
+
+// YouTubeタイトル取得（簡易版）
+async function fetchYouTubeTitle(id){
+  try{
+    const res = await fetch('https://noembed.com/embed?url=https://www.youtube.com/watch?v='+id)
+    if(!res.ok) return null
+    const data = await res.json()
+    return data.title || null
+  }catch(e){
+    return null
+  }
+}
+
+function renderList(filter=''){
+  listEl.innerHTML = ''
+  const items = playlist.map((p,i)=>({p,i})).filter(x=>x.p.title.toLowerCase().includes(filter.toLowerCase()))
+  if(items.length === 0){
+    const e = document.createElement('div')
+    e.className = 'empty'
+    e.textContent = 'プレイリストは空です'
+    listEl.appendChild(e)
+    return
+  }
+  for(const it of items){
+    const el = document.createElement('div')
+    el.className = 'item'
+    el.dataset.idx = it.i
+
+    const thumb = document.createElement('div')
+    thumb.className = 'thumb'
+    thumb.textContent = it.p.type === 'local' ? 'ローカル' : it.p.type === 'youtube' ? 'YouTube' : 'URL'
+
+    const t = document.createElement('div')
+    t.className = 'title'
+    t.textContent = it.p.title
+
+    const s = document.createElement('div')
+    s.className = 'small'
+    s.textContent = it.p.src
+
+    const del = document.createElement('button')
+    del.textContent = '削除'
+    del.style.marginLeft='auto'
+    del.addEventListener('click', e=>{
+      e.stopPropagation()
+      removeFromPlaylist(it.i)
+    })
+
+    el.appendChild(thumb)
+    el.appendChild(t)
+    el.appendChild(s)
+    el.appendChild(del)
+    el.addEventListener('click', ()=> playIndex(Number(el.dataset.idx)))
+    listEl.appendChild(el)
+  }
+}
+
+function getNameFromURL(u){
+  try{
+    const url = new URL(u)
+    const parts = url.pathname.split('/')
+    return decodeURIComponent(parts.pop() || parts.pop())
+  }catch(e){
+    return u
+  }
+}
+
+function removeFromPlaylist(i){
+  const item = playlist[i]
+  if(item.type === 'local'){
+    const tx = db.transaction('videos','readwrite')
+    const store = tx.objectStore('videos')
+    const getAllReq = store.getAll()
+    getAllReq.onsuccess = ()=>{
+      const records = getAllReq.result
+      for(const rec of records){
+        const blobUrl = URL.createObjectURL(new Blob([rec.blob]))
+        if(blobUrl === item.src || rec.title === item.title){
+          store.delete(rec.id)
+          break
+        }
+      }
+    }
+  }
+  playlist.splice(i,1)
+  if(index === i) index=-1
+  renderList(search.value)
+}
+
+function playIndex(i){
+  if(i < 0 || i >= playlist.length) return
+  index = i
+  const item = playlist[index]
+  nowTitle.textContent = item.title
+  nowInfo.textContent = item.type === 'youtube' ? 'YouTube埋め込み (nocookie)' : item.type
+
+  const player = document.querySelector('.player')
+
+  if(item.type === 'youtube'){
+    let iframe = player.querySelector('iframe')
+    if(!iframe){
+      iframe = document.createElement('iframe')
+      iframe.style.width = '100%'
+      iframe.style.height = '420px'
+      iframe.style.borderRadius = '8px'
+      iframe.setAttribute('frameborder','0')
+      iframe.setAttribute('allow','accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture')
+      iframe.setAttribute('allowfullscreen','')
+      const v = player.querySelector('video')
+      if(v) player.replaceChild(iframe, v)
+      else player.appendChild(iframe)
+    }
+    iframe.src = item.src
+  } else {
+    let videoEl = player.querySelector('video')
+    if(!videoEl){
+      videoEl = document.createElement('video')
+      videoEl.id = 'video'
+      videoEl.controls = true
+      videoEl.playsInline = true
+      videoEl.style.width = '100%'
+      videoEl.style.height = '420px'
+      const iframe = player.querySelector('iframe')
+      if(iframe) player.replaceChild(videoEl, iframe)
+      else player.appendChild(videoEl)
+    }
+    videoEl.src = item.src
+    videoEl.play().catch(()=>{})
+  }
+
+  highlightCurrent()
+}
+
+function highlightCurrent(){
+  const nodes = document.querySelectorAll('.item')
+  nodes.forEach(n=> n.style.background = '')
+  const cur = document.querySelector('.item[data-idx="'+index+'"]')
+  if(cur) cur.style.background = 'linear-gradient(90deg, rgba(30,144,255,.08), transparent)'
+}
+
+playBtn.addEventListener('click', ()=>{
+  const v = document.querySelector('.player video')
+  if(!v) return
+  if(v.paused) v.play().catch(()=>{})
+  else v.pause()
+})
+
+prevBtn.addEventListener('click', ()=>{
+  if(playlist.length === 0) return
+  const i = (index - 1 + playlist.length) % playlist.length
+  playIndex(i)
+})
+nextBtn.addEventListener('click', ()=>{
+  if(playlist.length === 0) return
+  const i = (index + 1) % playlist.length
+  playIndex(i)
+})
+search.addEventListener('input', ()=> renderList(search.value))
+clear.addEventListener('click', ()=>{search.value='';renderList('')})
+
+document.addEventListener('keydown', e=>{
+  if(e.key === ' ' && document.activeElement.tagName.toLowerCase() !== 'input') {
+    e.preventDefault()
+    const v = document.querySelector('.player video')
+    if(v) { if(v.paused) v.play().catch(()=>{}); else v.pause() }
+  }
+})
+openDB()
+renderList()
+</script>
+</body>
+</html>
