@@ -203,6 +203,23 @@ body {
   object-fit: contain;
 }
 
+.msg .edit {
+  color:#888;
+  font-size:0.8em;
+  cursor:pointer;
+  display:none;
+  margin-left:4px;
+}
+.msg:hover .delete,
+.msg:hover .edit {
+  display:inline;
+}
+.msg-edited {
+  color:#888;
+  font-size:0.75em;
+  margin-left:4px;
+}
+
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -472,9 +489,13 @@ function renderMessageHTML(e){
   if(m.glowEnabled==="true" || m.glowEnabled===true){
     style += `text-shadow:0 0 8px ${m.glowColor||"#ffff00"};`
   }
-  const del = (m.name===username || username==="SharkTomato")
+    const del = (m.name===username || username==="SharkTomato")
     ? `<span class="delete" onclick="deleteMsg('${e.key}','${String(m.name).replace(/'/g,"\\'")}')">[削除]</span>`
     : ''
+
+  const edit = (m.name===username)
+  ? `<span class="edit" onclick="editMsg('${e.key}')">[編集]</span>`
+  : ''
 
   let contentHTML = m.text
   .replace(/\n/g, "<br>")
@@ -503,13 +524,14 @@ let embedHTML = ""
   embedHTML = `<div class="msg-embed"><iframe src="${base}${id}" allowfullscreen></iframe></div>`
 }
 
-  return `
+   return `
     <div class="msg" data-key="${e.key}">
       <img src="${avatar}" width="36" height="36">
       <div class="msg-content">
-        <div><b>${m.name}</b> <span style="font-size:0.8em;color:#aaa;">${dateStr}</span> ${del}</div>
+        <div><b>${m.name}</b> <span style="font-size:0.8em;color:#aaa;">${dateStr}</span> ${del} ${edit}</div>
         <div style="${style}">${contentHTML}</div>
         ${embedHTML}
+        ${m.edited ? '<div><span class="msg-edited">(編集済み)</span></div>' : ''}
       </div>
     </div>
   `
@@ -621,6 +643,29 @@ document.addEventListener("keydown", e=>{
     document.getElementById("chat-header").style.display = hiddenUI ? "none" : "block"
   }
 })
+
+    function editMsg(key){
+  const ref = db.ref("channel"+currentChannel+"/"+key)
+  ref.once("value").then(snap=>{
+    const m = snap.val()
+    if(!m) return
+    if(m.name!==username) return
+    const clean = String(m.text || "")
+      .replace(/\s*\(編集済み\)\s*$/,"")
+      .replace(/<[^>]*>/g,"")
+      .trim()
+    const newText = prompt("メッセージを編集:", clean)
+    if(newText===null) return
+    const cleanNew = newText
+      .replace(/\s*\(編集済み\)\s*$/,"")
+      .replace(/<[^>]*>/g,"")
+      .trim()
+    m.text = cleanNew
+    m.edited = true
+    m.timestamp = Date.now()
+    ref.set(m)
+  })
+}
 
 function command(cmd){
   if(cmd==="/help"){
