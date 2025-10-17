@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>audio</title>
+<style>
+body{background:#0f0f12;color:#fff;font-family:sans-serif;text-align:center;margin:0;padding:20px}
+input[type=file]{margin:10px}
+canvas{background:#222;width:100%;height:100px;cursor:pointer;margin-top:10px}
+button{margin:5px;padding:10px 20px;background:#1e90ff;border:none;color:#fff;border-radius:6px}
+</style>
+</head>
+<body>
+<h2>audio</h2>
+<input type="file" id="file" accept="audio/*">
+<canvas id="wave"></canvas>
+<div>
+<button id="play">▶ 再生</button>
+<button id="stop">■ 停止</button>
+<button id="record">● 録音</button>
+</div>
+<audio id="rec" controls></audio>
+<script>
+let ctx=new (window.AudioContext||window.webkitAudioContext)()
+let buffer
+let canvas=document.getElementById("wave"),c=canvas.getContext("2d")
+canvas.width=window.innerWidth-40
+let pos=0,playing=false,hovering=false
+let currentSource=null
+let dest=ctx.createMediaStreamDestination()
+let recorder,recordedChunks=[]
+let normalSource=null
+
+document.getElementById("file").onchange=e=>{
+ let f=e.target.files[0]
+ if(!f)return
+ let r=new FileReader()
+ r.onload=async()=>{
+  buffer=await ctx.decodeAudioData(r.result)
+  draw()
+ }
+ r.readAsArrayBuffer(f)
+}
+
+function draw(){
+ if(!buffer)return
+ let data=buffer.getChannelData(0)
+ c.clearRect(0,0,canvas.width,canvas.height)
+ c.beginPath()
+ for(let i=0;i<data.length;i+=Math.floor(data.length/canvas.width)){
+  let y=(data[i]*0.4+0.5)*canvas.height
+  c.lineTo(i/data.length*canvas.width,y)
+ }
+ c.strokeStyle="#1e90ff"
+ c.stroke()
+ drawBar()
+}
+
+function drawBar(){
+ c.fillStyle="red"
+ c.fillRect(pos*canvas.width,0,2,canvas.height)
+}
+
+canvas.onmousemove=e=>{
+ if(!buffer)return
+ pos=e.offsetX/canvas.width
+ draw()
+ if(playing)playFrame()
+}
+
+function playFrame(){
+ if(!buffer)return
+ if(currentSource)try{currentSource.stop()}catch{}
+ let len=0.03
+ let start=pos*buffer.duration
+ let slice=ctx.createBuffer(buffer.numberOfChannels,ctx.sampleRate*len,ctx.sampleRate)
+ for(let ch=0;ch<buffer.numberOfChannels;ch++){
+  let src=buffer.getChannelData(ch)
+  let dst=slice.getChannelData(ch)
+  let s=Math.floor(start*ctx.sampleRate)
+  for(let i=0;i<dst.length;i++)dst[i]=src[s+i]||0
+ }
+ let source=ctx.createBufferSource()
+ source.buffer=slice
+ source.connect(ctx.destination)
+ source.connect(dest)
+ source.start()
+ currentSource=source
+}
+
+document.getElementById("play").onclick=()=>{
+ if(!buffer)return
+ stopAll()
+ normalSource=ctx.createBufferSource()
+ normalSource.buffer=buffer
+ normalSource.connect(ctx.destination)
+ normalSource.start()
+}
+
+document.getElementById("stop").onclick=stopAll
+function stopAll(){
+ if(currentSource)try{currentSource.stop()}catch{}
+ if(normalSource)try{normalSource.stop()}catch{}
+ playing=false
+}
+
+document.getElementById("record").onclick=async()=>{
+ if(!recorder){
+  let mic=await navigator.mediaDevices.getUserMedia({audio:true})
+  dest=ctx.createMediaStreamDestination()
+  let mix=new MediaStream([...mic.getTracks(),...dest.stream.getTracks()])
+  recordedChunks=[]
+  recorder=new MediaRecorder(mix)
+  recorder.ondataavailable=e=>recordedChunks.push(e.data)
+  recorder.onstop=async()=>{
+   let blob=new Blob(recordedChunks,{type:'audio/webm'})
+   document.getElementById("rec").src=URL.createObjectURL(blob)
+   let arr=await blob.arrayBuffer()
+   buffer=await ctx.decodeAudioData(arr)
+   draw()
+  }
+  recorder.start()
+  document.getElementById("record").textContent="■ 録音停止"
+ }else{
+  recorder.stop()
+  recorder=null
+  document.getElementById("record").textContent="● 録音"
+ }
+}
+
+document.getElementById("wave").addEventListener("mouseenter",()=>{
+ playing=true
+ loop()
+})
+document.getElementById("wave").addEventListener("mouseleave",()=>{
+ playing=false
+})
+function loop(){
+ if(!playing)return
+ playFrame()
+ requestAnimationFrame(loop)
+}
+</script>
+</body>
+</html>
