@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>In-Page DevTools</title>
+<style>
+:root{--bg:#0f0f12;--card:#111;--accent:#3aa0ff;--text:#e6eef8}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Segoe UI,Helvetica,Arial}
+.app{display:grid;grid-template-columns:1fr 1.2fr;gap:12px;padding:12px;height:100vh;box-sizing:border-box}
+.panel{background:var(--card);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;box-shadow:0 6px 20px rgba(0,0,0,0.6)}
+.editor{height:50vh;resize:none;width:100%;background:#0b0b0c;color:var(--text);padding:10px;border:1px solid #222;border-radius:6px;font-family:monospace;font-size:13px}
+.controls{display:flex;gap:8px}
+.btn{background:transparent;border:1px solid #264653;color:var(--text);padding:6px 10px;border-radius:6px;cursor:pointer}
+.btn.primary{border-color:var(--accent)}
+.preview{flex:1;min-height:0;display:flex;flex-direction:column}
+.iframeWrapper{flex:1;border-radius:6px;overflow:hidden;border:1px solid #222}
+.console{height:40vh;overflow:auto;background:#050506;border-radius:6px;padding:8px;font-family:monospace;font-size:13px;border:1px solid #222}
+.console-line{padding:4px 6px;border-bottom:1px solid rgba(255,255,255,0.02)}
+.console-input{display:flex;gap:8px}
+.input{flex:1;padding:6px;border-radius:6px;background:#0b0b0c;border:1px solid #222;color:var(--text);font-family:monospace}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="panel">
+    <textarea id="editor" class="editor"><!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>playground</title>
+</head>
+<body>
+<h1>hello</h1>
+<script>
+console.log('hello from iframe')
+</script>
+</body>
+</html></textarea>
+    <div class="controls">
+  <button id="run" class="btn primary">Run</button>
+  <button id="clearConsole" class="btn">Clear</button>
+  <label style="margin-left:auto;display:flex;align-items:center;gap:8px"><input id="autoRun" type="checkbox">AutoRun</label>
+  <input id="file" type="file" accept=".html,.css,.js,.ts" multiple class="btn" style="border:none"/>
+  <button id="openFull" class="btn" style="margin-left:8px">→</button>
+</div>
+  </div>
+  <div class="panel preview">
+    <div class="iframeWrapper" id="iframeWrapper">
+      <iframe id="preview" sandbox="allow-scripts allow-modals" style="width:100%;height:100%;border:0;background:white"></iframe>
+    </div>
+    <div id="console" class="console"></div>
+    <div class="console-input">
+      <input id="cmd" class="input" placeholder="console.log('test')"/>
+      <button id="evalBtn" class="btn">Run</button>
+    </div>
+  </div>
+</div>
+<script>
+const editor=document.getElementById('editor')
+const preview=document.getElementById('preview')
+const runBtn=document.getElementById('run')
+const consoleEl=document.getElementById('console')
+const evalBtn=document.getElementById('evalBtn')
+const cmd=document.getElementById('cmd')
+const clearConsoleBtn=document.getElementById('clearConsole')
+const autoRunCheckbox=document.getElementById('autoRun')
+const fileInput=document.getElementById('file')
+let extraFiles=[]
+function writeLine(t){const d=document.createElement('div');d.className='console-line';d.textContent=t;consoleEl.appendChild(d);consoleEl.scrollTop=consoleEl.scrollHeight}
+function makeSrcdoc(html){
+  html = typeof html==='string' ? html : '';
+  let css='', js='', ts='';
+  extraFiles.forEach(f=>{
+    const name=f.name.toLowerCase();
+    if(name.endsWith('.css')) css+='\n/* '+f.name+' */\n'+f.text;
+    else if(name.endsWith('.js')) js+='\n/* '+f.name+' */\n'+f.text;
+    else if(name.endsWith('.ts')) ts+='\n/* '+f.name+' */\n'+f.text.replace(/:\s*[^,;=)\n]+/g,'');
+    else if(name.endsWith('.html')) html+='\n\n<!-- inlined '+f.name+' -->\n'+f.text;
+  });
+  if(css) html=html.replace(/<\/head>/i,'<style>'+css+'</style></head>');
+  const runner="(function(){var oldLog=console.log,oldErr=console.error,oldWarn=console.warn;console.log=function(){oldLog.apply(console,arguments);try{parent.postMessage({__fromIframe:true,type:'log',args:Array.from(arguments).map(a=>{try{return typeof a==='object'?JSON.stringify(a):String(a)}catch(e){return String(a)}})},'*')}catch(e){};oldLog.apply(console,arguments)};console.error=function(){oldErr.apply(console,arguments);try{parent.postMessage({__fromIframe:true,type:'error',args:Array.from(arguments).map(a=>{try{return typeof a==='object'?JSON.stringify(a):String(a)}catch(e){return String(a)}})},'*')}catch(e){};oldErr.apply(console,arguments)};console.warn=function(){oldWarn.apply(console,arguments);try{parent.postMessage({__fromIframe:true,type:'warn',args:Array.from(arguments).map(a=>{try{return typeof a==='object'?JSON.stringify(a):String(a)}catch(e){return String(a)}})},'*')}catch(e){};oldWarn.apply(console,arguments)};window.addEventListener('message',e=>{try{if(e.data&&e.data.__runEval__){var r=eval(e.data.code);parent.postMessage({__fromIframe:true,type:'result',result:String(r)},'*')}}catch(err){parent.postMessage({__fromIframe:true,type:'error',message:err&&err.stack?err.stack:String(err)},'*')}});window.onerror=function(m,s,l,e){parent.postMessage({__fromIframe:true,type:'error',message:m+' at '+s+':'+l},'*')};})();";
+  let payload='';
+  if(js||ts) payload='<script>'+js+'\n'+ts+'<\/script>';
+  payload+='<script>'+runner.replace(/<\/script>/g,'<\\/script')+'</\script>';
+  try{
+    html=html.replace(/<\/body>/i,payload+'</body>');
+  }catch(e){
+    html+=payload;
+  }
+  return html;
+}
+
+function run(){preview.srcdoc=makeSrcdoc(editor.value)}
+runBtn.onclick=run
+editor.oninput=()=>{if(autoRunCheckbox.checked)run()}
+clearConsoleBtn.onclick=()=>consoleEl.innerHTML=''
+window.addEventListener('message',e=>{const d=e.data;if(!d||!d.__fromIframe)return;if(d.type==='log')writeLine('[log] '+d.args.join(' '));else if(d.type==='warn')writeLine('[warn] '+d.args.join(' '));else if(d.type==='error')writeLine('[error] '+(d.args?d.args.join(' '):d.message));else if(d.type==='result')writeLine('[result] '+d.result)})
+evalBtn.onclick=()=>{preview.contentWindow.postMessage({__runEval__:true,code:cmd.value},'*')}
+cmd.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();evalBtn.click()}})
+fileInput.addEventListener('change',e=>{extraFiles=[];[...e.target.files].forEach(f=>{const r=new FileReader();r.onload=()=>{extraFiles.push({name:f.name,text:r.result});if(autoRunCheckbox.checked)run()};r.readAsText(f)})})
+run()
+const openFullBtn = document.getElementById('openFull')
+
+openFullBtn.onclick = () => {
+  const w = window.open()
+  const html = makeSrcdoc(editor.value) + `
+<script>
+(function(){
+  const consoleEl=document.createElement('div')
+  consoleEl.style.cssText="height:200px;overflow:auto;background:#050506;color:#e6eef8;font-family:monospace;padding:8px;border-top:2px solid #3aa0ff"
+
+  const inputDiv=document.createElement('div')
+  inputDiv.style.cssText="display:flex;gap:4px;padding:4px;background:#111"
+  const cmd=document.createElement('input')
+  cmd.style.cssText="flex:1;padding:4px;background:#0b0b0c;color:#e6eef8;border:1px solid #222;font-family:monospace"
+  cmd.placeholder="console.log('test')"
+  const btn=document.createElement('button')
+  btn.textContent="Run"
+  btn.onclick=()=>{try{const r=eval(cmd.value);const d=document.createElement('div');d.textContent='[result] '+r;consoleEl.appendChild(d);consoleEl.scrollTop=consoleEl.scrollHeight}catch(e){const d=document.createElement('div');d.textContent='[error] '+e;consoleEl.appendChild(d);consoleEl.scrollTop=consoleEl.scrollHeight}}
+  inputDiv.appendChild(cmd)
+  inputDiv.appendChild(btn)
+
+  const consoleWrapper=document.createElement('div')
+  consoleWrapper.style.cssText="position:fixed;bottom:0;left:0;width:100%;z-index:9999"
+  consoleWrapper.appendChild(consoleEl)
+  consoleWrapper.appendChild(inputDiv)
+  document.body.appendChild(consoleWrapper)
+
+  const toggleBtn=document.createElement('button')
+  toggleBtn.textContent='↓'
+  toggleBtn.style.cssText="position:fixed;bottom:200px;right:8px;z-index:10000;padding:2px 6px;background:#111;color:#e6eef8;border:1px solid #222;border-radius:4px;cursor:pointer"
+  document.body.appendChild(toggleBtn)
+
+  let collapsed=false
+  toggleBtn.onclick=()=>{
+    if(collapsed){
+      consoleWrapper.style.height='auto'
+      consoleEl.style.height='200px'
+      toggleBtn.textContent='↓'
+      toggleBtn.style.bottom='200px'
+    } else {
+      consoleWrapper.style.height='24px'
+      consoleEl.style.height='0'
+      toggleBtn.textContent='↑'
+      toggleBtn.style.bottom='0'
+    }
+    collapsed=!collapsed
+  }
+
+  window.addEventListener('message',e=>{
+    if(e.data && e.data.__fromIframe){
+      const d=e.data
+      let div=document.createElement('div')
+      if(d.type==='log') div.textContent='[log] '+d.args.join(' ')
+      else if(d.type==='warn') div.textContent='[warn] '+d.args.join(' ')
+      else if(d.type==='error') div.textContent='[error] '+(d.args?d.args.join(' '):d.message)
+      else if(d.type==='result') div.textContent='[result] '+d.result
+      consoleEl.appendChild(div)
+      consoleEl.scrollTop=consoleEl.scrollHeight
+    }
+  })
+})();
+<\/script>
+`
+  w.document.open()
+  w.document.write(html)
+  w.document.close()
+}
+</script>
+</body>
+</html>
