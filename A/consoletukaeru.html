@@ -41,7 +41,7 @@ console.log('hello from iframe')
   <button id="run" class="btn primary">Run</button>
   <button id="clearConsole" class="btn">Clear</button>
   <label style="margin-left:auto;display:flex;align-items:center;gap:8px"><input id="autoRun" type="checkbox">AutoRun</label>
-  <input id="file" type="file" accept=".html,.css,.js,.ts" multiple class="btn" style="border:none"/>
+  <input id="file" type="file" webkitdirectory directory multiple class="btn" style="border:none"/>
   <button id="openFull" class="btn" style="margin-left:8px">→</button>
 </div>
   </div>
@@ -98,8 +98,49 @@ clearConsoleBtn.onclick=()=>consoleEl.innerHTML=''
 window.addEventListener('message',e=>{const d=e.data;if(!d||!d.__fromIframe)return;if(d.type==='log')writeLine('[log] '+d.args.join(' '));else if(d.type==='warn')writeLine('[warn] '+d.args.join(' '));else if(d.type==='error')writeLine('[error] '+(d.args?d.args.join(' '):d.message));else if(d.type==='result')writeLine('[result] '+d.result)})
 evalBtn.onclick=()=>{preview.contentWindow.postMessage({__runEval__:true,code:cmd.value},'*')}
 cmd.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();evalBtn.click()}})
-fileInput.addEventListener('change',e=>{extraFiles=[];[...e.target.files].forEach(f=>{const r=new FileReader();r.onload=()=>{extraFiles.push({name:f.name,text:r.result});if(autoRunCheckbox.checked)run()};r.readAsText(f)})})
-run()
+fileInput.addEventListener('change', async e=>{
+  extraFiles=[]
+  const files=[...e.target.files]
+  const fileMap={}
+  const binaryExts=['png','jpg','jpeg','gif','svg','webp','ico','bmp']
+  for(const f of files){
+    const ext=f.name.split('.').pop().toLowerCase()
+    const isText=!binaryExts.includes(ext)
+    const reader=new FileReader()
+    await new Promise(res=>{
+      reader.onload=()=>{
+        const content=isText?reader.result:URL.createObjectURL(new Blob([reader.result]))
+        fileMap[f.webkitRelativePath||f.name]=content
+        res()
+      }
+      if(isText) reader.readAsText(f)
+      else reader.readAsArrayBuffer(f)
+    })
+  }
+
+  extraFiles=Object.entries(fileMap).map(([name,text])=>({name,text}))
+
+  const main=files.find(f=>/index\.html$/i.test(f.name))
+  if(main){
+    const html=fileMap[main.webkitRelativePath||main.name]
+    editor.value=html
+  }
+
+  const origMakeSrcdoc=makeSrcdoc
+  makeSrcdoc=function(html){
+    let src=origMakeSrcdoc(html)
+    for(const [path,url] of Object.entries(fileMap)){
+      if(/\.(png|jpg|jpeg|gif|svg|webp|ico|bmp)$/i.test(path)){
+        const short=path.split('/').slice(1).join('/')
+        src=src.replace(new RegExp(short,'g'),url)
+      }
+    }
+    return src
+  }
+
+  if(autoRunCheckbox.checked)run()
+})
+
 const openFullBtn = document.getElementById('openFull')
 
 openFullBtn.onclick = () => {
