@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Undertale Nルート 再現</title>
+<style>
+:root {
+  --bg:#000;
+  --flowey-size:220px;
+  --soul-size:46px;
+  --idle-rot-speed:0.001;
+  --absorb-duration:2600ms;
+}
+html,body {
+  height:100%;
+  margin:0;
+  background:var(--bg);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+.stage {
+  width:920px;
+  height:540px;
+  position:relative;
+  background:#000;
+  overflow:hidden;
+}
+.flowey {
+  width:var(--flowey-size);
+  height:var(--flowey-size);
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  background:transparent;
+  background-size:cover;
+  background-position:center;
+  z-index:1;
+}
+.souls {
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+}
+.soul {
+  background-image: url("/image/n.png");
+  background-size: cover;
+}
+.soul[data-index="0"] { filter: hue-rotate(250deg); }
+.soul[data-index="1"] { filter: hue-rotate(56deg); }
+.soul[data-index="2"] { filter: hue-rotate(129deg); }
+.soul[data-index="3"] { filter: hue-rotate(359deg); }
+.soul[data-index="4"] { filter: hue-rotate(284deg); }
+.soul[data-index="5"] { filter: hue-rotate(3deg); }
+.white-fade {
+  position:fixed;
+  inset:0;
+  background:#fff;
+  opacity:0;
+  pointer-events:none;
+  z-index:999;
+  transition:opacity 600ms linear;
+}
+.controls {
+  position:absolute;
+  left:14px;
+  bottom:14px;
+  z-index:60;
+  display:flex;
+  gap:8px;
+  background:rgba(0,0,0,0.25);
+  padding:8px;
+  border-radius:8px;
+}
+.control-btn {
+  padding:6px 10px;
+  border-radius:6px;
+  background:rgba(255,255,255,0.15);
+  color:#fff;
+  cursor:pointer;
+  user-select:none;
+  font-size:13px;
+}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="souls" id="souls"></div>
+  <div class="flowey" id="flowey"></div>
+  <div class="controls">
+    <div class="control-btn" id="start">魂を取り込む</div>
+    <div class="control-btn" id="reset">リセット</div>
+    <div class="control-btn" id="uploadBtn">フラウィーをアップロード</div>
+    <input type="file" id="fileInput" accept="image/*" class="hidden">
+  </div>
+</div>
+<div class="white-fade" id="whiteFade"></div>
+<script>
+const stage=document.getElementById('stage')
+const soulsEl=document.getElementById('souls')
+const flowey=document.getElementById('flowey')
+const floweyLabel=document.getElementById('floweyLabel')
+const whiteFade=document.getElementById('whiteFade')
+const fileInput=document.getElementById('fileInput')
+const uploadBtn=document.getElementById('uploadBtn')
+
+let centerX=stage.clientWidth/2
+let centerY=stage.clientHeight/2
+let soulCount=6
+let souls=[]
+let angleOffset=0
+let baseSpeed=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--idle-rot-speed'))||0.001
+let speed= 0.0388
+let absorbing=false
+
+function createSouls(){
+  soulsEl.innerHTML=''
+  souls=[]
+  for(let i=0;i<soulCount;i++){
+    const el=document.createElement('div')
+    el.className='soul'
+    el.dataset.index=i
+    const angle=(i/soulCount)*Math.PI*2
+    const radius=230+Math.random()*20
+    const x=centerX+Math.cos(angle)*radius-23
+    const y=centerY+Math.sin(angle)*radius-23
+    el.style.left=x+'px'
+    el.style.top=y+'px'
+    el.dataset.angle=angle
+    el.dataset.radius=radius
+    soulsEl.appendChild(el)
+    souls.push(el)
+  }
+}
+
+function orbit(){
+  angleOffset-=speed
+  if(angleOffset<-Math.PI*2)angleOffset%=Math.PI*2
+  souls.forEach((el,i)=>{
+    const baseAngle=(i/soulCount)*Math.PI*2+angleOffset
+    const r=parseFloat(el.dataset.radius)
+    const x=centerX+Math.cos(baseAngle)*r-23
+    const y=centerY+Math.sin(baseAngle)*r-23
+    el.style.left=x+'px'
+    el.style.top=y+'px'
+  })
+  requestAnimationFrame(orbit)
+}
+requestAnimationFrame(orbit)
+
+function absorb(){
+  if(absorbing)return
+  absorbing=true
+  let fade=whiteFade
+  fade.style.transition='opacity 3s linear'
+  fade.style.opacity='1'
+  setTimeout(()=>{
+  souls.forEach(el=>el.remove())
+},3000)
+  let targetSpeed=baseSpeed/10
+  let slowDown=setInterval(()=>{
+    if(speed>targetSpeed)speed-=0.00333
+  },30)
+  souls.forEach((el)=>{
+    const sx=parseFloat(el.style.left)+23
+    const sy=parseFloat(el.style.top)+23
+    const dx=centerX
+    const dy=centerY
+    el.animate(
+      [
+        {transform:`translate3d(0,0,0) scale(1)`,opacity:1},
+        {transform:`translate3d(${dx-sx}px,${dy-sy}px,0) scale(0.3)`,opacity:0}
+      ],
+      {duration:15000,easing:'cubic-bezier(.2,.8,.2,1)'}
+    )
+    setTimeout(()=>{el.style.opacity='0'},2800)
+  })
+  setTimeout(()=>{
+    fade.style.opacity='0'
+    clearInterval(slowDown)
+    speed=baseSpeed
+    absorbing=false
+  },3000)
+}
+
+function reset(){
+  absorbing=false
+  speed = 0.0388
+  whiteFade.style.opacity='0'
+  createSouls()
+}
+
+document.getElementById('start').onclick=absorb
+document.getElementById('reset').onclick=reset
+uploadBtn.onclick=()=>fileInput.click()
+fileInput.onchange=e=>{
+  const f=e.target.files[0]
+  if(!f)return
+  const url=URL.createObjectURL(f)
+  flowey.style.backgroundImage=`url('${url}')`
+  floweyLabel.style.display='none'
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key.toLowerCase()==='z')absorb()
+  if(e.key.toLowerCase()==='c')reset()
+  if(e.key.toLowerCase()==='x'){
+    const c=document.querySelector('.controls')
+    if(c.style.display==='none')c.style.display='flex'
+    else c.style.display='none'
+  }
+})
+
+createSouls()
+</script>
+</body>
+</html>
