@@ -46,8 +46,11 @@ html,body {
   pointer-events:none;
 }
 .soul {
-  background-image: url("/image/n.png");
-  background-size: cover;
+  position:absolute;
+  width:var(--soul-size);
+  height:var(--soul-size);
+  background-image:url("/image/n.png");
+  background-size:cover;
 }
 .soul[data-index="0"] { filter: hue-rotate(250deg); }
 .soul[data-index="1"] { filter: hue-rotate(56deg); }
