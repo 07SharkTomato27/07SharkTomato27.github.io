@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>WebChat</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <style>
+      :root {
+        --bg: #2f3136;
+        --sidebar: #2f3136;
+        --main: #36393f;
+        --input: #40444b;
+        --hover: #3a3c43;
+        --accent: #5865f2;
+        --accent-hover: #4752c4;
+        --online: #43b581;
+        --text: #dcddde;
+        --muted: #72767d;
+        --border: #292b2f;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes slideInLeft {
+        from {
+          transform: translateX(-100%);
+        }
+
+        to {
+          transform: translateX(0);
+        }
+      }
+
+      @keyframes bounce {
+
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+
+        50% {
+          transform: translateY(-8px);
+        }
+      }
+
+      @keyframes pulse {
+        0% {
+          box-shadow: 0 0 0 0 rgba(88, 101, 242, 0.4);
+        }
+
+        70% {
+          box-shadow: 0 0 0 10px rgba(88, 101, 242, 0);
+        }
+
+        100% {
+          box-shadow: 0 0 0 0 rgba(88, 101, 242, 0);
+        }
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        font-family: "Whitney", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        color: var(--text);
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+      }
+
+      #rules,
+      #nameModal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.95);
+        backdrop-filter: blur(10px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        animation: fadeIn 0.6s ease-out;
+      }
+
+      .modalBox,
+      #rulesBox {
+        background: var(--main);
+        padding: 40px;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+        max-width: 460px;
+        width: 90%;
+        text-align: center;
+        animation: bounce 0.6s ease-out;
+        border: 1px solid rgba(88, 101, 242, 0.3);
+      }
+
+      .modalBox button,
+      #rulesBox button {
+        background: var(--accent);
+        padding: 14px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .modalBox button:hover,
+      #rulesBox button:hover {
+        background: var(--accent-hover);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(88, 101, 242, 0.4);
+      }
+
+      .modalBox button:active,
+      #rulesBox button:active {
+        animation: pulse 0.6s;
+      }
+
+      .container {
+        display: flex;
+        width: 100%;
+        height: 100vh;
+        animation: slideInLeft 0.8s ease-out;
+      }
+
+      .sidebar {
+        width: 240px;
+        background: var(--sidebar);
+        padding: 12px 0;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+        z-index: 10;
+      }
+
+      .server-name {
+        color: #fff;
+        font-weight: 700;
+        padding: 12px 20px;
+        margin: 8px 12px;
+        border-radius: 8px;
+        background: rgba(88, 101, 242, 0.2);
+        transition: all 0.3s;
+        cursor: pointer;
+      }
+
+      .server-name:hover {
+        background: var(--accent);
+        transform: translateX(8px);
+      }
+
+      .online-list {
+        margin-top: 30px;
+        padding: 0 16px;
+      }
+
+      .online-title {
+        color: var(--online);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 0 8px;
+      }
+
+      .online-item {
+        display: flex;
+        align-items: center;
+        padding: 6px 12px;
+        border-radius: 8px;
+        margin: 3px 0;
+        transition: all 0.2s;
+        animation: fadeIn 0.5s ease-out forwards;
+        opacity: 0;
+      }
+
+      .online-item:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+
+      .online-item:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+
+      .online-item:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+
+      .online-item:hover {
+        background: rgba(67, 181, 129, 0.2);
+        transform: translateX(4px);
+      }
+
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        background: var(--online);
+        border-radius: 50%;
+        margin-right: 12px;
+        box-shadow: 0 0 10px rgba(67, 181, 129, 0.8);
+        animation: pulse 2s infinite;
+      }
+
+      .channel-list div {
+        padding: 10px 20px;
+        border-radius: 8px;
+        margin: 4px 12px;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .channel-list div::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        transition: 0.6s;
+      }
+
+      .channel-list div:hover::before {
+        left: 100%;
+      }
+
+      .channel-list div:hover {
+        background: var(--hover);
+        color: #fff;
+        transform: translateX(8px);
+      }
+
+      .main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: var(--main);
+      }
+
+      .header {
+        height: 48px;
+        background: rgba(0, 0, 0, 0.2);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        backdrop-filter: blur(10px);
+        z-index: 5;
+      }
+
+      #chatBox {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background: linear-gradient(to bottom, #36393f, #2f3136);
+      }
+
+      .message {
+        margin-bottom: 20px;
+        display: flex;
+        opacity: 0;
+        transform: translateY(30px);
+        animation: fadeIn 0.5s ease-out forwards;
+      }
+
+      .message:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+
+      .message:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+
+      .message:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+
+      .avatar {
+        width: 40px;
+        height: 40px;
+        background: var(--accent);
+        border-radius: 50%;
+        margin-right: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+        box-shadow: 0 0 15px rgba(88, 101, 242, 0.5);
+        transition: all 0.3s;
+      }
+
+      .message:hover .avatar {
+        transform: scale(1.1) rotate(5deg);
+      }
+
+      .username {
+        font-weight: 600;
+        color: #fff;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .username:hover {
+        color: var(--accent);
+        text-shadow: 0 0 8px rgba(88, 101, 242, 0.6);
+      }
+
+      .text a {
+        color: #00aff4 !important;
+        text-decoration: underline;
+        transition: all 0.2s;
+      }
+
+      .text a:hover {
+        color: #00d9ff !important;
+        text-shadow: 0 0 10px rgba(0, 175, 244, 0.6);
+      }
+
+      .inputArea {
+        padding: 16px;
+        background: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+      }
+
+      .inputWrapper {
+        background: var(--input);
+        border-radius: 12px;
+        padding: 0 16px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s;
+      }
+
+      .inputWrapper:focus-within {
+        box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.4);
+        transform: scale(1.02);
+      }
+
+      #msg {
+        width: 100%;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: var(--text);
+        font-size: 15px;
+        padding: 14px 0;
+        resize: none;
+        max-height: 150px;
+      }
+
+      #chatBox::-webkit-scrollbar {
+        width: 10px;
+      }
+
+      #chatBox::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      #chatBox::-webkit-scrollbar-thumb {
+        background: rgba(88, 101, 242, 0.5);
+        border-radius: 10px;
+        border: 2px solid var(--main);
+      }
+
+      #chatBox::-webkit-scrollbar-thumb:hover {
+        background: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="rules">
+      <div id="rulesBox">
+        <h1>ルール</h1>
+        <p style="color:#b9bbbe;">1. 強い暴言を使わない（タヒねとか）</p>
+        <p style="color:#b9bbbe;">2. 荒らさない （スパムとか）</p>
+        <p style="color:#b9bbbe;">3. いじめない （普通にやめろ）</p>
+        <p style="color:#b9bbbe;">4. ハッキングしない（やめてくれ）</p>
+        <p style="color:#b9bbbe;">5. 不快な言葉を使わない（嫌われるよ？）</p>
+        <p style="color:#b9bbbe;">6. ウイルス・危険なファイルを配布しない（やめろ）</p>
+        <p style="color:#b9bbbe;">7. 脅し（もちろんダメ）</p>
+        <p style="color:#b9bbbe;">8. 詐欺（やめろ絶対やめろ）</p>
+        <p style="color:#b9bbbe;">8. なりすまし禁止（そっくりだったら少し改名しよう）</p>
+        <p style="color:#b9bbbe;">9. 住所とか個人情報をさらさない教えない （やめろ）</p>
+        <p style="color:#b9bbbe;">10. 名前に本名を使わない（ニックネームにしよう！）</p>
+        <p style="color:#b9bbbe;">OKを押すとルールに同意したとみなされる。</p>
+        <button id="okBtn">OK</button>
+      </div>
+    </div>
+    <div class="container" style="display:none">
+      <div class="sidebar">
+        <div class="server-name" id="changeName">WebChat ← クリックで名前変更</div>
+        <div class="online-list">
+          <div class="online-title">オンライン — <span id="onlineCount">0</span>
+          </div>
+          <div id="onlineUsers"></div>
+        </div>
+        <div class="channel-list">
+          <div># 雑談</div>
+        </div>
+      </div>
+      <div class="main">
+        <div class="header">
+          <h2># 雑談</h2>
+        </div>
+        <div id="chatBox"></div>
+        <div class="inputArea">
+          <div class="inputWrapper">
+            <textarea id="msg" rows="1" placeholder="メッセージ #雑談"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="nameModal" style="display:none">
+      <div class="modalBox">
+        <h1>ニックネームを決めてね</h1>
+        <input type="text" id="nameInput" placeholder="例：洗濯機" maxlength="20">
+        <button id="nameSubmit">決定</button>
+      </div>
+    </div>
+    <script>
+      let userName = localStorage.getItem("chatName") || "";
+      let userId = localStorage.getItem("chatUserId");
+      if (!userId) {
+        userId = "user_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
+        localStorage.setItem("chatUserId", userId);
+      }
+      const firebaseConfig = {
+        apiKey: "AIzaSyAMBXkyezKK-9da0WEqYefi1bbkyublqxs",
+        authDomain: "webchat-1e806.firebaseapp.com",
+        databaseURL: "https://webchat-1e806-default-rtdb.firebaseio.com/",
+        projectId: "webchat-1e806",
+        storageBucket: "webchat-1e806.firebasestorage.app",
+        messagingSenderId: "899551320846",
+        appId: "1:899551320846:web:b53cb1291c9dc5595d955f"
+      };
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.database();
+      const messagesRef = db.ref("messages");
+      const usersRef = db.ref("onlineUsers");
+      const auth = firebase.auth();
+      auth.signInAnonymously()
+      .then(() => console.log("匿名ログイン成功"))
+      .catch(err => console.error("匿名ログイン失敗", err));
+      auth.onAuthStateChanged(user => {
+       if (user) {
+      userId = user.uid;
+      localStorage.setItem("chatUserId", userId);
+      updateOnlineStatus();
+      }
+     });
+      const nameModal = document.getElementById("nameModal");
+      const rulesScreen = document.getElementById("rules");
+      const container = document.querySelector(".container");
+      const msgInput = document.getElementById("msg");
+      const chatBox = document.getElementById("chatBox");
+      const onlineUsersDiv = document.getElementById("onlineUsers");
+      const onlineCountSpan = document.getElementById("onlineCount");
+      const showNameModal = () => {
+        document.getElementById("nameInput").value = userName;
+        nameModal.style.display = "flex";
+      };
+      const updateOnlineStatus = () => {
+        if (userName) {
+          usersRef.child(userId).set({
+            name: userName,
+            time: Date.now()
+          });
+          usersRef.child(userId).onDisconnect().remove();
+        }
+      };
+      document.getElementById("okBtn").onclick = () => {
+        rulesScreen.style.display = "none";
+        container.style.display = "flex";
+        if (!userName) showNameModal();
+        updateOnlineStatus();
+      };
+      document.getElementById("nameSubmit").onclick = () => {
+        const oldName = userName;
+        userName = document.getElementById("nameInput").value.trim() || "名無し";
+        localStorage.setItem("chatName", userName);
+        nameModal.style.display = "none";
+        updateOnlineStatus();
+        if (oldName && oldName !== userName) {
+          messagesRef.orderByChild("uid").equalTo(userId).once("value", s => {
+            const updates = {};
+            s.forEach(child => updates[child.key + "/u"] = userName);
+            messagesRef.update(updates);
+          });
+        }
+      };
+      document.getElementById("nameInput").onkeydown = e => {
+        if (e.key === "Enter") document.getElementById("nameSubmit").click();
+      };
+      document.getElementById("changeName").onclick = showNameModal;
+      msgInput.oninput = () => {
+        msgInput.style.height = "auto";
+        msgInput.style.height = msgInput.scrollHeight + "px";
+      };
+      const sendMessage = () => {
+        const text = msgInput.value.trim();
+        if (text && userName) {
+          messagesRef.push({
+            u: userName,
+            t: text,
+            uid: userId,
+            time: Date.now()
+          });
+          msgInput.value = "";
+          msgInput.style.height = "auto";
+        }
+      };
+      msgInput.onkeydown = e => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      };
+     messagesRef.on("child_added", s => {
+     const m = s.val();
+     const key = s.key;
+
+     const msgDiv = document.createElement("div");
+      msgDiv.className = "message";
+      msgDiv.dataset.key = key;
+
+    const avatar = document.createElement("div");
+     avatar.className = "avatar";
+     avatar.textContent = (m.u || "??").slice(0,2).toUpperCase();
+
+    const content = document.createElement("div");
+     content.className = "content";
+
+    const header = document.createElement("div");
+    const nameSpan = document.createElement("span");
+     nameSpan.className = "username";
+     nameSpan.textContent = m.u || "名無し";
+    const timeSpan = document.createElement("span");
+     timeSpan.className = "timestamp";
+     timeSpan.textContent = new Date(m.time).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
+     header.append(nameSpan, timeSpan);
+
+    const textDiv = document.createElement("div");
+     textDiv.className = "text";
+
+    const textWithLinks = m.t
+    .replace(/\n/g, '<br>')
+    .replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?])/g, '<a href="$1" target="_blank" style="color:#00aff4;text-decoration:underline;">$1</a>');
+
+     textDiv.innerHTML = textWithLinks;
+
+     content.append(header, textDiv);
+     msgDiv.append(avatar, content);
+     chatBox.appendChild(msgDiv);
+     chatBox.scrollTop = chatBox.scrollHeight;
+
+    while (chatBox.children.length > 16) {
+    const oldest = chatBox.children[0];
+    messagesRef.child(oldest.dataset.key).remove();
+    oldest.remove();
+      }
+    });
+    
+    usersRef.on("value", snap => {
+     const users = snap.val() || {};
+     const now = Date.now();
+     const active = {};
+
+    Object.keys(users).forEach(id => {
+    if (now - users[id].time < 60000) active[id] = users[id];
+    });
+
+     onlineUsersDiv.innerHTML = "";
+     onlineCountSpan.textContent = Object.keys(active).length;
+
+    Object.keys(active)
+    .sort((a, b) => active[a].name.localeCompare(active[b].name))
+    .forEach(id => {
+      const div = document.createElement("div");
+      div.className = "online-item";
+      div.innerHTML = `<div class="status-dot"></div><div class="online-name">${active[id].name}</div>`;
+      if (id === userId) div.querySelector(".status-dot").style.background = "#f04747";
+      onlineUsersDiv.appendChild(div);
+      });
+     });
+    </script>
+  </body>
+</html>
