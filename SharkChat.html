@@ -292,8 +292,43 @@ const firebaseConfig = {
   messagingSenderId:"932358584876",
   appId:"1:932358584876:web:afa8b9f8515c0ac6826f89"
 };
+const _0x4e3 = [55,48,55,49,48,55];
+function getPass(){ return _0x4e3.map(n=>String.fromCharCode(n)).join(''); }
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+const auth = firebase.auth();
+
+async function loginWithPass(){
+  const inputPass = document.getElementById('password').value;
+  if(inputPass === getPass()){
+    try{
+      await auth.signInAnonymously();
+      document.getElementById('login').remove();
+      document.getElementById('app').style.display="block";
+      document.getElementById('username').value=username;
+      if(avatarURL) document.getElementById('avatar-preview').src=avatarURL;
+      document.getElementById("font-setting").value=localStorage.getItem("font")||"";
+      document.getElementById("text-color-setting").value=localStorage.getItem("textColor")||"#ffffff";
+      document.getElementById("color1-setting").value=localStorage.getItem("color1")||"#1e1e2f";
+      document.getElementById("color2-setting").value=localStorage.getItem("color2")||"#3a3a5c";
+      applySettings();
+      listenMessages();
+    }catch(e){
+      alert("認証エラー（再読み込みしてみて）");
+    }
+  }else{
+    alert("間違ったパスワード");
+  }
+}
+
+function checkPass(){ loginWithPass(); }
+
+document.getElementById("enter-button").addEventListener("click",checkPass);
+document.getElementById("password").addEventListener("keydown",e=>{
+  if(e.key==="Enter") checkPass();
+});
+
 
 let username = localStorage.getItem("username")||"名無し";
 let avatarURL = localStorage.getItem("avatarURL")||"";
@@ -338,22 +373,6 @@ document.getElementById("glow-enabled").addEventListener("change", e=>{
   localStorage.setItem("glowEnabled", e.target.checked);
   renderVirtual();
 });
-
-function checkPass(){
-  const pass=document.getElementById('password').value;
-  if(pass==="707107"){
-    document.getElementById('login').remove()
-    document.getElementById('app').style.display="block";
-    document.getElementById('username').value=username;
-    if(avatarURL) document.getElementById('avatar-preview').src=avatarURL;
-    document.getElementById("font-setting").value=localStorage.getItem("font")||"";
-    document.getElementById("text-color-setting").value=localStorage.getItem("textColor")||"#ffffff";
-    document.getElementById("color1-setting").value=localStorage.getItem("color1")||"#1e1e2f";
-    document.getElementById("color2-setting").value=localStorage.getItem("color2")||"#3a3a5c";
-    applySettings();
-    listenMessages();
-  } else { alert("間違ったパスワード"); }
-}
 
 document.getElementById("resetBtn").onclick=()=>{
   if(currentChannel !== null && currentChannel !== undefined){
