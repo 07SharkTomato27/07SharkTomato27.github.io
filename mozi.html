@@ -1,160 +1,251 @@
 <!doctype html>
 <html lang="ja">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>もじ</title>
-<style>
-*{box-sizing:border-box}
-body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
-.wrap{max-width:720px;margin:24px auto;padding:16px}
-label{display:block;margin:12px 0 4px}
-input,select,button{width:100%;padding:10px;font-size:16px}
-#overlay{position:fixed;inset:0;background:#000;color:#fff;display:none;overflow:hidden}
-.stage{position:relative;width:100%;height:100%}
-.rtlRow{position:absolute;left:0;right:0;overflow:hidden}
-.rtlTrack{display:flex;white-space:nowrap;will-change:transform}
-.rtlInner{display:inline-flex;white-space:nowrap}
-@keyframes zoomPulse{0%{transform:scale(.9);opacity:.9}50%{transform:scale(1.2);opacity:1}100%{transform:scale(.9);opacity:.9}}
-.zoomText{font-weight:900;text-align:center;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
-.drop{position:absolute;will-change:transform,opacity;white-space:nowrap}
-@keyframes fall{0%{transform:translateY(-110%);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(110%);opacity:0}}
-</style>
-</head>
-<body>
-<div class="wrap">
-  <label>文字</label>
-  <input id="text" value="HELLO">
-  <label>モード</label>
-  <select id="mode">
-    <option value="rtl">右→左ループ</option>
-    <option value="fall">降る</option>
-    <option value="zoom">拡大縮小</option>
-  </select>
-  <label>サイズ</label>
-  <input id="size" type="range" min="16" max="160" value="64">
-  <label>速度</label>
-  <input id="speed" type="range" min="1" max="10" value="5">
-  <label>色</label>
-  <input id="color" type="color" value="#ffffff">
-  <button id="start">開始</button>
-</div>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>もじ</title>
+    <style>
+      * {
+        box-sizing: border-box
+      }
 
-<div id="overlay">
-  <div class="stage" id="stage"></div>
-</div>
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial
+      }
 
-<script>
-const txt=document.getElementById('text')
-const mode=document.getElementById('mode')
-const size=document.getElementById('size')
-const speed=document.getElementById('speed')
-const color=document.getElementById('color')
-const start=document.getElementById('start')
-const overlay=document.getElementById('overlay')
-const stage=document.getElementById('stage')
-let anims=[]
+      .wrap {
+        max-width: 720px;
+        margin: 24px auto;
+        padding: 16px
+      }
 
-function clearStage(){
-  anims.forEach(a=>a.cancel())
-  anims=[]
-  stage.innerHTML=''
-  overlay.style.cursor='auto'
-}
+      label {
+        display: block;
+        margin: 12px 0 4px
+      }
 
-function startRTL(s,t,v,c){
-  clearStage()
-  const rowHeight=Math.max(24,Math.floor(s*1.4))
-  let rows=Math.floor(window.innerHeight/rowHeight)
-  if(rows<1)rows=1
-  for(let r=0;r<rows;r++){
-    const row=document.createElement('div')
-    row.className='rtlRow'
-    row.style.fontSize=s+'px'
-    row.style.color=c
-    row.style.top=(r*rowHeight)+'px'
-    row.style.height=rowHeight+'px'
-    row.style.lineHeight=rowHeight+'px'
-    row.style.overflow='hidden'
+      input,
+      select,
+      button {
+        width: 100%;
+        padding: 10px;
+        font-size: 16px
+      }
 
-    const track=document.createElement('div')
-    track.className='rtlTrack'
-    const inner=document.createElement('div')
-    inner.className='rtlInner'
-    const span=document.createElement('span')
-    span.textContent=t+'　'
-    span.style.color=c
-    inner.appendChild(span.cloneNode(true))
-    track.appendChild(inner)
-    row.appendChild(track)
-    stage.appendChild(row)
+      #overlay {
+        position: fixed;
+        inset: 0;
+        background: #000;
+        color: #fff;
+        display: none;
+        overflow: hidden
+      }
 
-    while(inner.scrollWidth < window.innerWidth * 1.2){
-      inner.appendChild(span.cloneNode(true))
-    }
+      .stage {
+        position: relative;
+        width: 100%;
+        height: 100%
+      }
 
-    const clone = inner.cloneNode(true)
-    track.appendChild(clone)
+      .rtlRow {
+        position: absolute;
+        left: 0;
+        right: 0;
+        overflow: hidden
+      }
 
-    const innerWidth = inner.scrollWidth
-    const slider = Number(v)
-    const pxPerSec = Math.max(20, slider * 120)
-    const duration = Math.max(0.05, innerWidth / pxPerSec) * 1000
+      .rtlTrack {
+        display: flex;
+        white-space: nowrap;
+        will-change: transform
+      }
 
-    const anim = track.animate(
-      [{transform:'translateX(0px)'},{transform:`translateX(-${innerWidth}px)`}],
-      {duration:duration, iterations:Infinity, easing:'linear'}
-    )
-    anims.push(anim)
-  }
-}
+      .rtlInner {
+        display: inline-flex;
+        white-space: nowrap
+      }
 
-function startZoom(s,t,v,c){
-  clearStage()
-  const el=document.createElement('div')
-  el.className='zoomText'
-  el.style.fontSize=s+'px'
-  el.style.color=c
-  el.style.animation=`zoomPulse ${Math.max(1,(11-v))*0.8}s ease-in-out infinite`
-  el.textContent=t
-  stage.appendChild(el)
-}
+      @keyframes zoomPulse {
+        0% {
+          transform: scale(.9);
+          opacity: .9
+        }
 
-function startFall(s,t,v,c){
-  clearStage()
-  const count=120
-  const dur=Math.max(1,(11-v))*1.2
-  for(let i=0;i<count;i++){
-    const el=document.createElement('div')
-    el.className='drop'
-    el.style.left=Math.random()*100+'%'
-    el.style.fontSize=(s*0.6+Math.random()*s*0.8)+'px'
-    el.style.color=c
-    el.style.top='-20%'
-    el.style.animation=`fall ${dur+Math.random()*dur}s linear ${Math.random()*dur}s infinite`
-    el.textContent=t
-    stage.appendChild(el)
-  }
-}
+        50% {
+          transform: scale(1.2);
+          opacity: 1
+        }
 
-function launch(){
-  const t=txt.value||''
-  if(!t.trim())return
-  overlay.style.display='block'
-  if(mode.value==='rtl')startRTL(Number(size.value),t,Number(speed.value),color.value)
-  else if(mode.value==='zoom')startZoom(Number(size.value),t,Number(speed.value),color.value)
-  else startFall(Number(size.value),t,Number(speed.value),color.value)
-}
+        100% {
+          transform: scale(.9);
+          opacity: .9
+        }
+      }
 
-function closeAll(){
-  overlay.style.display='none'
-  clearStage()
-}
+      .zoomText {
+        font-weight: 900;
+        text-align: center;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center
+      }
 
-start.addEventListener('click',launch)
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll()})
-overlay.addEventListener('dblclick',closeAll)
-window.addEventListener('resize',()=>{if(overlay.style.display==='block'){launch()}})
-</script>
-</body>
+      .drop {
+        position: absolute;
+        will-change: transform, opacity;
+        white-space: nowrap
+      }
+
+      @keyframes fall {
+        0% {
+          transform: translateY(-110%);
+          opacity: 0
+        }
+
+        10% {
+          opacity: 1
+        }
+
+        90% {
+          opacity: 1
+        }
+
+        100% {
+          transform: translateY(110%);
+          opacity: 0
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap"><label>文字</label><input id="text" value="HELLO"><label>モード</label><select id="mode">
+        <option value="rtl">右→左ループ</option>
+        <option value="fall">降る</option>
+        <option value="zoom">拡大縮小</option>
+      </select><label>サイズ</label><input id="size" type="range" min="16" max="160" value="64"><label>速度</label><input id="speed" type="range" min="1" max="10" value="5"><label>色</label><input id="color" type="color" value="#ffffff"><button id="start">開始</button></div>
+    <div id="overlay">
+      <div class="stage" id="stage"></div>
+    </div>
+    <script>
+      const txt = document.getElementById('text')
+      const mode = document.getElementById('mode')
+      const size = document.getElementById('size')
+      const speed = document.getElementById('speed')
+      const color = document.getElementById('color')
+      const start = document.getElementById('start')
+      const overlay = document.getElementById('overlay')
+      const stage = document.getElementById('stage')
+      let anims = []
+
+      function clearStage() {
+        anims.forEach(a => a.cancel())
+        anims = []
+        stage.innerHTML = ''
+        overlay.style.cursor = 'auto'
+      }
+
+      function startRTL(s, t, v, c) {
+        clearStage()
+        const rowHeight = Math.max(24, Math.floor(s * 1.4))
+        let rows = Math.floor(window.innerHeight / rowHeight)
+        if (rows < 1) rows = 1
+        for (let r = 0; r < rows; r++) {
+          const row = document.createElement('div')
+          row.className = 'rtlRow'
+          row.style.fontSize = s + 'px'
+          row.style.color = c
+          row.style.top = (r * rowHeight) + 'px'
+          row.style.height = rowHeight + 'px'
+          row.style.lineHeight = rowHeight + 'px'
+          row.style.overflow = 'hidden'
+          const track = document.createElement('div')
+          track.className = 'rtlTrack'
+          const inner = document.createElement('div')
+          inner.className = 'rtlInner'
+          const span = document.createElement('span')
+          span.textContent = t + '　'
+          span.style.color = c
+          inner.appendChild(span.cloneNode(true))
+          track.appendChild(inner)
+          row.appendChild(track)
+          stage.appendChild(row)
+          while (inner.scrollWidth < window.innerWidth * 1.2) {
+            inner.appendChild(span.cloneNode(true))
+          }
+          const clone = inner.cloneNode(true)
+          track.appendChild(clone)
+          const innerWidth = inner.scrollWidth
+          const slider = Number(v)
+          const pxPerSec = Math.max(20, slider * 120)
+          const duration = Math.max(0.05, innerWidth / pxPerSec) * 1000
+          const anim = track.animate(
+            [{
+              transform: 'translateX(0px)'
+            }, {
+              transform: `translateX(-${innerWidth}px)`
+            }], {
+              duration: duration,
+              iterations: Infinity,
+              easing: 'linear'
+            })
+          anims.push(anim)
+        }
+      }
+
+      function startZoom(s, t, v, c) {
+        clearStage()
+        const el = document.createElement('div')
+        el.className = 'zoomText'
+        el.style.fontSize = s + 'px'
+        el.style.color = c
+        el.style.animation = `zoomPulse ${Math.max(1,(11-v))*0.8}s ease-in-out infinite`
+        el.textContent = t
+        stage.appendChild(el)
+      }
+
+      function startFall(s, t, v, c) {
+        clearStage()
+        const count = 120
+        const dur = Math.max(1, (11 - v)) * 1.2
+        for (let i = 0; i < count; i++) {
+          const el = document.createElement('div')
+          el.className = 'drop'
+          el.style.left = Math.random() * 100 + '%'
+          el.style.fontSize = (s * 0.6 + Math.random() * s * 0.8) + 'px'
+          el.style.color = c
+          el.style.top = '-20%'
+          el.style.animation = `fall ${dur+Math.random()*dur}s linear ${Math.random()*dur}s infinite`
+          el.textContent = t
+          stage.appendChild(el)
+        }
+      }
+
+      function launch() {
+        const t = txt.value || ''
+        if (!t.trim()) return
+        overlay.style.display = 'block'
+        if (mode.value === 'rtl') startRTL(Number(size.value), t, Number(speed.value), color.value)
+        else if (mode.value === 'zoom') startZoom(Number(size.value), t, Number(speed.value), color.value)
+        else startFall(Number(size.value), t, Number(speed.value), color.value)
+      }
+
+      function closeAll() {
+        overlay.style.display = 'none'
+        clearStage()
+      }
+      start.addEventListener('click', launch)
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeAll()
+      })
+      overlay.addEventListener('dblclick', closeAll)
+      window.addEventListener('resize', () => {
+        if (overlay.style.display === 'block') {
+          launch()
+        }
+      })
+    </script>
+  </body>
 </html>
