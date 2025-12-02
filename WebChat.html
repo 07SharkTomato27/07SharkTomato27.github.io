@@ -585,7 +585,7 @@
     chatBox.appendChild(msgDiv);
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    while (chatBox.children.length > 16) {
+    while (chatBox.children.length > 40) {
       const oldest = chatBox.children[0];
       messagesRef.child(oldest.dataset.key).remove();
       oldest.remove();
