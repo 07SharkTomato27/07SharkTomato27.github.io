@@ -1,364 +1,388 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta content="IE=edge" http-equiv="X-UA-Compatible">
-  <meta content="width=device-width, initial-scale=1" name="viewport">
-  <meta name="google-adsense-account" content="ca-pub-6284865224487235">
-  <title>Shark net</title>
-  <link href="icon/favicon.ico" rel="icon">
-  <style>
-    body {
-      margin: 0;
-      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      color: white;
-      text-align: center;
-    }
-
-    .top-left-button, .top-left-button-alt, .top-left-button-chat, .top-left-button-marbleball, .top-left-button-habutekinayatu {
-      position: absolute;
-      top: 20px;
-      background: rgba(0, 0, 0, 0.6);
-      color: #0ff;
-      padding: 16px 24px;
-      font-size: 20px;
-      border-radius: 12px;
-      text-decoration: none;
-      box-shadow: 0 0 10px #0ff;
-      transition: all 0.3s ease;
-    }
-
-    .top-left-button:hover, .top-left-button-alt:hover, .top-left-button-chat:hover {
-      background-color: #00ffff;
-      color: black;
-      box-shadow: 0 0 20px #00ffff;
-    }
-
-    .top-left-button:hover, .top-left-button-alt:hover, .top-left-button-marbleball:hover {
-      background-color: #00ffff;
-      color: black;
-      box-shadow: 0 0 20px #00ffff;
-    }
-
-    .top-left-button:hover, .top-left-button-alt:hover, .top-left-button-habutekinayatu:hover {
-      background-color: #00ffff;
-      color: black;
-      box-shadow: 0 0 20px #00ffff;
-    }
-
-    .top-left-button {
-      left: 20px;
-    }
-
-    .top-left-button-alt {
-      left: 180px;
-    }
-
-    .top-left-button-chat {
-      left: 470px;
-    }
-    
-    .top-left-button-marbleball {
-      left: 630px;
-    }
-    
-    .top-left-button-habutekinayatu {
-      left: 840px;
-    }
-
-    h1#a {
-      font-size: 3em;
-      margin-top: 100px;
-      text-shadow: 0 0 10px #0ff;
-    }
-
-    .subtitle {
-      font-size: 1.5em;
-      color: #ccc;
-      margin-bottom: 30px;
-    }
-
-    .Home_banner__shark {
-      width: 100%;
-      max-width: 1200px;
-      height: auto;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(0,255,255,0.4);
-      margin-bottom: 40px;
-    }
-
-    .button {
-      display: inline-block;
-      margin: 10px 15px;
-      padding: 14px 24px;
-      font-size: 18px;
-      font-weight: bold;
-      border: none;
-      border-radius: 10px;
-      text-decoration: none;
-      transition: all 0.3s ease;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    }
-
-    .button:hover {
-      transform: scale(1.1);
-      box-shadow: 0 0 15px #fff;
-    }
-
-    #night-warning {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: black;
-      z-index: 9999;
-      color: red;
-      font-weight: bold;
-      overflow: hidden;
-    }
-
-    #nero-img {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-
-    #ignore-btn {
-      position: absolute;
-      bottom: 10px;
-      left: 10px;
-      background: rgba(0,0,0,0.6);
-      color: white;
-      padding: 5px 10px;
-      border: none;
-      font-size: 14px;
-      cursor: pointer;
-      z-index: 10000;
-    }
-
-    #ignore-warning {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: black;
-      overflow: hidden;
-      z-index: 9999;
-    }
-
-    .nero-text {
-      position: absolute;
-      color: red;
-      font-weight: bold;
-      font-size: 20px;
-      user-select: none;
-      pointer-events: none;
-      white-space: nowrap;
-      transform-origin: center center;
-    }
-
-    #final-ignore-btn {
-      position: fixed;
-      bottom: 10px;
-      right: 10px;
-      background: rgba(255,0,0,0.8);
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      font-size: 16px;
-      cursor: pointer;
-      z-index: 10000;
-    }
-
-    .eye {
-      position: absolute;
-      width: 64px;
-      height: 64px;
-    }
-    .anim-box.popup.is-animated {
-    animation: popup 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    }
- 
-    @keyframes popup {
-    0% {
-    transform: translateY(40px) scale(0.8);
-    opacity: 0;
-    }
-    100% {
-    transform: translateY(0) scale(1.0);
-    }
-    80%, 100% {
-    opacity: 1;
-    }
-    }
-    .anim-box.poyopoyo.is-animated {
-    animation: poyopoyo 1s ease-in-out forwards;
-    }
- 
-    @keyframes poyopoyo {
-    0%  {
-    transform: scale(1.0, 1.0) translate(0, 0);
-    }
-    15% {
-    transform: scale(0.98, 0.9) translate(0, 5px);
-    }
-    30% {
-    transform: scale(1.02, 1.0) translate(0, 8px);
-    }
-    50% {transform: scale(0.98, 1.05) translate(0, -8px);
-    }
-    70% {
-    transform: scale(1.0, 0.9) translate(0, 5px);
-    }
-    100% {
-    transform: scale(1.0, 1.0) translate(0, 0);
-    }
-    0%, 100% {
-    opacity: 1;
-    }
-    }
-  </style>
-</head>
-<body>
-  <a class="top-left-button anim-box popup" href="AU-room.html">AUの部屋</a>
-  <a class="top-left-button-alt anim-box popup" href="spacekey.html">スペースキークリッカー</a>
-  <a class="top-left-button-chat anim-box popup" href="SharkChat.html">SharkChat</a>
-  <a class="top-left-button-marbleball anim-box popup" href="marbleball.html">まーぶるぼーる</a>
-  <a class="top-left-button-habutekinayatu anim-box popup" href="habutekinayatu.html">ハブ的なやつ</a>
-  <h1 id="a">SharkTomato net</h1>
-  <img class="Home_banner__shark anim-box poyopoyo" src="banner.webp" alt="sharknet">
-  <p class="subtitle anim-box poyopoyo">: )</p>
-
-  <a class="button anim-box popup" style="background-color:#00fa31;color:#0000fa" href="https://github.com/07SharkTomato27/haihu">配布</a>
-  <a class="button anim-box popup" style="background-color:#7e520f;color:#31f106" href="https://classic.minecraft.net/">classic minecraft</a>
-  <a class="button anim-box popup" style="background-color:#7e520f;color:#31f106" href="https://swordslasher.com/games/minecraft/game.html">minecraft 1.5.2</a>
-  <a class="button anim-box popup" style="background-color:#7e520f;color:#31f106" href="https://eaglercraft.com/mc/1.8.8/">minecraft 1.8.8</a>
-  <a class="button anim-box popup" style="background-color:#7e520f;color:#31f106" href="https://eaglercraft.com/mc/1.12.2/">minecraft 1.12.2</a>
-  <a class="button anim-box popup" style="background-color:#d7dfd5;color:#5f5f5e" href="https://07sharktomato27.github.io/s-a-n-s/">sans</a>
-  <a class="button anim-box popup" style="background-color:#7e520f;color:#31f106" href="https://07sharktomato27.github.io/Shark-Minecraft/">sharkcraft</a>
-
-  <div id="night-warning">
-    <img id="nero-img" src="image/nero.gif" alt="nero">
-    <button id="ignore-btn">警告を虫</button>
-  </div>
-  <div id="ignore-warning"></div>
-  <button id="final-ignore-btn" style="display:none;">本当に無視</button>
-
-  <script>
-    const warning = document.getElementById('night-warning');
-    const ignoreBtn = document.getElementById('ignore-btn');
-    const ignoreWarning = document.getElementById('ignore-warning');
-    const finalIgnoreBtn = document.getElementById('final-ignore-btn');
-
-    let audio;
-    const neroTexts = [];
-    const maxNeroCount = 300;
-
-    function startAudioLoop() {
-      audio = new Audio('media/nero.mp3');
-      audio.loop = true;
-      audio.play().catch(() => {});
-    }
-
-    function stopAudio() {
-      if (audio) {
-        audio.pause();
-        audio.currentTime = 0;
+  <head>
+    <meta charset="UTF-8">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <meta name="google-adsense-account" content="ca-pub-6284865224487235">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet" />
+    <title>Shark net</title>
+    <link href="icon/favicon.ico" rel="icon">
+    <style>
+      body {
+        margin: 0;
+        background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: white;
+        text-align: center;
       }
-    }
 
-    function createNeroText() {
-      if (neroTexts.length >= maxNeroCount) return;
-      const span = document.createElement('span');
-      span.textContent = 'ねろ';
-      span.className = 'nero-text';
-      ignoreWarning.appendChild(span);
+      .top-left-button,
+      .top-left-button-alt,
+      .top-left-button-chat,
+      .top-left-button-marbleball,
+      .top-left-button-habutekinayatu {
+        position: absolute;
+        top: 20px;
+        background: rgba(0, 0, 0, 0.6);
+        color: #0ff;
+        padding: 16px 24px;
+        font-size: 20px;
+        border-radius: 12px;
+        text-decoration: none;
+        box-shadow: 0 0 10px #0ff;
+        transition: all 0.3s ease;
+      }
 
-      let x = Math.random() * window.innerWidth;
-      let y = Math.random() * window.innerHeight;
-      let rot = Math.random() * 360;
-      span.style.left = `${x}px`;
-      span.style.top = `${y}px`;
-      span.style.transform = `rotate(${rot}deg)`;
+      .top-left-button:hover,
+      .top-left-button-alt:hover,
+      .top-left-button-chat:hover {
+        background-color: #00ffff;
+        color: black;
+        box-shadow: 0 0 20px #00ffff;
+      }
 
-      neroTexts.push({ el: span, x, y, rot, vx: (Math.random() - 0.5) * 4, vy: (Math.random() - 0.5) * 4, vrot: (Math.random() - 0.5) * 6 });
-    }
+      .top-left-button:hover,
+      .top-left-button-alt:hover,
+      .top-left-button-marbleball:hover {
+        background-color: #00ffff;
+        color: black;
+        box-shadow: 0 0 20px #00ffff;
+      }
 
-    function updateNeroTexts() {
-      for (const obj of neroTexts) {
-        obj.x += obj.vx;
-        obj.y += obj.vy;
-        obj.rot += obj.vrot;
+      .top-left-button:hover,
+      .top-left-button-alt:hover,
+      .top-left-button-habutekinayatu:hover {
+        background-color: #00ffff;
+        color: black;
+        box-shadow: 0 0 20px #00ffff;
+      }
 
-        if (obj.x < -100 || obj.x > window.innerWidth + 100 || obj.y < -50 || obj.y > window.innerHeight + 50) {
-          obj.x = Math.random() * window.innerWidth;
-          obj.y = Math.random() * window.innerHeight;
+      .top-left-button {
+        left: 20px;
+      }
+
+      .top-left-button-alt {
+        left: 180px;
+      }
+
+      .top-left-button-chat {
+        left: 470px;
+      }
+
+      .top-left-button-marbleball {
+        left: 630px;
+      }
+
+      .top-left-button-habutekinayatu {
+        left: 840px;
+      }
+
+      h1#a {
+        font-size: 3em;
+        margin-top: 100px;
+        text-shadow: 0 0 10px #0ff;
+      }
+
+      .subtitle {
+        font-size: 1.5em;
+        color: #ccc;
+        margin-bottom: 30px;
+      }
+
+      .Home_banner__shark {
+        width: 100%;
+        max-width: 1200px;
+        height: auto;
+        border-radius: 12px;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+        margin-bottom: 40px;
+      }
+
+      .button {
+        display: inline-block;
+        margin: 10px 15px;
+        padding: 14px 24px;
+        font-size: 18px;
+        font-weight: bold;
+        border: none;
+        border-radius: 10px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      }
+
+      .button:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 15px #fff;
+      }
+
+      #night-warning {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: black;
+        z-index: 9999;
+        color: red;
+        font-weight: bold;
+        overflow: hidden;
+      }
+
+      #nero-img {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      #ignore-btn {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.6);
+        color: white;
+        padding: 5px 10px;
+        border: none;
+        font-size: 14px;
+        cursor: pointer;
+        z-index: 10000;
+      }
+
+      #ignore-warning {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: black;
+        overflow: hidden;
+        z-index: 9999;
+      }
+
+      .nero-text {
+        position: absolute;
+        color: red;
+        font-weight: bold;
+        font-size: 20px;
+        user-select: none;
+        pointer-events: none;
+        white-space: nowrap;
+        transform-origin: center center;
+      }
+
+      #final-ignore-btn {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        background: rgba(255, 0, 0, 0.8);
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        font-size: 16px;
+        cursor: pointer;
+        z-index: 10000;
+      }
+
+      .eye {
+        position: absolute;
+        width: 64px;
+        height: 64px;
+      }
+
+      .anim-box.popup.is-animated {
+        animation: popup 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      }
+
+      @keyframes popup {
+        0% {
+          transform: translateY(40px) scale(0.8);
+          opacity: 0;
         }
 
-        obj.el.style.left = `${obj.x}px`;
-        obj.el.style.top = `${obj.y}px`;
-        obj.el.style.transform = `rotate(${obj.rot}deg)`;
+        100% {
+          transform: translateY(0) scale(1.0);
+        }
+
+        80%,
+        100% {
+          opacity: 1;
+        }
       }
-      requestAnimationFrame(updateNeroTexts);
-    }
 
-    function spawnEyes() {
-      let count = 0;
-      const interval = setInterval(() => {
-        const img = document.createElement('img');
-        img.src = 'image/eye.gif';
-        img.className = 'eye';
-        img.style.left = `${Math.random() * window.innerWidth}px`;
-        img.style.top = `${Math.random() * window.innerHeight}px`;
-        ignoreWarning.appendChild(img);
-        count++;
-        if (count >= 30) clearInterval(interval);
-      }, 100);
-    }
+      .anim-box.poyopoyo.is-animated {
+        animation: poyopoyo 1s ease-in-out forwards;
+      }
 
-    if (new Date().getHours() >= 22) {
-      warning.style.display = 'block';
-      startAudioLoop();
+      @keyframes poyopoyo {
+        0% {
+          transform: scale(1.0, 1.0) translate(0, 0);
+        }
 
-      ignoreBtn.onclick = () => {
-        ignoreWarning.style.display = 'block';
-        warning.style.background = 'black';
-        ignoreBtn.style.display = 'none';
-        finalIgnoreBtn.style.display = 'block';
+        15% {
+          transform: scale(0.98, 0.9) translate(0, 5px);
+        }
 
-        setInterval(() => {
-          createNeroText();
-        }, 300);
-        updateNeroTexts();
-        spawnEyes();
-      };
+        30% {
+          transform: scale(1.02, 1.0) translate(0, 8px);
+        }
 
-      finalIgnoreBtn.onclick = () => {
-        stopAudio();
-        warning.style.display = 'none';
-        ignoreWarning.style.display = 'none';
-        finalIgnoreBtn.style.display = 'none';
+        50% {
+          transform: scale(0.98, 1.05) translate(0, -8px);
+        }
+
+        70% {
+          transform: scale(1.0, 0.9) translate(0, 5px);
+        }
+
+        100% {
+          transform: scale(1.0, 1.0) translate(0, 0);
+        }
+
+        0%,
+        100% {
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="top-left-button anim-box popup" href="AU-room.html">AUの部屋</a>
+    <a class="top-left-button-alt anim-box popup" href="spacekey.html">スペースキークリッカー</a>
+    <a class="top-left-button-chat anim-box popup" href="SharkChat.html">SharkChat</a>
+    <a class="top-left-button-marbleball anim-box popup" href="marbleball.html">まーぶるぼーる</a>
+    <a class="top-left-button-habutekinayatu anim-box popup" href="habutekinayatu.html">ハブ的なやつ</a>
+    <h1 id="a">SharkTomato net</h1>
+    <img class="Home_banner__shark anim-box poyopoyo" src="banner.webp" alt="sharknet">
+    <p class="subtitle anim-box poyopoyo">: )</p>
+    <a class="button anim-box popup" style="background-color:#00fa31;color:#0000fa" href="https://github.com/07SharkTomato27/haihu">配布</a>
+    <a class="button anim-box popup" style="background-color:#7e520f;color:#31f106" href="https://classic.minecraft.net/">classic minecraft</a>
+    <a class="button anim-box popup" style="background-color:#7e520f;color:#31f106" href="https://swordslasher.com/games/minecraft/game.html">minecraft 1.5.2</a>
+    <a class="button anim-box popup" style="background-color:#7e520f;color:#31f106" href="https://eaglercraft.com/mc/1.8.8/">minecraft 1.8.8</a>
+    <a class="button anim-box popup" style="background-color:#7e520f;color:#31f106" href="https://eaglercraft.com/mc/1.12.2/">minecraft 1.12.2</a>
+    <a class="button anim-box popup" style="background-color:#d7dfd5;color:#5f5f5e" href="https://07sharktomato27.github.io/s-a-n-s/">sans</a>
+    <a class="button anim-box popup" style="background-color:#7e520f;color:#31f106" href="https://07sharktomato27.github.io/Shark-Minecraft/">sharkcraft</a>
+    <div id="night-warning">
+      <img id="nero-img" src="image/nero.gif" alt="nero">
+      <button id="ignore-btn">警告を虫</button>
+    </div>
+    <div id="ignore-warning"></div>
+    <button id="final-ignore-btn" style="display:none;">本当に無視</button>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+    <script>
+      const warning = document.getElementById('night-warning');
+      const ignoreBtn = document.getElementById('ignore-btn');
+      const ignoreWarning = document.getElementById('ignore-warning');
+      const finalIgnoreBtn = document.getElementById('final-ignore-btn');
+      let audio;
+      const neroTexts = [];
+      const maxNeroCount = 300;
+
+      function startAudioLoop() {
+        audio = new Audio('media/nero.mp3');
+        audio.loop = true;
+        audio.play().catch(() => {});
+      }
+
+      function stopAudio() {
+        if (audio) {
+          audio.pause();
+          audio.currentTime = 0;
+        }
+      }
+
+      function createNeroText() {
+        if (neroTexts.length >= maxNeroCount) return;
+        const span = document.createElement('span');
+        span.textContent = 'ねろ';
+        span.className = 'nero-text';
+        ignoreWarning.appendChild(span);
+        let x = Math.random() * window.innerWidth;
+        let y = Math.random() * window.innerHeight;
+        let rot = Math.random() * 360;
+        span.style.left = `${x}px`;
+        span.style.top = `${y}px`;
+        span.style.transform = `rotate(${rot}deg)`;
+        neroTexts.push({
+          el: span,
+          x,
+          y,
+          rot,
+          vx: (Math.random() - 0.5) * 4,
+          vy: (Math.random() - 0.5) * 4,
+          vrot: (Math.random() - 0.5) * 6
+        });
+      }
+
+      function updateNeroTexts() {
         for (const obj of neroTexts) {
-          obj.el.remove();
+          obj.x += obj.vx;
+          obj.y += obj.vy;
+          obj.rot += obj.vrot;
+          if (obj.x < -100 || obj.x > window.innerWidth + 100 || obj.y < -50 || obj.y > window.innerHeight + 50) {
+            obj.x = Math.random() * window.innerWidth;
+            obj.y = Math.random() * window.innerHeight;
+          }
+          obj.el.style.left = `${obj.x}px`;
+          obj.el.style.top = `${obj.y}px`;
+          obj.el.style.transform = `rotate(${obj.rot}deg)`;
         }
-        neroTexts.length = 0;
-      };
-    }
-    document.addEventListener('DOMContentLoaded', () => {
-    const boxes = document.querySelectorAll('.anim-box.popup');
-    boxes.forEach((box, index) => {
-    setTimeout(() => {
-    box.classList.add('is-animated');
-    }, index * 150);
-    });
-    })
-    window.addEventListener('DOMContentLoaded', () => {
-    const box = document.querySelector('.anim-box.poyopoyo')
-    box.classList.add('is-animated')
-    })
-  </script>
-</body>
+        requestAnimationFrame(updateNeroTexts);
+      }
+
+      function spawnEyes() {
+        let count = 0;
+        const interval = setInterval(() => {
+          const img = document.createElement('img');
+          img.src = 'image/eye.gif';
+          img.className = 'eye';
+          img.style.left = `${Math.random() * window.innerWidth}px`;
+          img.style.top = `${Math.random() * window.innerHeight}px`;
+          ignoreWarning.appendChild(img);
+          count++;
+          if (count >= 30) clearInterval(interval);
+        }, 100);
+      }
+      if (new Date().getHours() >= 22) {
+        warning.style.display = 'block';
+        startAudioLoop();
+        ignoreBtn.onclick = () => {
+          ignoreWarning.style.display = 'block';
+          warning.style.background = 'black';
+          ignoreBtn.style.display = 'none';
+          finalIgnoreBtn.style.display = 'block';
+          setInterval(() => {
+            createNeroText();
+          }, 300);
+          updateNeroTexts();
+          spawnEyes();
+        };
+        finalIgnoreBtn.onclick = () => {
+          stopAudio();
+          warning.style.display = 'none';
+          ignoreWarning.style.display = 'none';
+          finalIgnoreBtn.style.display = 'none';
+          for (const obj of neroTexts) {
+            obj.el.remove();
+          }
+          neroTexts.length = 0;
+        };
+      }
+      document.addEventListener('DOMContentLoaded', () => {
+        const boxes = document.querySelectorAll('.anim-box.popup');
+        boxes.forEach((box, index) => {
+          setTimeout(() => {
+            box.classList.add('is-animated');
+          }, index * 150);
+        });
+      })
+      window.addEventListener('DOMContentLoaded', () => {
+        const box = document.querySelector('.anim-box.poyopoyo')
+        box.classList.add('is-animated')
+      })
+      AOS.init();
+    </script>
+  </body>
 </html>
