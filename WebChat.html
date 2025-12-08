@@ -376,6 +376,34 @@
       #chatBox::-webkit-scrollbar-thumb:hover {
         background: var(--accent);
       }
+
+      #clickCounterBtn {
+        position: absolute;
+        top: 12px;
+        right: 20px;
+        background: rgba(88, 101, 242, 0.2);
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        user-select: none;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(88, 101, 242, 0.3);
+        z-index: 100;
+      }
+
+      #clickCounterBtn:hover {
+        background: var(--accent);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(88, 101, 242, 0.4);
+      }
+
+      #clickCounterBtn:active {
+        transform: translateY(0);
+        animation: pulse 0.6s;
+      }
     </style>
   </head>
   <body>
@@ -413,6 +441,9 @@
         <div class="header">
           <h2># 雑談</h2>
         </div>
+        <div id="clickCounterBtn">
+          <span id="counterText">🔥 0</span>
+        </div>
         <div id="chatBox"></div>
         <div class="inputArea">
           <div class="inputWrapper">
@@ -429,198 +460,189 @@
       </div>
     </div>
     <script>
-  let userName = localStorage.getItem("chatName") || "";
-  let userId = localStorage.getItem("chatUserId");
-  if (!userId) {
-    userId = "user_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
-    localStorage.setItem("chatUserId", userId);
-  }
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyAMBXkyezKK-9da0WEqYefi1bbkyublqxs",
-    authDomain: "webchat-1e806.firebaseapp.com",
-    databaseURL: "https://webchat-1e806-default-rtdb.firebaseio.com/",
-    projectId: "webchat-1e806",
-    storageBucket: "webchat-1e806.firebasestorage.app",
-    messagingSenderId: "899551320846",
-    appId: "1:899551320846:web:b53cb1291c9dc5595d955f"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-  const messagesRef = db.ref("messages");
-  const usersRef = db.ref("onlineUsers");
-  const auth = firebase.auth();
-
-  auth.signInAnonymously()
-    .then(() => console.log("匿名ログイン成功"))
-    .catch(err => console.error("匿名ログイン失敗", err));
-
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      userId = user.uid;
-      localStorage.setItem("chatUserId", userId);
-      startHeartbeat();
-    }
-  });
-
-  const nameModal = document.getElementById("nameModal");
-  const rulesScreen = document.getElementById("rules");
-  const container = document.querySelector(".container");
-  const msgInput = document.getElementById("msg");
-  const chatBox = document.getElementById("chatBox");
-  const onlineUsersDiv = document.getElementById("onlineUsers");
-  const onlineCountSpan = document.getElementById("onlineCount");
-
-  const showNameModal = () => {
-    document.getElementById("nameInput").value = userName;
-    nameModal.style.display = "flex";
-  };
-
-  const updateOnlineStatus = () => {
-    if (userName && userId) {
-      usersRef.child(userId).set({
-        name: userName,
-        time: firebase.database.ServerValue.TIMESTAMP
-      });
-      usersRef.child(userId).onDisconnect().remove();
-    }
-  };
-
-  let heartbeatInterval;
-  const startHeartbeat = () => {
-    updateOnlineStatus();
-    clearInterval(heartbeatInterval);
-    heartbeatInterval = setInterval(updateOnlineStatus, 5000);
-  };
-
-  document.getElementById("okBtn").onclick = () => {
-    rulesScreen.style.display = "none";
-    container.style.display = "flex";
-    if (!userName) showNameModal();
-    startHeartbeat();
-  };
-
-  document.getElementById("nameSubmit").onclick = () => {
-    const oldName = userName;
-    userName = document.getElementById("nameInput").value.trim() || "名無し";
-    localStorage.setItem("chatName", userName);
-    nameModal.style.display = "none";
-    updateOnlineStatus();
-    if (oldName && oldName !== userName) {
-      messagesRef.orderByChild("uid").equalTo(userId).once("value", s => {
-        const updates = {};
-        s.forEach(child => updates[child.key + "/u"] = userName);
-        messagesRef.update(updates);
-      });
-    }
-  };
-
-  document.getElementById("nameInput").onkeydown = e => {
-    if (e.key === "Enter") document.getElementById("nameSubmit").click();
-  };
-
-  document.getElementById("changeName").onclick = showNameModal;
-
-  msgInput.oninput = () => {
-    msgInput.style.height = "auto";
-    msgInput.style.height = msgInput.scrollHeight + "px";
-  };
-
-  const sendMessage = () => {
-    const text = msgInput.value.trim();
-    if (text && userName) {
-      messagesRef.push({
-        u: userName,
-        t: text,
-        uid: userId,
-        time: firebase.database.ServerValue.TIMESTAMP
-      });
-      msgInput.value = "";
-      msgInput.style.height = "auto";
-    }
-  };
-
-  msgInput.onkeydown = e => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
-
-  messagesRef.on("child_added", s => {
-    const m = s.val();
-    const key = s.key;
-    const msgDiv = document.createElement("div");
-    msgDiv.className = "message";
-    msgDiv.dataset.key = key;
-
-    const avatar = document.createElement("div");
-    avatar.className = "avatar";
-    avatar.textContent = (m.u || "??").slice(0,2).toUpperCase();
-
-    const content = document.createElement("div");
-    content.className = "content";
-
-    const header = document.createElement("div");
-    const nameSpan = document.createElement("span");
-    nameSpan.className = "username";
-    nameSpan.textContent = m.u || "名無し";
-
-    const timeSpan = document.createElement("span");
-    timeSpan.className = "timestamp";
-    timeSpan.textContent = new Date(m.time).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
-
-    header.append(nameSpan, timeSpan);
-
-    const textDiv = document.createElement("div");
-    textDiv.className = "text";
-    const textWithLinks = m.t
-      .replace(/\n/g, '<br>')
-      .replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?])/g, '<a href="$1" target="_blank" style="color:#00aff4;text-decoration:underline;">$1</a>');
-    textDiv.innerHTML = textWithLinks;
-
-    content.append(header, textDiv);
-    msgDiv.append(avatar, content);
-    chatBox.appendChild(msgDiv);
-    chatBox.scrollTop = chatBox.scrollHeight;
-
-    while (chatBox.children.length > 40) {
-      const oldest = chatBox.children[0];
-      messagesRef.child(oldest.dataset.key).remove();
-      oldest.remove();
-    }
-  });
-
-  usersRef.on("value", snap => {
-    const users = snap.val() || {};
-    const now = Date.now();
-    const active = {};
-
-    Object.keys(users).forEach(id => {
-      if (now - users[id].time < 30000) {
-        active[id] = users[id];
+      let userName = localStorage.getItem("chatName") || "";
+      let userId = localStorage.getItem("chatUserId");
+      if (!userId) {
+        userId = "user_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
+        localStorage.setItem("chatUserId", userId);
       }
-    });
-
-    onlineUsersDiv.innerHTML = "";
-    onlineCountSpan.textContent = Object.keys(active).length;
-
-    Object.keys(active)
-      .sort((a, b) => active[a].name.localeCompare(active[b].name))
-      .forEach(id => {
-        const div = document.createElement("div");
-        div.className = "online-item";
-        div.innerHTML = `<div class="status-dot"></div><div class="online-name">${active[id].name}</div>`;
-        if (id === userId) div.querySelector(".status-dot").style.background = "#f04747";
-        onlineUsersDiv.appendChild(div);
+      const firebaseConfig = {
+        apiKey: "AIzaSyAMBXkyezKK-9da0WEqYefi1bbkyublqxs",
+        authDomain: "webchat-1e806.firebaseapp.com",
+        databaseURL: "https://webchat-1e806-default-rtdb.firebaseio.com/",
+        projectId: "webchat-1e806",
+        storageBucket: "webchat-1e806.firebasestorage.app",
+        messagingSenderId: "899551320846",
+        appId: "1:899551320846:web:b53cb1291c9dc5595d955f"
+      };
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.database();
+      const messagesRef = db.ref("messages");
+      const usersRef = db.ref("onlineUsers");
+      const auth = firebase.auth();
+      auth.signInAnonymously().then(() => console.log("匿名ログイン成功")).catch(err => console.error("匿名ログイン失敗", err));
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          userId = user.uid;
+          localStorage.setItem("chatUserId", userId);
+          startHeartbeat();
+        }
       });
-  });
+      const nameModal = document.getElementById("nameModal");
+      const rulesScreen = document.getElementById("rules");
+      const container = document.querySelector(".container");
+      const msgInput = document.getElementById("msg");
+      const chatBox = document.getElementById("chatBox");
+      const onlineUsersDiv = document.getElementById("onlineUsers");
+      const onlineCountSpan = document.getElementById("onlineCount");
+      const showNameModal = () => {
+        document.getElementById("nameInput").value = userName;
+        nameModal.style.display = "flex";
+      };
+      const updateOnlineStatus = () => {
+        if (userName && userId) {
+          usersRef.child(userId).set({
+            name: userName,
+            time: firebase.database.ServerValue.TIMESTAMP
+          });
+          usersRef.child(userId).onDisconnect().remove();
+        }
+      };
+      let heartbeatInterval;
+      const startHeartbeat = () => {
+        updateOnlineStatus();
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = setInterval(updateOnlineStatus, 5000);
+      };
+      document.getElementById("okBtn").onclick = () => {
+        rulesScreen.style.display = "none";
+        container.style.display = "flex";
+        if (!userName) showNameModal();
+        startHeartbeat();
+      };
+      document.getElementById("nameSubmit").onclick = () => {
+        const oldName = userName;
+        userName = document.getElementById("nameInput").value.trim() || "名無し";
+        localStorage.setItem("chatName", userName);
+        nameModal.style.display = "none";
+        updateOnlineStatus();
+        if (oldName && oldName !== userName) {
+          messagesRef.orderByChild("uid").equalTo(userId).once("value", s => {
+            const updates = {};
+            s.forEach(child => updates[child.key + "/u"] = userName);
+            messagesRef.update(updates);
+          });
+        }
+      };
+      document.getElementById("nameInput").onkeydown = e => {
+        if (e.key === "Enter") document.getElementById("nameSubmit").click();
+      };
+      document.getElementById("changeName").onclick = showNameModal;
+      msgInput.oninput = () => {
+        msgInput.style.height = "auto";
+        msgInput.style.height = msgInput.scrollHeight + "px";
+      };
+      const sendMessage = () => {
+        const text = msgInput.value.trim();
+        if (text && userName) {
+          messagesRef.push({
+            u: userName,
+            t: text,
+            uid: userId,
+            time: firebase.database.ServerValue.TIMESTAMP
+          });
+          msgInput.value = "";
+          msgInput.style.height = "auto";
+        }
+      };
+      msgInput.onkeydown = e => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      };
+      messagesRef.on("child_added", s => {
+            const m = s.val();
+            const key = s.key;
+            const msgDiv = document.createElement("div");
+            msgDiv.className = "message";
+            msgDiv.dataset.key = key;
+            const avatar = document.createElement("div");
+            avatar.className = "avatar";
+            avatar.textContent = (m.u || "??").slice(0, 2).toUpperCase();
+            const content = document.createElement("div");
+            content.className = "content";
+            const header = document.createElement("div");
+            const nameSpan = document.createElement("span");
+            nameSpan.className = "username";
+            nameSpan.textContent = m.u || "名無し";
+            const timeSpan = document.createElement("span");
+            timeSpan.className = "timestamp";
+            timeSpan.textContent = new Date(m.time).toLocaleTimeString("ja-JP", {
+              hour: "2-digit",
+              minute: "2-digit"
+            });
+            header.append(nameSpan, timeSpan);
+            const textDiv = document.createElement("div");
+            textDiv.className = "text";
+             const textWithLinks = m.t
+            .replace(/\n/g, '<br>')
+            .replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?])/g, '<a href="$1" target="_blank" style="color:#00aff4;text-decoration:underline;">$1</a>');
+              textDiv.innerHTML = textWithLinks; content.append(header, textDiv); msgDiv.append(avatar, content); chatBox.appendChild(msgDiv); chatBox.scrollTop = chatBox.scrollHeight;
+              while (chatBox.children.length > 40) {
+                const oldest = chatBox.children[0];
+                messagesRef.child(oldest.dataset.key).remove();
+                oldest.remove();
+              }
+            });
+            usersRef.on("value", snap => {
+              const users = snap.val() || {};
+              const now = Date.now();
+              const active = {};
+              Object.keys(users).forEach(id => {
+                if (now - users[id].time < 30000) {
+                  active[id] = users[id];
+                }
+              });
+              onlineUsersDiv.innerHTML = "";
+              onlineCountSpan.textContent = Object.keys(active).length;
+              Object.keys(active).sort((a, b) => active[a].name.localeCompare(active[b].name)).forEach(id => {
+                const div = document.createElement("div");
+                div.className = "online-item";
+                div.innerHTML = `
+                
+						<div class="status-dot"></div>
+						<div class="online-name">${active[id].name}</div>`;
+                if (id === userId) div.querySelector(".status-dot").style.background = "#f04747";
+                onlineUsersDiv.appendChild(div);
+              });
+            });
+            window.addEventListener("beforeunload", () => {
+              usersRef.child(userId).remove();
+              clearInterval(heartbeatInterval);
+            });
+            const counterBtn = document.getElementById("clickCounterBtn");
+            const counterText = document.getElementById("counterText");
+            const counterRef = db.ref("clickCounter");
+            const todayRef = db.ref("counterToday");
 
-  window.addEventListener("beforeunload", () => {
-    usersRef.child(userId).remove();
-    clearInterval(heartbeatInterval);
-  });
-</script>
+            function getToday() {
+              return new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+            }
+            counterRef.on("value", snap => {
+              counterText.textContent = `今日の押された回数→ ${snap.val() || 0}`;
+            });
+            counterBtn.onclick = () => {
+              counterRef.transaction(c => (c || 0) + 1);
+            };
+            todayRef.get().then(snap => {
+              const saved = snap.val();
+              const today = getToday();
+              if (saved !== today) {
+                counterRef.set(0);
+                todayRef.set(today);
+              }
+            });
+    </script>
   </body>
 </html>
