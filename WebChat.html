@@ -542,6 +542,9 @@
         msgInput.style.height = "auto";
         msgInput.style.height = msgInput.scrollHeight + "px";
       };
+      
+      const now = new Date(Date.now() + 9*60*60*1000);
+      const dateStr = now.toLocaleDateString("ja-JP", {year:"numeric",month:"numeric",day:"numeric"});
       const sendMessage = () => {
         const text = msgInput.value.trim();
         if (text && userName) {
@@ -549,7 +552,8 @@
             u: userName,
             t: text,
             uid: userId,
-            time: firebase.database.ServerValue.TIMESTAMP
+            time: firebase.database.ServerValue.TIMESTAMP,
+            date: dateStr
           });
           msgInput.value = "";
           msgInput.style.height = "auto";
@@ -578,10 +582,7 @@
             nameSpan.textContent = m.u || "名無し";
             const timeSpan = document.createElement("span");
             timeSpan.className = "timestamp";
-            timeSpan.textContent = new Date(m.time).toLocaleTimeString("ja-JP", {
-              hour: "2-digit",
-              minute: "2-digit"
-            });
+            timeSpan.textContent = m.date + " " + new Date(m.time).toLocaleTimeString("ja-JP", {hour:"2-digit", minute:"2-digit"});
             header.append(nameSpan, timeSpan);
             const textDiv = document.createElement("div");
             textDiv.className = "text";
