@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8">
+    <title>濁点・半濁点・半角カナ付けツール</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 20px;
+        max-width: 600px;
+        margin: auto;
+        line-height: 1.6;
+      }
+
+      textarea,
+      select,
+      button {
+        font-size: 18px;
+        margin: 10px 0;
+        width: 100%;
+        padding: 12px;
+        box-sizing: border-box;
+      }
+
+      button {
+        width: auto;
+        display: inline-block;
+        background: #0077cc;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: #005fa3;
+      }
+
+      .controls {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .result {
+        margin-top: 20px;
+        padding: 20px;
+        background: #f8f8f8;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 28px;
+        white-space: pre-wrap;
+        word-break: break-all;
+        min-height: 80px;
+      }
+
+      .copy-btn {
+        font-size: 16px;
+        padding: 10px 20px;
+      }
+
+      .copy-btn.copied {
+        background: #218838;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>好きな文字に濁点・半濁点付与ツール</h2>
+    <textarea id="input" rows="6" placeholder="ここに変換したい文字を入力してください"></textarea>
+    <div class="controls">
+      <select id="mode">
+        <option value="3099">濁点 (U+3099) ─ 結合濁点</option>
+        <option value="309B">濁点 (U+309B) ─ 独立゛</option>
+        <option value="FF9E">半濁点 (U+FF9E) ─ 半角カナ用 ﾟ</option>
+      </select>
+      <button onclick="convert()">変換する</button>
+    </div>
+    <div class="result" id="output">ここに表示される</div>
+    <div style="text-align: right; margin-top: 8px;">
+      <button class="copy-btn" id="copyBtn" onclick="copyResult()">クリップボードにコピー</button>
+    </div>
+    <script>
+      function convert() {
+        const text = document.getElementById('input').value;
+        if (!text) {
+          document.getElementById('output').textContent = '入力してください';
+          return;
+        }
+        const mode = document.getElementById('mode').value;
+        let combining = '';
+        if (mode === '3099') combining = '\u3099';
+        if (mode === '309B') combining = '\u309B';
+        if (mode === 'FF9E') combining = '\uFF9E';
+        const result = text.split('').map(c => c + combining).join('');
+        document.getElementById('output').textContent = result;
+        document.getElementById('copyBtn').textContent = 'クリップボードにコピー';
+        document.getElementById('copyBtn').classList.remove('copied');
+      }
+
+      function copyResult() {
+        const text = document.getElementById('output').textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          const btn = document.getElementById('copyBtn');
+          btn.textContent = 'コピーしました！';
+          btn.classList.add('copied');
+        });
+      }
+    </script>
+  </body>
+</html>
