@@ -12,86 +12,61 @@
     <style>
       body {
         margin: 0;
-        background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+        background: linear-gradient(324deg, #6DFC6D, #85FFFF);
+        background-size: 400% 400%;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         color: white;
         text-align: center;
+        animation: rainbow 15s ease infinite;
       }
-
+      .bbb,
       .top-left-button,
       .top-left-button-alt,
       .top-left-button-chat,
       .top-left-button-marbleball,
       .top-left-button-habutekinayatu {
-        position: absolute;
+        display: inline-block;
+        padding: 2vh 4vw;
         top: 20px;
         background: rgba(0, 0, 0, 0.6);
         color: #0ff;
-        padding: 16px 24px;
+        margin: 1vh 2vw;
+        border-radius: 1vw;
+        border: 0.2vw #00ffff;
         font-size: 20px;
-        border-radius: 12px;
         text-decoration: none;
         box-shadow: 0 0 10px #0ff;
         transition: all 0.3s ease;
+        
+        
       }
-
+      .bbb:hover,
       .top-left-button:hover,
       .top-left-button-alt:hover,
-      .top-left-button-chat:hover {
-        background-color: #00ffff;
-        color: black;
-        box-shadow: 0 0 20px #00ffff;
-      }
-
-      .top-left-button:hover,
-      .top-left-button-alt:hover,
-      .top-left-button-marbleball:hover {
-        background-color: #00ffff;
-        color: black;
-        box-shadow: 0 0 20px #00ffff;
-      }
-
-      .top-left-button:hover,
-      .top-left-button-alt:hover,
+      .top-left-button-chat:hover,
+      .top-left-button-marbleball:hover,
       .top-left-button-habutekinayatu:hover {
         background-color: #00ffff;
         color: black;
         box-shadow: 0 0 20px #00ffff;
       }
-
-      .top-left-button {
-        left: 20px;
-      }
-
-      .top-left-button-alt {
-        left: 180px;
-      }
-
-      .top-left-button-chat {
-        left: 470px;
-      }
-
-      .top-left-button-marbleball {
-        left: 630px;
-      }
-
+      
       .top-left-button-habutekinayatu {
-        left: 840px;
+        border: 4px solid;
       }
-
       h1#a {
         font-size: 3em;
         margin-top: 100px;
         text-shadow: 0 0 10px #0ff;
       }
-
       .subtitle {
         font-size: 1.5em;
         color: #ccc;
         margin-bottom: 30px;
       }
-
-      .Home_banner__shark {
+      .Home_banner_shark {
         width: 100%;
         max-width: 1200px;
         height: auto;
@@ -99,7 +74,6 @@
         box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
         margin-bottom: 40px;
       }
-
       .button {
         display: inline-block;
         margin: 10px 15px;
@@ -112,12 +86,10 @@
         transition: all 0.3s ease;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
       }
-
       .button:hover {
         transform: scale(1.1);
         box-shadow: 0 0 15px #fff;
       }
-
       #night-warning {
         display: none;
         position: fixed;
@@ -128,7 +100,6 @@
         font-weight: bold;
         overflow: hidden;
       }
-
       #nero-img {
         position: absolute;
         top: 50%;
@@ -138,7 +109,6 @@
         height: 100%;
         object-fit: contain;
       }
-
       #ignore-btn {
         position: absolute;
         bottom: 10px;
@@ -151,7 +121,6 @@
         cursor: pointer;
         z-index: 10000;
       }
-
       #ignore-warning {
         display: none;
         position: fixed;
@@ -160,7 +129,6 @@
         overflow: hidden;
         z-index: 9999;
       }
-
       .nero-text {
         position: absolute;
         color: red;
@@ -171,7 +139,6 @@
         white-space: nowrap;
         transform-origin: center center;
       }
-
       #final-ignore-btn {
         position: fixed;
         bottom: 10px;
@@ -184,67 +151,124 @@
         cursor: pointer;
         z-index: 10000;
       }
-
       .eye {
         position: absolute;
         width: 64px;
         height: 64px;
       }
-
+      
+      .anim-box.rainbow.is-animated {
+        animation: rainbow 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      }
+      
+      @keyframes rainbow {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+      
       .anim-box.popup.is-animated {
         animation: popup 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
       }
-
       @keyframes popup {
         0% {
           transform: translateY(40px) scale(0.8);
           opacity: 0;
         }
-
         100% {
           transform: translateY(0) scale(1.0);
         }
-
         80%,
         100% {
           opacity: 1;
         }
       }
-
       .anim-box.poyopoyo.is-animated {
         animation: poyopoyo 1s ease-in-out forwards;
       }
-
       @keyframes poyopoyo {
         0% {
           transform: scale(1.0, 1.0) translate(0, 0);
         }
-
         15% {
           transform: scale(0.98, 0.9) translate(0, 5px);
         }
-
         30% {
           transform: scale(1.02, 1.0) translate(0, 8px);
         }
-
         50% {
           transform: scale(0.98, 1.05) translate(0, -8px);
         }
-
         70% {
           transform: scale(1.0, 0.9) translate(0, 5px);
         }
-
         100% {
           transform: scale(1.0, 1.0) translate(0, 0);
         }
-
         0%,
         100% {
           opacity: 1;
         }
       }
+      .anim-box.rainbowb.is-animated {
+        animation: rainbowBorder 2s linear infinite;
+      }
+      @keyframes rainbowBorder {
+        0% {
+          border-color: #ff006e;
+          box-shadow: 0 0 20px #ff006e;
+        }
+        14% {
+          border-color: #8338ec;
+          box-shadow: 0 0 20px #8338ec;
+        }
+        28% {
+          border-color: #3a86ff;
+          box-shadow: 0 0 20px #3a86ff;
+        }
+        42% {
+          border-color: #06ffa5;
+          box-shadow: 0 0 20px #06ffa5;
+        }
+        57% {
+          border-color: #ffbe0b;
+          box-shadow: 0 0 20px #ffbe0b;
+        }
+        71% {
+          border-color: #fb5607;
+          box-shadow: 0 0 20px #fb5607;
+        }
+        85% {
+          border-color: #ff006e;
+          box-shadow: 0 0 20px #ff006e;
+        }
+        100% {
+          border-color: #ff006e;
+          box-shadow: 0 0 20px #ff006e;
+        }
+      }
+      .anim-box.rainbow2.is-animated {
+        animation: rainbow2 2s linear infinite;
+      }
+      @keyframes rainbow2 {
+        0% { filter: hue-rotate(0deg); }
+        100% { filter: hue-rotate(360deg); }
+      }
+      .anim-box.rp.is-animated {
+        animation:
+          rainbowBorder 2s linear infinite,
+          popup 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      }
+     
+      .anim-box.sn.is-animated {
+        animation: sn 2s linear infinite;
+      }
+      @keyframes sn {
+        0% { filter: brightness(0) saturate(100%) invert(91%) sepia(58%) saturate(3394%) hue-rotate(86deg) brightness(100%) contrast(102%); }
+        50% { filter: brightness(0) saturate(100%) invert(83%) sepia(33%) saturate(7464%) hue-rotate(100deg) brightness(122%) contrast(103%); }
+        100% { filter: brightness(0) saturate(100%) invert(60%) sepia(98%) saturate(1581%) hue-rotate(67deg) brightness(108%) contrast(130%); }
+        100% { filter: brightness(0) saturate(100%) invert(84%) sepia(97%) saturate(4757%) hue-rotate(72deg) brightness(100%) contrast(114%); }
+     
     </style>
   </head>
   <body>
@@ -252,9 +276,9 @@
     <a class="top-left-button-alt anim-box popup" href="spacekey.html">スペースキークリッカー</a>
     <a class="top-left-button-chat anim-box popup" href="SharkChat.html">SharkChat</a>
     <a class="top-left-button-marbleball anim-box popup" href="marbleball.html">まーぶるぼーる</a>
-    <a class="top-left-button-habutekinayatu anim-box popup" href="habutekinayatu.html">ハブ的なやつ</a>
-    <h1 id="a">SharkTomato net</h1>
-    <img class="Home_banner__shark anim-box poyopoyo" src="banner.webp" alt="sharknet">
+    <a class="top-left-button-habutekinayatu anim-box rainbow2" href="habutekinayatu.html">ハブ的なやつ</a>
+    <h1 id="a" class="anim-box sn">_SharkTomato_Jp Net</h1>
+    <img class="Home_banner_shark anim-box poyopoyo rainbowb" src="banner.webp" alt="sharknet">
     <p class="subtitle anim-box poyopoyo">: )</p>
     <a class="button anim-box popup" style="background-color:#7e520f;color:#31f106" href="https://classic.minecraft.net/">classic minecraft</a>
     <a class="button anim-box popup" style="background-color:#7e520f;color:#31f106" href="https://swordslasher.com/games/minecraft/game.html">minecraft 1.5.2</a>
@@ -278,20 +302,17 @@
       let audio;
       const neroTexts = [];
       const maxNeroCount = 300;
-
       function startAudioLoop() {
         audio = new Audio('media/nero.mp3');
         audio.loop = true;
         audio.play().catch(() => {});
       }
-
       function stopAudio() {
         if (audio) {
           audio.pause();
           audio.currentTime = 0;
         }
       }
-
       function createNeroText() {
         if (neroTexts.length >= maxNeroCount) return;
         const span = document.createElement('span');
@@ -314,7 +335,6 @@
           vrot: (Math.random() - 0.5) * 6
         });
       }
-
       function updateNeroTexts() {
         for (const obj of neroTexts) {
           obj.x += obj.vx;
@@ -330,7 +350,6 @@
         }
         requestAnimationFrame(updateNeroTexts);
       }
-
       function spawnEyes() {
         let count = 0;
         const interval = setInterval(() => {
@@ -379,6 +398,26 @@
       })
       window.addEventListener('DOMContentLoaded', () => {
         const box = document.querySelector('.anim-box.poyopoyo')
+        box.classList.add('is-animated')
+      })
+      window.addEventListener('DOMContentLoaded', () => {
+        const box = document.querySelector('.anim-box.rainbowb')
+        box.classList.add('is-animated')
+      })
+      window.addEventListener('DOMContentLoaded', () => {
+        const box = document.querySelector('.anim-box.rainbow2')
+        box.classList.add('is-animated')
+      })
+      window.addEventListener('DOMContentLoaded', () => {
+        const box = document.querySelector('.anim-box.rp')
+        box.classList.add('is-animated')
+      })
+      window.addEventListener('DOMContentLoaded', () => {
+        const box = document.querySelector('.anim-box.sn')
+        box.classList.add('is-animated')
+      })
+      window.addEventListener('DOMContentLoaded', () => {
+        const box = document.querySelector('.anim-box.rainbow')
         box.classList.add('is-animated')
       })
       AOS.init();
