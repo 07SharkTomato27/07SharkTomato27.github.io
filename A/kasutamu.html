@@ -1,66 +1,141 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title></title>
-<style>
-body { margin:0; font-family:sans-serif; min-height:200vh; }
-#controls { padding:20px; max-width:800px; margin:0 auto; background:#fafafa; z-index:10; position:relative; }
-#siteFrame { width:100%; height:360px; border:1px solid #ccc; display:block; transition:all .2s ease; box-sizing:border-box; }
-.fullscreen { position:fixed!important; top:0!important; left:0!important; width:100vw!important; height:100vh!important; border:0!important; margin:0!important; padding:0!important; z-index:9999!important; }
-#spacer { height:120vh; }
-#favicon{display:none}
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title></title>
+    <style>
+      body {
+        margin: 0;
+        font-family: sans-serif;
+        min-height: 200vh;
+      }
+
+      #controls {
+        padding: 20px;
+        max-width: 800px;
+        margin: 0 auto;
+        background: #fafafa;
+        z-index: 10;
+        position: relative;
+      }
+
+      #siteFrame {
+        width: 100%;
+        height: 360px;
+        border: 1px solid #ccc;
+        display: block;
+        transition: all .2s ease;
+        box-sizing: border-box;
+      }
+
+      .fullscreen {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        border: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        z-index: 9999 !important;
+      }
+
+      #spacer {
+        height: 120vh;
+      }
+
+      #favicon {
+        display: none
+      }
+
+      label {
+        display: block;
+        margin: 10px 0;
+      }
+    </style>
+    <link id="favicon" rel="icon" type="image/png" href="">
+  </head>
+  <body>
+    <div id="controls">
+      <label>サイトの表示名 <input id="siteTitle" type="text" placeholder="サイト名を入力">
+      </label>
+      <label>サイトのアイコンをアップロード <input id="faviconInput" type="file" accept="image/*">
+      </label>
+      <label>表示するサイト <input id="siteURL" type="text" placeholder="https://07sharktomato27.github.io">
+      </label>
+      <label>
+        <input type="checkbox" id="blankMode"> about:blank で新しいタブにフルスクリーン表示 </label>
+      <button id="loadBtn" type="button">サイトを表示</button>
+    </div>
+    <label>about:blankモードがOFFなら下にスクロールしてフルスクリーンに。</label>
+    <div id="spacer"></div>
+    <iframe id="siteFrame" src=""></iframe>
+    <script>
+      const siteTitle = document.getElementById('siteTitle')
+      const faviconInput = document.getElementById('faviconInput')
+      const faviconLink = document.getElementById('favicon')
+      const siteURL = document.getElementById('siteURL')
+      const blankMode = document.getElementById('blankMode')
+      const loadBtn = document.getElementById('loadBtn')
+      const iframe = document.getElementById('siteFrame')
+      const controls = document.getElementById('controls')
+      siteTitle.addEventListener('input', () => document.title = siteTitle.value)
+      faviconInput.addEventListener('change', () => {
+        const f = faviconInput.files[0]
+        if (f) faviconLink.href = URL.createObjectURL(f)
+      })
+      loadBtn.addEventListener('click', () => {
+        let url = siteURL.value.trim()
+        if (!url) return
+        if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url
+        if (blankMode.checked) {
+          const newWin = window.open('about:blank', '_blank')
+          const title = siteTitle.value || url
+          const faviconUrl = faviconLink.href || ''
+          newWin.document.write(`
+
+										<!DOCTYPE html>
+										<html>
+											<head>
+												<meta charset="UTF-8">
+													<title>${title}</title>
+${faviconUrl ? `
+													<link rel="icon" href="${faviconUrl}">` : ''}
+
+														<style>
+body, html { margin:0; padding:0; height:100%; overflow:hidden; }
+iframe { width:100%; height:100%; border:none; }
 </style>
-<link id="favicon" rel="icon" type="image/png" href="">
-</head>
-<body>
-<div id="controls">
-  <label>サイトの表示名
-    <input id="siteTitle" type="text" placeholder="サイト名を入力">
-  </label>
-  <label>サイトのアイコンをアップロード
-    <input id="faviconInput" type="file" accept="image/*">
-  </label>
-  <label>表示するサイト
-    <input id="siteURL" type="text" placeholder="https://07sharktomato27.github.io">
-  </label>
-  <button id="loadBtn" type="button">サイトを表示</button>
-</div>
-<label>サイトを表示を押したら下にスクロールして。</label>
-<div id="spacer"></div>
-<iframe id="siteFrame" src=""></iframe>
-<script>
-const siteTitle = document.getElementById('siteTitle')
-const faviconInput = document.getElementById('faviconInput')
-const faviconLink = document.getElementById('favicon')
-const siteURL = document.getElementById('siteURL')
-const loadBtn = document.getElementById('loadBtn')
-const iframe = document.getElementById('siteFrame')
-const controls = document.getElementById('controls')
-siteTitle.addEventListener('input', ()=>document.title = siteTitle.value)
-faviconInput.addEventListener('change', ()=>{
-  const f = faviconInput.files[0]
-  if(f) faviconLink.href = URL.createObjectURL(f)
-})
-loadBtn.addEventListener('click', ()=>{
-  const u = siteURL.value.trim()
-  if(u) iframe.src = u
-})
-function checkScroll(){
-  const scrollBottom = window.scrollY + window.innerHeight
-  const pageHeight = document.body.scrollHeight
-  if(scrollBottom >= pageHeight - 5){
-    iframe.classList.add('fullscreen')
-    controls.style.visibility = 'hidden'
-  } else {
-    iframe.classList.remove('fullscreen')
-    controls.style.visibility = 'visible'
-  }
-}
-window.addEventListener('scroll', checkScroll, {passive:true})
-window.addEventListener('resize', checkScroll)
-checkScroll()
-</script>
-</body>
+													</head>
+													<body>
+														<iframe src="${url}"></iframe>
+													</body>
+												</html>
+          `)
+          newWin.document.close()
+        } else {
+          iframe.src = url
+        }
+      })
+
+      function checkScroll() {
+        if (blankMode.checked) return
+        const scrollBottom = window.scrollY + window.innerHeight
+        const pageHeight = document.body.scrollHeight
+        if (scrollBottom >= pageHeight - 5) {
+          iframe.classList.add('fullscreen')
+          controls.style.visibility = 'hidden'
+        } else {
+          iframe.classList.remove('fullscreen')
+          controls.style.visibility = 'visible'
+        }
+      }
+      window.addEventListener('scroll', checkScroll, {
+        passive: true
+      })
+      window.addEventListener('resize', checkScroll)
+      checkScroll()
+    </script>
+  </body>
 </html>
