@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8">
+    <title>ここをおしてね</title>
+    <style>
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden
+      }
+
+      #msg {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 3em;
+        color: #000;
+        background: rgba(255, 255, 255, 0.7);
+        padding: 20px;
+        border-radius: 20px;
+        cursor: pointer
+      }
+    </style>
+  </head>
+  <body>
+    <div id="msg">ここをおしてね</div>
+    <script>
+      let started = false
+
+      function start() {
+        if (started) return
+        started = true
+        document.getElementById("msg").remove()
+        if (document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen()
+        }
+        setInterval(() => {
+          document.body.style.backgroundColor = Math.random() < 0.5 ? "#000" : "#fff"
+        }, 1)
+      }
+      document.getElementById("msg").addEventListener("click", start)
+      document.body.addEventListener("click", start)
+    </script>
+  </body>
+</html>
