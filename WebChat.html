@@ -409,19 +409,9 @@
   <body>
     <div id="rules">
       <div id="rulesBox">
-        <h1>ルール</h1>
-        <p style="color:#b9bbbe;">1. 強い暴言を使わない（タヒねとか）</p>
-        <p style="color:#b9bbbe;">2. 荒らさない （スパムとか）</p>
-        <p style="color:#b9bbbe;">3. いじめない （普通にやめろ）</p>
-        <p style="color:#b9bbbe;">4. ハッキングしない（やめてくれ）</p>
-        <p style="color:#b9bbbe;">5. 不快な言葉を使わない（嫌われるよ？）</p>
-        <p style="color:#b9bbbe;">6. ウイルス・危険なファイルを配布しない（やめろ）</p>
-        <p style="color:#b9bbbe;">7. 脅し（もちろんダメ）</p>
-        <p style="color:#b9bbbe;">8. 詐欺（やめろ絶対やめろ）</p>
-        <p style="color:#b9bbbe;">8. なりすまし禁止（そっくりだったら少し改名しよう）</p>
-        <p style="color:#b9bbbe;">9. 住所とか個人情報をさらさない教えない （やめろ）</p>
-        <p style="color:#b9bbbe;">10. 名前に本名を使わない（ニックネームにしよう！）</p>
-        <p style="color:#b9bbbe;">OKを押すとルールに同意したとみなされる。</p>
+        <h1>はじめに</h1>
+        <p style="color:#b9bbbe;"><a href="https://07sharktomato27.github.io/A/r" class="btn btn-outline-info btn-lg" target="_blank">ルール・利用規約・仕様  </a></p>
+        <p style="color:#b9bbbe;">OKを押すとルール・利用規約に同意したとみなされる。</p>
         <button id="okBtn">OK</button>
       </div>
     </div>
@@ -631,12 +621,24 @@
             const counterText = document.getElementById("counterText");
             const counterRef = db.ref("clickCounter");
             
+            counterBtn.addEventListener("click", () => {
+            incrementCounter();
+            });
+
             counterRef.on("value", snap => {
             counterText.textContent = `謎の回数→ ${snap.val() || 0}`;
             });
 
             function incrementCounter() {
-            counterRef.transaction(c => (c || 0) + 1);
+              counterRef.transaction(c => (c || 0) + 1, (error, committed, snapshot) => {
+                if (error) {
+              console.error("カウンター更新エラー:", error);
+            } else if (committed) {
+              console.log("カウント成功:", snapshot.val());
+            } else {
+            console.log("コミット失敗");
+                }
+             });
             }
             
     </script>
