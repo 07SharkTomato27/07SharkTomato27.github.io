@@ -455,7 +455,7 @@
     <div id="nameModal" style="display:none">
       <div class="modalBox">
         <h1>ニックネームを決めてね</h1>
-        <input type="text" id="nameInput" placeholder="例：洗濯機" maxlength="20">
+        <input type="text" id="nameInput" placeholder="例：洗濯機" maxlength="16">
         <button id="nameSubmit">決定</button>
       </div>
     </div>
@@ -496,6 +496,8 @@
       const onlineUsersDiv = document.getElementById("onlineUsers");
       const onlineCountSpan = document.getElementById("onlineCount");
       const showNameModal = () => {
+      const counterRef = db.ref("clickCounter");
+      const counterText = document.getElementById("counterText");
         document.getElementById("nameInput").value = userName;
         nameModal.style.display = "flex";
       };
@@ -517,10 +519,12 @@
       document.getElementById("okBtn").onclick = () => {
         rulesScreen.style.display = "none";
         container.style.display = "flex";
+        incrementCounter();
         if (!userName) showNameModal();
         startHeartbeat();
       };
       document.getElementById("nameSubmit").onclick = () => {
+        incrementCounter();
         const oldName = userName;
         userName = document.getElementById("nameInput").value.trim() || "名無し";
         localStorage.setItem("chatName", userName);
@@ -557,6 +561,7 @@
           });
           msgInput.value = "";
           msgInput.style.height = "auto";
+          incrementCounter();
         }
       };
       msgInput.onkeydown = e => {
@@ -625,25 +630,15 @@
             const counterBtn = document.getElementById("clickCounterBtn");
             const counterText = document.getElementById("counterText");
             const counterRef = db.ref("clickCounter");
-            const todayRef = db.ref("counterToday");
-
-            function getToday() {
-              return new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
-            }
+            
             counterRef.on("value", snap => {
-              counterText.textContent = `今日の押された回数→ ${snap.val() || 0}`;
+            counterText.textContent = `謎の回数→ ${snap.val() || 0}`;
             });
-            counterBtn.onclick = () => {
-              counterRef.transaction(c => (c || 0) + 1);
-            };
-            todayRef.get().then(snap => {
-              const saved = snap.val();
-              const today = getToday();
-              if (saved !== today) {
-                counterRef.set(0);
-                todayRef.set(today);
-              }
-            });
+
+            function incrementCounter() {
+            counterRef.transaction(c => (c || 0) + 1);
+            }
+            
     </script>
   </body>
 </html>
