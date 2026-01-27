@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Shark SMP</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: "Helvetica Neue", sans-serif;
+      line-height: 1.6;
+      background: #f8f8f8;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 20px;
+    }
+    p {
+      margin-bottom: 20px;
+    }
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 14px;
+      color: #999;
+    }
+    .blog-image {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 20px auto;
+  border-radius: 6px;
+}
+
+.copy-container {
+  display: flex;
+  align-items: center;
+  background: #f4f4f4;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: 10px 0;
+  font-family: monospace;
+}
+.copy-text {
+  flex-grow: 1;
+  white-space: pre-wrap;
+}
+.copy-button {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+.copy-button:hover {
+  background: #0056b3;
+}
+    
+pre {
+  background: #f0f0f0;
+  padding: 10px;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-family: monospace;
+}
+button {
+  background: #008CBA;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+button:hover {
+  background: #005f73;
+}
+    @media screen and (max-width: 600px) {
+    .blog-image {
+      max-width: 100%;
+      height: auto;
+    }
+    .copy-container {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .copy-button {
+      margin-left: 0;
+      margin-top: 8px;
+    }
+  }
+</style>
+
+</head>
+<body>
+  <div class="container">
+    <h1>SharkSMPに入る 方法</h1>
+    <img src="smp.webp" alt="SharkSMP" class="blog-image">
+    <p>SharkSMPは Geysermc というプラグインが入っているから</p>
+    <p>統合版もjava版も一緒に遊べるぞ</p>
+    <p>Java版ならマルチプレイからサーバーを追加して名前をつける（デフォルトでもいい）</p>
+    <p>それでサーバーIPを入力する</p>
+    <p>IP↓</p>
+    
+    <span id="copyTarget" class="copy-text">60.150.242.64</span>
+    <button class="copy-button" onclick="copyText()">コピー</button>
+    <p>統合版ならプレイ→サーバー  に進む</p>
+    <p>一番下にスクロールしたらサーバーを追加</p>
+    <p>でまた名前をつける  そしたらさっきと同じIPを入力</p>
+    <p>ポートはデフォルトの19132でOK</p>
+    <h1>スイッチ・プレステ</h1>
+    <p>スイッチとかでさっきの方法はできないから</p>
+    <p>スイッチ マイクラ 外部サーバー 入り方</p>
+    <p>Playstation マイクラ 外部サーバー 入り方</p>
+    <p>とか検索してしらべてください</p>
+    
+  </div>
+  <script>
+function copyText() {
+  const text = document.getElementById("copyTarget").innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector(".copy-button");
+    btn.innerText = "✅ コピー完了";
+    setTimeout(() => btn.innerText = "コピー", 1500);
+  });
+}
+</script>
+</body>
+</html>
