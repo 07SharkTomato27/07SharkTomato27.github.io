@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>画像を文字で再現</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        background: #111;
+        color: #eee;
+        margin: 0;
+        padding: 20px;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin: 20px 0;
+        align-items: center;
+      }
+
+      .canvas-container {
+        flex: 1;
+        position: relative;
+        background: #000;
+        border: 1px solid #333;
+        margin: 0 auto 20px;
+        width: 100%;
+        max-height: 70vh;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      canvas {
+        image-rendering: pixelated;
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+      }
+
+      input[type="text"] {
+        min-width: 180px;
+      }
+
+      button,
+      input,
+      label {
+        padding: 8px 14px;
+        font-size: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>文字</h2>
+      <div class="controls">
+        <label>画像 <input type="file" id="file" accept="image/*">
+        </label>
+        <label>使う文字 <input type="text" id="chars" value="あいうえお" placeholder="例:あいうえお">
+        </label>
+        <label>サイズ <input type="range" id="size" min="4" max="32" value="10">
+          <span id="sizeVal">10</span>px </label>
+        <button id="convert">変換</button>
+        <button id="download" disabled>PNG保存</button>
+      </div>
+      <div class="canvas-container">
+        <canvas id="canvas"></canvas>
+      </div>
+    </div>
+    <script>
+      const fileInput = document.getElementById('file')
+      const charsInput = document.getElementById('chars')
+      const sizeSlider = document.getElementById('size')
+      const sizeVal = document.getElementById('sizeVal')
+      const convertBtn = document.getElementById('convert')
+      const downloadBtn = document.getElementById('download')
+      const canvas = document.getElementById('canvas')
+      const ctx = canvas.getContext('2d')
+      let originalImg = null
+      let originalWidth = 0
+      let originalHeight = 0
+      sizeSlider.oninput = () => {
+        sizeVal.textContent = sizeSlider.value
+      }
+      fileInput.onchange = e => {
+        const file = e.target.files[0]
+        if (!file) return
+        const reader = new FileReader()
+        reader.onload = ev => {
+          originalImg = new Image()
+          originalImg.onload = () => {
+            originalWidth = originalImg.width
+            originalHeight = originalImg.height
+          }
+          originalImg.src = ev.target.result
+        }
+        reader.readAsDataURL(file)
+      }
+      convertBtn.onclick = () => {
+        if (!originalImg) {
+          alert('画像を選択してください')
+          return
+        }
+        const chars = charsInput.value || 'あいうえお'
+        if (chars.length === 0) {
+          alert('少なくとも1文字は入れてください')
+          return
+        }
+        const cell = parseInt(sizeSlider.value)
+        canvas.width = originalWidth
+        canvas.height = originalHeight
+        const tempCanvas = document.createElement('canvas')
+        tempCanvas.width = originalWidth
+        tempCanvas.height = originalHeight
+        const tempCtx = tempCanvas.getContext('2d')
+        tempCtx.drawImage(originalImg, 0, 0)
+        const imageData = tempCtx.getImageData(0, 0, originalWidth, originalHeight).data
+        ctx.fillStyle = '#000'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+        ctx.textBaseline = 'top'
+        ctx.font = `${cell}px monospace`
+        for (let y = 0; y < originalHeight; y += cell) {
+          for (let x = 0; x < originalWidth; x += cell) {
+            let r = 0,
+              g = 0,
+              b = 0,
+              count = 0
+            for (let dy = 0; dy < cell && y + dy < originalHeight; dy++) {
+              for (let dx = 0; dx < cell && x + dx < originalWidth; dx++) {
+                const i = ((y + dy) * originalWidth + (x + dx)) * 4
+                r += imageData[i]
+                g += imageData[i + 1]
+                b += imageData[i + 2]
+                count++
+              }
+            }
+            if (count === 0) continue
+            r = Math.floor(r / count)
+            g = Math.floor(g / count)
+            b = Math.floor(b / count)
+            const brightness = (r * 0.299 + g * 0.587 + b * 0.114) / 255
+            let index = Math.floor(brightness * (chars.length - 1))
+            index = Math.max(0, Math.min(index, chars.length - 1))
+            ctx.fillStyle = `rgb(${r},${g},${b})`
+            ctx.fillText(chars[index], x, y)
+          }
+        }
+        const container = canvas.parentElement
+        const maxW = container.clientWidth
+        const maxH = container.clientHeight
+        const ratio = Math.min(maxW / originalWidth, maxH / originalHeight, 1)
+        canvas.style.width = `${originalWidth * ratio}px`
+        canvas.style.height = `${originalHeight * ratio}px`
+        downloadBtn.disabled = false
+      }
+      downloadBtn.onclick = () => {
+        const link = document.createElement('a')
+        link.download = 'text-image.png'
+        link.href = canvas.toDataURL('image/png')
+        link.click()
+      }
+    </script>
+  </body>
+</html>
