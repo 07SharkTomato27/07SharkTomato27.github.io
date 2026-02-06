@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8">
+    <title>Deltarune</title>
+    <style>
+      body {
+        font-family: monospace;
+        background: #000;
+        color: #fff;
+        padding: 20px
+      }
+
+      canvas {
+        border: 1px solid #ff8f;
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 20px 0;
+        image-rendering: pixelated
+      }
+
+      button {
+        margin: 5px;
+        padding: 10px 20px;
+        background: #111;
+        color: #fff;
+        border: 1px solid #fff;
+        cursor: pointer
+      }
+
+      button:hover {
+        background: #222
+      }
+
+      button:disabled {
+        opacity: .5;
+        cursor: not-allowed
+      }
+
+      h1 {
+        color: #fff
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Deltarune</h1>
+    <p>The Legend</p>
+    <input type="file" id="upload" accept="image/*">
+    <br>
+    <br>
+    <button id="fullBtn">1</button>
+    <button id="pixelBtn">2</button>
+    <button id="silBtn">3</button>
+    <button id="origBtn">4</button>
+    <br>
+    <br>
+    <canvas id="preview"></canvas>
+    <br>
+    <button id="downloadBtn" disabled>DL</button>
+    <script>
+      const upload = document.getElementById('upload')
+      const preview = document.getElementById('preview')
+      const ctx = preview.getContext('2d')
+      const fullBtn = document.getElementById('fullBtn')
+      const pixelBtn = document.getElementById('pixelBtn')
+      const silBtn = document.getElementById('silBtn')
+      const origBtn = document.getElementById('origBtn')
+      const downloadBtn = document.getElementById('downloadBtn')
+      let img = null
+      const SCALE = 8
+      const GLOW = [
+        [-8, .12],
+        [-6, .25],
+        [-4, .4],
+        [-3, .6],
+        [-2, .8],
+        [-1, .95],
+        [0, 1],
+        [1, .95],
+        [2, .8],
+        [3, .6],
+        [4, .4]
+      ]
+      upload.addEventListener('change', async e => {
+        const f = e.target.files[0]
+        if (!f) return
+        img = await createImageBitmap(f)
+        preview.width = img.width
+        preview.height = img.height
+        ctx.imageSmoothingEnabled = false
+        drawOrig()
+        downloadBtn.disabled = false
+      })
+
+      function drawOrig() {
+        ctx.clearRect(0, 0, preview.width, preview.height)
+        ctx.drawImage(img, 0, 0)
+      }
+
+      function process(m) {
+        if (!img) return
+        preview.width = img.width
+        preview.height = img.height
+        ctx.imageSmoothingEnabled = false
+        if (m === 'full') fullProcess()
+        else if (m === 'pixel') pixelOnly()
+        else if (m === 'sil') silOnly()
+        else drawOrig()
+      }
+
+      function silOnly() {
+        ctx.drawImage(img, 0, 0)
+        const d = ctx.getImageData(0, 0, preview.width, preview.height).data
+        for (let i = 0; i < d.length; i += 4) {
+          const r = d[i],
+            g = d[i + 1],
+            b = d[i + 2],
+            a = d[i + 3]
+          if (a === 0) continue
+          const gray = 0.299 * r + 0.587 * g + 0.114 * b
+          const brightness = gray / 255
+          const warmth = Math.max(0, 1 - Math.abs(brightness - 0.5) * 2)
+          const hueShift = 30 * (brightness - 0.5)
+          let h = 40 + hueShift
+          let s = 90 + warmth * 40
+          let l = brightness * 50
+          const rgb = hslToRgb(h / 360, s / 100, l / 100)
+          d[i] = rgb[0]
+          d[i + 1] = rgb[1]
+          d[i + 2] = rgb[2]
+        }
+        ctx.putImageData(new ImageData(d, preview.width, preview.height), 0, 0)
+      }
+
+      function fullProcess() {
+        ctx.clearRect(0, 0, preview.width, preview.height) // ← 追加
+        const ow = Math.floor(preview.width / SCALE)
+        const oh = Math.floor(preview.height / SCALE)
+        const t = document.createElement('canvas')
+        t.width = ow
+        t.height = oh
+        const tc = t.getContext('2d')
+        tc.imageSmoothingEnabled = false
+        tc.drawImage(img, 0, 0, ow, oh)
+        const id = tc.getImageData(0, 0, ow, oh)
+        const d = id.data
+        for (let i = 0; i < d.length; i += 4) {
+          const r = d[i],
+            g = d[i + 1],
+            b = d[i + 2],
+            a = d[i + 3]
+          if (a === 0) continue
+          const gray = 0.299 * r + 0.587 * g + 0.114 * b
+          const brightness = gray / 255
+          const warmth = Math.max(0, 1 - Math.abs(brightness - 0.5) * 2)
+          const hueShift = 30 * (brightness - 0.5)
+          let h = 40 + hueShift
+          let s = 90 + warmth * 40
+          let l = brightness * 50
+          const rgb = hslToRgb(h / 360, s / 100, l / 100)
+          d[i] = rgb[0]
+          d[i + 1] = rgb[1]
+          d[i + 2] = rgb[2]
+        }
+        tc.putImageData(id, 0, 0)
+        ctx.globalCompositeOperation = 'lighter'
+        GLOW.forEach(([o, a]) => {
+          ctx.globalAlpha = a
+          ctx.drawImage(t, o, o, preview.width - 2 * o, preview.height - 2 * o)
+        })
+        ctx.globalAlpha = 1
+        ctx.globalCompositeOperation = 'source-over'
+        ctx.drawImage(t, 0, 0, preview.width, preview.height)
+      }
+
+      function pixelOnly() {
+        const ow = Math.floor(preview.width / SCALE)
+        const oh = Math.floor(preview.height / SCALE)
+        const t = document.createElement('canvas')
+        t.width = ow
+        t.height = oh
+        const tc = t.getContext('2d')
+        tc.imageSmoothingEnabled = false
+        tc.drawImage(img, 0, 0, ow, oh)
+        ctx.drawImage(t, 0, 0, preview.width, preview.height)
+      }
+
+      function hslToRgb(h, s, l) {
+        let r, g, b
+        if (s === 0) {
+          r = g = b = l
+        } else {
+          const hue2rgb = (p, q, t) => {
+            if (t < 0) t += 1
+            if (t > 1) t -= 1
+            if (t < 1 / 6) return p + (q - p) * 6 * t
+            if (t < 1 / 2) return q
+            if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6
+            return p
+          }
+          const q = l < 0.5 ? l * (1 + s) : l + s - l * s
+          const p = 2 * l - q
+          r = hue2rgb(p, q, h + 1 / 3)
+          g = hue2rgb(p, q, h)
+          b = hue2rgb(p, q, h - 1 / 3)
+        }
+        return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)]
+      }
+      fullBtn.onclick = () => process('full')
+      pixelBtn.onclick = () => process('pixel')
+      silBtn.onclick = () => process('sil')
+      origBtn.onclick = () => process('orig')
+      downloadBtn.onclick = () => {
+        const a = document.createElement('a')
+        a.download = 'aaa.png'
+        a.href = preview.toDataURL()
+        a.click()
+      }
+    </script>
+  </body>
+</html>
