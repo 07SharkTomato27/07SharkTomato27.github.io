@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ジャンプスケアジェネレーター</title>
+    <style>
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+        font-family: system-ui, sans-serif;
+        color: #ddd;
+      }
+
+      #container {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        background: #111;
+      }
+
+      #bg {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+
+      #overlay {
+        position: absolute;
+        inset: 0;
+        background: #8b0000;
+        opacity: 0;
+        pointer-events: none;
+        mix-blend-mode: multiply;
+        transition: opacity 0.1s;
+      }
+
+      #scare {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.02);
+        opacity: 0;
+        pointer-events: none;
+        filter: brightness(1.1) contrast(1.15) hue-rotate(355deg) drop-shadow(0 0 15px #ff0000);
+        transition: all 0.05s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      #setup {
+        position: absolute;
+        inset: 0;
+        background: rgba(10, 10, 10, 0.92);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 28px;
+        z-index: 10;
+        padding: 20px;
+        box-sizing: border-box;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 2.4rem;
+        text-align: center;
+        color: #ff4444;
+        text-shadow: 0 0 15px #ff0000;
+      }
+
+      .section {
+        width: 100%;
+        max-width: 520px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      label {
+        font-size: 1.15rem;
+        color: #eee;
+      }
+
+      input[type="file"],
+      input[type="text"],
+      button {
+        padding: 14px 18px;
+        font-size: 1.1rem;
+        border: none;
+        border-radius: 8px;
+      }
+
+      input[type="file"] {
+        font-size: 1rem;
+      }
+
+      input[type="text"] {
+        background: #1a1a1a;
+        color: #eee;
+      }
+
+      input[type="checkbox"] {
+        transform: scale(1.3);
+      }
+
+      button {
+        background: #8b0000;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 0 20px rgba(139, 0, 0, 0.6);
+      }
+
+      button:hover {
+        background: #a50000;
+        box-shadow: 0 0 30px rgba(200, 0, 0, 0.8);
+      }
+
+      .checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-size: 1.15rem;
+      }
+
+      #startArea {
+        font-size: 3.8rem;
+        font-weight: bold;
+        text-align: center;
+        user-select: none;
+        cursor: pointer;
+        padding: 50px 30px;
+        border: 4px dashed #444;
+        border-radius: 16px;
+        background: rgba(20, 20, 20, 0.7);
+        transition: all 0.25s;
+      }
+
+      #startArea:active {
+        background: #222;
+        border-color: #666;
+        transform: scale(0.98);
+      }
+
+      .hidden {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container">
+      <img id="bg" alt="背景">
+      <div id="overlay"></div>
+      <img id="scare" alt="ジャンプスケア">
+      <div id="setup">
+        <h1>ジャンプスケアジェネレーター</h1>
+        <div class="section">
+          <label>1. 背景画像</label>
+          <input type="file" id="bgInput" accept="image/*">
+        </div>
+        <div class="section">
+          <label>2. ジャンプスケア画像</label>
+          <input type="file" id="scareInput" accept="image/*">
+        </div>
+        <div class="section">
+          <label>3. ジャンプスケア音声（任意）</label>
+          <input type="file" id="audioInput" accept="audio/*">
+        </div>
+        <div class="section">
+          <label>4. 発動キー（空欄＝タッチで発動）</label>
+          <input type="text" id="triggerKey" maxlength="1" placeholder="例: s">
+        </div>
+        <div class="section checkbox-row">
+          <input type="checkbox" id="autoHide" checked>
+          <label for="autoHide">自動で消す</label>
+        </div>
+        <button id="startBtn">開始</button>
+      </div>
+      <div id="startArea" class="hidden">ここをタップ <br>またはキーを押す </div>
+    </div>
+    <script>
+      const bgInput = document.getElementById('bgInput')
+      const scareInput = document.getElementById('scareInput')
+      const audioInput = document.getElementById('audioInput')
+      const triggerKeyInput = document.getElementById('triggerKey')
+      const autoHideCheckbox = document.getElementById('autoHide')
+      const startBtn = document.getElementById('startBtn')
+      const setup = document.getElementById('setup')
+      const startArea = document.getElementById('startArea')
+      const bgImg = document.getElementById('bg')
+      const scareImg = document.getElementById('scare')
+      const overlay = document.getElementById('overlay')
+      let triggerKey = null
+      let isStarting = false
+      let scareAudio = null
+
+      function loadImage(input, target) {
+        const file = input.files[0]
+        if (!file) return
+        const reader = new FileReader()
+        reader.onload = e => target.src = e.target.result
+        reader.readAsDataURL(file)
+      }
+      bgInput.onchange = () => loadImage(bgInput, bgImg)
+      scareInput.onchange = () => loadImage(scareInput, scareImg)
+      audioInput.onchange = () => {
+        const file = audioInput.files[0]
+        if (!file) {
+          scareAudio = null
+          return
+        }
+        const url = URL.createObjectURL(file)
+        scareAudio = new Audio(url)
+        scareAudio.preload = 'auto'
+      }
+      startBtn.addEventListener('click', e => {
+        e.stopPropagation()
+        if (!bgImg.src || bgImg.src.endsWith('#')) return alert('背景画像を入れて')
+        if (!scareImg.src || scareImg.src.endsWith('#')) return alert('ジャンプスケア画像を入れて')
+        triggerKey = triggerKeyInput.value.trim().toLowerCase() || null
+        setup.classList.add('hidden')
+        startArea.classList.remove('hidden')
+        document.documentElement.requestFullscreen?.().catch(() => {})
+        isStarting = true
+      })
+
+      function triggerScare() {
+        scareImg.style.opacity = '1'
+        overlay.style.opacity = '1'
+        scareImg.style.transform = 'translate(-50%, -50%) scale(0.02) rotate(-3deg)'
+        setTimeout(() => {
+          scareImg.style.transform = 'translate(-50%, -50%) scale(0.6) rotate(4deg)'
+        }, 15)
+        setTimeout(() => {
+          scareImg.style.transform = 'translate(-50%, -50%) scale(1.4) rotate(-5deg)'
+        }, 40)
+        setTimeout(() => {
+          scareImg.style.transform = 'translate(-50%, -50%) scale(0.7) rotate(6deg)'
+        }, 70)
+        setTimeout(() => {
+          scareImg.style.transform = 'translate(-50%, -50%) scale(3.2) rotate(-2deg)'
+        }, 110)
+        if (scareAudio) {
+          scareAudio.currentTime = 0
+          scareAudio.play().catch(() => {})
+        }
+        if (autoHideCheckbox.checked) {
+          setTimeout(() => {
+            overlay.style.opacity = '0'
+            scareImg.style.opacity = '0'
+            scareImg.style.transform = 'translate(-50%, -50%) scale(0.02) rotate(0deg)'
+          }, 550)
+        }
+      }
+      window.addEventListener('keydown', e => {
+        if (!setup.classList.contains('hidden')) return
+        const key = e.key.toLowerCase()
+        if (key === 'escape') {
+          setup.classList.remove('hidden')
+          startArea.classList.add('hidden')
+          overlay.style.opacity = '0'
+          scareImg.style.opacity = '0'
+          scareImg.style.transform = 'translate(-50%, -50%) scale(0.02) rotate(0deg)'
+          if (scareAudio) scareAudio.pause()
+          document.exitFullscreen?.().catch(() => {})
+          isStarting = false
+          return
+        }
+        if (triggerKey && key === triggerKey) {
+          triggerScare()
+        }
+      })
+      startArea.addEventListener('click', e => {
+        e.stopPropagation()
+        if (setup.classList.contains('hidden') === false) return
+        if (triggerKey === null) {
+          triggerScare()
+        }
+      })
+      document.addEventListener('click', e => {
+        if (!isStarting) return
+        if (triggerKey !== null) return
+        if (setup.classList.contains('hidden') === false) return
+        if (e.target.closest('#startArea')) return
+        triggerScare()
+      })
+    </script>
+  </body>
+</html>
