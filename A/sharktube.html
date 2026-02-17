@@ -1,605 +1,477 @@
 <!doctype html>
 <html lang="ja">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>SharkTube</title>
-    <link href="/icon/favicon.ico" rel="icon">
-    <style>
-      :root {
-        --bg: #0f0f12;
-        --card: #141416;
-        --accent: #555;
-        --accent-hover: #666;
-        --text: #e6e6e6;
-        --text-light: #fff;
-        --shadow: 0 6px 24px rgba(0, 0, 0, 0.7);
-        --radius: 12px;
-        --transition: .25s ease;
-        --hover-bg: rgba(255, 255, 255, 0.05);
-        --scrollbar-bg: #141416;
-        --scrollbar-thumb: #333
-      }
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SharkTube</title>
+  <link rel="icon" href="/icon/favicon.ico">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root {
+      --bg: #0b0e17;
+      --bg-overlay: linear-gradient(135deg, rgba(20,25,60,0.4), rgba(60,20,80,0.3), rgba(20,60,100,0.25), rgba(80,20,60,0.2));
+      --card: rgba(15,18,28,0.88);
+      --card-glass: rgba(20,25,40,0.35);
+      --accent: #7c3aed;
+      --accent-glow: #a78bfa;
+      --text: #e0e7ff;
+      --text-dim: #94a3b8;
+      --border: rgba(165,180,252,0.12);
+      --radius: 16px;
+      --transition: 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    }
 
-      body,
-      html {
-        height: 100%;
-        margin: 0;
-        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        background: var(--bg);
-        color: var(--text);
-        display: flex;
-        justify-content: center;
-        padding: 24px;
-        overflow-y: scroll
-      }
+    * {margin:0;padding:0;box-sizing:border-box}
 
-      body::-webkit-scrollbar {
-        width: 10px
-      }
+    body {
+      min-height:100vh;
+      background:var(--bg);
+      color:var(--text);
+      font-family:system-ui,sans-serif;
+      overflow-x:hidden;
+      position:relative;
+      display:flex;
+      justify-content:center;
+      padding:20px 12px;
+    }
 
-      body::-webkit-scrollbar-track {
-        background: var(--scrollbar-bg);
-        border-radius: var(--radius)
-      }
+    body::before {
+      content:"";
+      position:fixed;
+      inset:0;
+      background:var(--bg-overlay);
+      animation:bgPulse 24s ease-in-out infinite alternate;
+      pointer-events:none;
+      z-index:-2;
+    }
 
-      body::-webkit-scrollbar-thumb {
-        background: var(--scrollbar-thumb);
-        border-radius: var(--radius)
-      }
+    @keyframes bgPulse {
+      0% {opacity:0.9;transform:scale(1.01)}
+      100% {opacity:1;transform:scale(1)}
+    }
 
-      body::-webkit-scrollbar-thumb:hover {
-        background: #444
-      }
+    .app {
+      width:100%;
+      max-width:1140px;
+      display:grid;
+      grid-template-columns:minmax(0,680px) 1fr;
+      gap:20px;
+    }
 
-      .app {
-        width: 1100px;
-        max-width: 96%;
-        display: grid;
-        grid-template-columns: 700px 1fr;
-        gap: 20px
-      }
+    .player {
+      background:var(--card);
+      border-radius:var(--radius);
+      border:1px solid var(--border);
+      backdrop-filter:blur(16px);
+      box-shadow:0 12px 40px rgba(0,0,0,0.7);
+      padding:12px;
+      position:relative;
+      overflow:hidden;
+      transition:all var(--transition);
+    }
 
-      .player {
-        background: var(--card);
-        padding: 16px;
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        display: flex;
-        flex-direction: column;
-        transition: transform var(--transition)
-      }
+    .player:hover {transform:translateY(-6px)}
 
-      .player:hover {
-        transform: scale(1.005)
-      }
+    .video-wrap {
+      border-radius:12px;
+      overflow:hidden;
+      background:#000;
+      position:relative;
+      box-shadow:inset 0 0 60px rgba(0,0,0,0.9);
+    }
 
-      iframe,
-      video {
-        width: 100%;
-        height: 420px;
-        background: #000;
-        border-radius: var(--radius);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, .6);
-        transition: box-shadow var(--transition)
-      }
+    video,iframe {
+      width:100%;
+      height:420px;
+      border:none;
+      display:block;
+    }
 
-      iframe:hover,
-      video:hover {
-        box-shadow: 0 6px 28px rgba(0, 0, 0, .8)
-      }
+    .controls {
+      position:absolute;
+      bottom:-80px;
+      left:12px;
+      right:12px;
+      background:var(--card-glass);
+      border:1px solid var(--border);
+      border-radius:12px;
+      backdrop-filter:blur(12px);
+      padding:10px 14px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      transition:bottom .4s ease,opacity .4s;
+      opacity:0;
+    }
 
-      .controls {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        margin-top: 12px;
-        flex-wrap: wrap
-      }
+    .player:hover .controls,.controls.show {bottom:12px;opacity:1}
 
-      button,
-      input[type=file] {
-        background: rgba(255, 255, 255, .05);
-        border: 1px solid rgba(255, 255, 255, .1);
-        padding: 8px 12px;
-        border-radius: var(--radius);
-        color: var(--text);
-        cursor: pointer;
-        font-weight: 500;
-        transition: all var(--transition)
-      }
+    .btn {
+      background:none;
+      border:none;
+      color:var(--text-dim);
+      font-size:1.3rem;
+      cursor:pointer;
+      padding:6px;
+      border-radius:50%;
+      transition:all .25s;
+      width:38px;
+      height:38px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
 
-      button:hover,
-      input[type=file]:hover {
-        background: var(--hover-bg);
-        border-color: rgba(255, 255, 255, .15)
-      }
+    .btn:hover {
+      color:var(--accent-glow);
+      background:rgba(124,58,237,.15);
+      transform:scale(1.15);
+      box-shadow:0 0 16px rgba(124,58,237,.4);
+    }
 
-      .input {
-        flex: 1;
-        padding: 8px 10px;
-        border-radius: var(--radius);
-        border: 1px solid rgba(255, 255, 255, .08);
-        background: rgba(255, 255, 255, .02);
-        color: var(--text);
-        transition: all var(--transition)
-      }
+    .url-in {
+      flex:1;
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:8px 12px;
+      color:var(--text);
+      font-size:.9rem;
+    }
 
-      .input:focus {
-        outline: 0;
-        border-color: var(--accent-hover);
-        background: rgba(255, 255, 255, .04)
-      }
+    .url-in:focus {
+      outline:none;
+      border-color:var(--accent);
+      box-shadow:0 0 0 3px rgba(124,58,237,.2);
+    }
 
-      .meta {
-        margin-top: 14px
-      }
+    .meta {
+      margin-top:12px;
+      padding:0 4px;
+    }
 
-      .meta #nowTitle {
-        font-size: 17px;
-        font-weight: 600;
-        color: var(--text-light)
-      }
+    #nowTitle {
+      font-size:1.1rem;
+      font-weight:600;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
 
-      .meta .small {
-        color: #aaa;
-        font-size: 13px
-      }
+    #nowInfo {font-size:.78rem;color:var(--text-dim)}
 
-      .playlist {
-        background: var(--card);
-        padding: 14px;
-        border-radius: var(--radius);
-        height: 540px;
-        overflow: auto;
-        box-shadow: var(--shadow);
-        display: flex;
-        flex-direction: column
-      }
+    .playlist {
+      background:var(--card);
+      border-radius:var(--radius);
+      border:1px solid var(--border);
+      backdrop-filter:blur(12px);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      height:580px;
+    }
 
-      .search {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 10px
-      }
+    .playlist-head {
+      padding:12px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      gap:8px;
+    }
 
-      .item {
-        padding: 10px;
-        border-radius: var(--radius);
-        margin-bottom: 8px;
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        cursor: pointer;
-        transition: all var(--transition);
-        background: rgba(255, 255, 255, .01)
-      }
+    .playlist-items {
+      flex:1;
+      overflow-y:auto;
+      padding:6px;
+    }
 
-      .item:hover {
-        background: var(--hover-bg)
-      }
+    .item {
+      display:flex;
+      gap:10px;
+      padding:8px 10px;
+      border-radius:10px;
+      cursor:pointer;
+      transition:all var(--transition);
+      opacity:.92;
+    }
 
-      .thumb {
-        width: 100px;
-        height: 56px;
-        background: #000;
-        border-radius: 8px;
-        flex: 0 0 100px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        color: #888;
-        box-shadow: inset 0 0 3px rgba(255, 255, 255, .1)
-      }
+    .item:hover {
+      background:rgba(124,58,237,.12);
+      transform:translateX(6px) scale(1.02);
+    }
 
-      .title {
-        font-size: 14px;
-        font-weight: 500;
-        color: var(--text-light)
-      }
+    .item.active {
+      background:rgba(124,58,237,.25);
+      transform:scale(1.03);
+    }
 
-      .small {
-        font-size: 12px;
-        color: #aaa;
-        word-break: break-all
-      }
+    .thumb {
+      width:86px;
+      height:48px;
+      border-radius:8px;
+      overflow:hidden;
+      flex-shrink:0;
+      background:#111;
+    }
 
-      .empty {
-        color: #777;
-        padding: 10px;
-        text-align: center;
-        font-style: italic
-      }
+    .thumb img {width:100%;height:100%;object-fit:cover}
 
-      .playlist::-webkit-scrollbar {
-        width: 8px
-      }
+    .item-info {flex:1;min-width:0}
 
-      .playlist::-webkit-scrollbar-track {
-        background: rgba(0, 0, 0, .15);
-        border-radius: var(--radius)
-      }
+    .item-title {
+      font-size:.88rem;
+      font-weight:500;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
 
-      .playlist::-webkit-scrollbar-thumb {
-        background: #333;
-        border-radius: var(--radius)
-      }
+    .item-src {
+      font-size:.7rem;
+      color:var(--text-dim);
+      opacity:.8;
+    }
 
-      .playlist::-webkit-scrollbar-thumb:hover {
-        background: #444
-      }
+    .btn-del {
+      color:#f87171;
+      font-size:1.1rem;
+      opacity:.5;
+      transition:.2s;
+    }
 
-      .drag-over {
-        background: rgba(255, 255, 255, .1) !important
-      }
-    </style>
-  </head>
-  <body>
-    <div class="app">
-      <div class="player"><video id="video" controls playsinline></video>
-        <div class="controls"><button id="prev">前へ</button><button id="play">再生/一時停止</button><button id="next">次へ</button><input id="file" type="file" accept="video/*" multiple="multiple"><input id="urlInput" class="input" placeholder="YouTubeのURLをここに貼る"><button id="addUrl">追加</button></div>
-        <div class="meta">
-          <div id="nowTitle">再生する動画を追加してください</div>
-          <div class="small" id="nowInfo"></div>
-        </div>
-      </div>
-      <div class="playlist">
-        <div class="search"><input id="search" class="input" placeholder="タイトルでフィルタ"><button id="clear">クリア</button></div>
-        <div id="list"></div>
-      </div>
+    .btn-del:hover {opacity:1;transform:scale(1.2)}
+
+    .empty {text-align:center;color:#475569;padding:80px 20px;font-style:italic}
+
+    #customBg {
+      position:fixed;
+      bottom:20px;
+      right:20px;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:16px;
+      backdrop-filter:blur(12px);
+      box-shadow:0 10px 30px rgba(0,0,0,.6);
+      display:none;
+      z-index:10;
+      width:300px;
+      max-height:80vh;
+      overflow-y:auto;
+      color:var(--text);
+    }
+
+    #customBg.show {display:block}
+
+    .section {margin:14px 0}
+
+    label {display:block;margin-bottom:6px;font-size:.9rem;color:var(--text-dim)}
+
+    input[type=color],input[type=number] {
+      width:100%;
+      height:38px;
+      border:none;
+      border-radius:8px;
+      cursor:pointer;
+    }
+
+    input[type=number] {
+      background:rgba(255,255,255,.08);
+      color:var(--text);
+      padding:0 12px;
+      font-size:1rem;
+    }
+
+    .grad-list {
+      margin-top:8px;
+      max-height:240px;
+      overflow-y:auto;
+      padding-right:6px;
+    }
+
+    .grad-item {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-bottom:10px;
+      padding:6px;
+      background:rgba(255,255,255,.03);
+      border-radius:8px;
+    }
+
+    .grad-item input[type=color] {
+      width:60px;
+      height:36px;
+      border-radius:6px;
+    }
+
+    .grad-item .btn-del-grad {
+      background:none;
+      border:none;
+      color:#f87171;
+      font-size:1.2rem;
+      cursor:pointer;
+      padding:4px;
+      opacity:.7;
+      transition:.2s;
+    }
+
+    .grad-item .btn-del-grad:hover {
+      opacity:1;
+      transform:scale(1.15);
+    }
+
+    .btn-save {
+      width:100%;
+      margin-top:16px;
+      padding:10px;
+      background:var(--accent);
+      color:white;
+      border:none;
+      border-radius:10px;
+      font-weight:600;
+      cursor:pointer;
+    }
+
+    .btn-save:hover {background:#9f7aea}
+
+    ::-webkit-scrollbar {width:6px}
+    ::-webkit-scrollbar-track {background:rgba(0,0,0,.4)}
+    ::-webkit-scrollbar-thumb {background:#475569;border-radius:10px}
+    ::-webkit-scrollbar-thumb:hover {background:#64748b}
+
+    @media (max-width:900px) {
+      .app {grid-template-columns:1fr}
+      .playlist {height:480px}
+      video,iframe {height:360px}
+      #customBg {width:90%;right:5%;bottom:10px}
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <div class="player">
+    <div class="video-wrap" id="vidWrap">
+      <video id="video" controls playsinline></video>
     </div>
-    <script>
-      const video = document.getElementById('video')
-      const fileInput = document.getElementById('file')
-      const listEl = document.getElementById('list')
-      const nowTitle = document.getElementById('nowTitle')
-      const nowInfo = document.getElementById('nowInfo')
-      const playBtn = document.getElementById('play')
-      const prevBtn = document.getElementById('prev')
-      const nextBtn = document.getElementById('next')
-      const urlInput = document.getElementById('urlInput')
-      const addUrlBtn = document.getElementById('addUrl')
-      const search = document.getElementById('search')
-      const clear = document.getElementById('clear')
-      let playlist = []
-      let index = -1
-      const dbName = 'localtubeDB'
-      let db
 
-      function openDB() {
-        const req = indexedDB.open(dbName, 1)
-        req.onupgradeneeded = e => {
-          db = e.target.result
-          if (!db.objectStoreNames.contains('videos')) db.createObjectStore('videos', {
-            keyPath: 'id',
-            autoIncrement: true
-          })
-        }
-        req.onsuccess = e => {
-          db = e.target.result
-          loadSavedVideos()
-          loadPlaylistOrder()
-        }
-        req.onerror = e => console.error('DB open error', e)
-      }
+    <div class="controls">
+      <button class="btn" id="prev"><i class="fa-solid fa-backward-step"></i></button>
+      <button class="btn active" id="play"><i class="fa-solid fa-play"></i></button>
+      <button class="btn" id="next"><i class="fa-solid fa-forward-step"></i></button>
 
-      function saveVideo(file) {
-        const reader = new FileReader()
-        reader.onload = e => {
-          const blob = e.target.result
-          const tx = db.transaction('videos', 'readwrite')
-          const store = tx.objectStore('videos')
-          store.add({
-            title: file.name,
-            blob
-          })
-        }
-        reader.readAsArrayBuffer(file)
-      }
+      <input type="file" id="file" accept="video/*" multiple hidden>
+      <button class="btn" id="btnFile"><i class="fa-solid fa-file-video"></i></button>
 
-      function loadSavedVideos() {
-        const tx = db.transaction('videos', 'readonly')
-        const store = tx.objectStore('videos')
-        const req = store.getAll()
-        req.onsuccess = () => {
-          for (const rec of req.result) {
-            const url = URL.createObjectURL(new Blob([rec.blob]))
-            playlist.push({
-              title: rec.title,
-              src: url,
-              type: 'local'
-            })
-          }
-          renderList()
-          if (index === -1 && playlist.length) playIndex(0)
-        }
-      }
+      <input id="urlInput" class="url-in" placeholder="YT URL / 直リンク">
+      <button class="btn" id="addUrl"><i class="fa-solid fa-plus"></i></button>
+    </div>
 
-      function savePlaylistOrder() {
-        localStorage.setItem('playlistOrder', JSON.stringify(playlist))
-      }
+    <div class="meta">
+      <div id="nowTitle">動画を追加してね</div>
+      <div id="nowInfo"></div>
+    </div>
+  </div>
 
-      function loadPlaylistOrder() {
-        const saved = localStorage.getItem('playlistOrder')
-        if (saved) {
-          const arr = JSON.parse(saved)
-          playlist = arr
-          renderList()
-          if (index === -1 && playlist.length) playIndex(0)
-        }
-      }
+  <div class="playlist">
+    <div class="playlist-head">
+      <input id="search" class="url-in" placeholder="検索...">
+      <button class="btn" id="clear"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="playlist-items" id="list"></div>
+  </div>
+</div>
 
-      function addFileList(files) {
-        for (const f of files) {
-          const url = URL.createObjectURL(f)
-          playlist.push({
-            title: f.name,
-            src: url,
-            type: 'local'
-          })
-          saveVideo(f)
-        }
-        renderList()
-        savePlaylistOrder()
-        if (index === -1 && playlist.length) playIndex(0)
-      }
-      fileInput.addEventListener('change', e => addFileList(e.target.files))
-      addUrlBtn.addEventListener('click', async () => {
-        const v = urlInput.value.trim()
-        if (!v) return
-        if (v.includes('youtube.com') || v.includes('youtu.be')) {
-          const id = extractYouTubeID(v)
-          if (id) {
-            const title = await fetchYouTubeTitle(id)
-            const embed = 'https://www.youtube-nocookie.com/embed/' + id
-            playlist.push({
-              title: title || 'YouTube: ' + id,
-              src: embed,
-              type: 'youtube',
-              id
-            })
-            renderList()
-            urlInput.value = ''
-            savePlaylistOrder()
-            if (index === -1) playIndex(0)
-            return
-          }
-        }
-        playlist.push({
-          title: getNameFromURL(v),
-          src: v,
-          type: 'direct'
-        })
-        renderList()
-        savePlaylistOrder()
-        urlInput.value = ''
-        if (index === -1) playIndex(0)
-      })
+<button class="btn" id="openCustom" style="position:fixed;bottom:20px;right:20px;z-index:9;font-size:1.4rem;background:var(--card);border:1px solid var(--border);border-radius:50%;width:48px;height:48px;"><i class="fa-solid fa-palette"></i></button>
 
-      function extractYouTubeID(u) {
-        try {
-          const url = new URL(u)
-          if (url.hostname.includes('youtu.be')) return url.pathname.slice(1)
-          if (url.searchParams.get('v')) return url.searchParams.get('v')
-          if (url.pathname.startsWith('/watch')) return url.searchParams.get('v')
-          const parts = url.pathname.split('/')
-          return parts.pop() || parts.pop()
-        } catch (e) {
-          return null
-        }
-      }
-      async function fetchYouTubeTitle(id) {
-        try {
-          const res = await fetch('https://noembed.com/embed?url=https://www.youtube.com/watch?v=' + id)
-          if (!res.ok) return null
-          const data = await res.json()
-          return data.title || null
-        } catch (e) {
-          return null
-        }
-      }
+<div id="customBg">
+  <div class="section">
+    <label>ベースカラー</label>
+    <input type="color" id="baseColor" value="#0b0e17">
+  </div>
 
-      function renderList(filter = '') {
-        listEl.innerHTML = ''
-        const items = playlist.map((p, i) => ({
-          p,
-          i
-        })).filter(x => x.p.title.toLowerCase().includes(filter.toLowerCase()))
-        if (items.length === 0) {
-          const e = document.createElement('div')
-          e.className = 'empty'
-          e.textContent = 'プレイリストは空です'
-          listEl.appendChild(e)
-          return
-        }
-        for (const it of items) {
-          const el = document.createElement('div')
-          el.className = 'item'
-          el.dataset.idx = it.i
-          el.draggable = true
-          el.addEventListener('dragstart', handleDragStart)
-          el.addEventListener('dragover', handleDragOver)
-          el.addEventListener('dragleave', handleDragLeave)
-          el.addEventListener('drop', handleDrop)
-          const thumb = document.createElement('div')
-          thumb.className = 'thumb'
-          if (it.p.type === 'youtube' && it.p.id) {
-            const img = document.createElement('img')
-            img.src = `https://img.youtube.com/vi/${it.p.id}/hqdefault.jpg`
-            img.width = 120
-            img.height = 68
-            thumb.appendChild(img)
-          } else {
-            thumb.textContent = it.p.type === 'local' ? 'ローカル' : 'URL'
-          }
-          const t = document.createElement('div')
-          t.className = 'title'
-          t.textContent = it.p.title
-          const s = document.createElement('div')
-          s.className = 'small'
-          s.textContent = it.p.src
-          const del = document.createElement('button')
-          del.textContent = '削除'
-          del.style.marginLeft = 'auto'
-          del.addEventListener('click', e => {
-            e.stopPropagation()
-            removeFromPlaylist(it.i)
-          })
-          el.appendChild(thumb)
-          el.appendChild(t)
-          el.appendChild(s)
-          el.appendChild(del)
-          el.addEventListener('click', () => playIndex(Number(el.dataset.idx)))
-          listEl.appendChild(el)
-        }
-        highlightCurrent()
-      }
-      let dragSrc = null
+  <div class="section">
+    <label>グラデーションの数 (1〜8)</label>
+    <input type="number" id="gradCount" min="1" max="8" value="4">
+  </div>
 
-      function handleDragStart(e) {
-        dragSrc = Number(e.currentTarget.dataset.idx)
-        e.dataTransfer.effectAllowed = 'move'
-      }
+  <div class="section">
+    <label>グラデーション色（薄め透過で合成）</label>
+    <div class="grad-list" id="gradColors"></div>
+  </div>
 
-      function handleDragOver(e) {
-        e.preventDefault()
-        e.currentTarget.classList.add('drag-over')
-      }
+  <button class="btn-save" id="saveBg">保存して適用</button>
+</div>
 
-      function handleDragLeave(e) {
-        e.currentTarget.classList.remove('drag-over')
-      }
+<script>
+const video=document.getElementById('video')
+const fileInput=document.getElementById('file')
+const btnFile=document.getElementById('btnFile')
+const listEl=document.getElementById('list')
+const nowTitle=document.getElementById('nowTitle')
+const nowInfo=document.getElementById('nowInfo')
+const playBtn=document.getElementById('play')
+const prevBtn=document.getElementById('prev')
+const nextBtn=document.getElementById('next')
+const urlInput=document.getElementById('urlInput')
+const addUrlBtn=document.getElementById('addUrl')
+const search=document.getElementById('search')
+const clear=document.getElementById('clear')
 
-      function handleDrop(e) {
-        e.preventDefault()
-        const from = dragSrc
-        const to = Number(e.currentTarget.dataset.idx)
-        if (from === to) return
-        const moved = playlist.splice(from, 1)[0]
-        playlist.splice(to, 0, moved)
-        savePlaylistOrder()
-        renderList(search.value)
-      }
+let playlist=[]
+let index=-1
+let db
 
-      function getNameFromURL(u) {
-        try {
-          const url = new URL(u)
-          const parts = url.pathname.split('/')
-          return decodeURIComponent(parts.pop() || parts.pop())
-        } catch (e) {
-          return u
-        }
-      }
+function openDB(){const req=indexedDB.open('localtubeDB',1);req.onupgradeneeded=e=>{db=e.target.result;if(!db.objectStoreNames.contains('videos'))db.createObjectStore('videos',{keyPath:'id',autoIncrement:true})};req.onsuccess=e=>{db=e.target.result;loadSavedVideos();loadPlaylistOrder();loadBgSettings()}}
+function saveVideo(file){const reader=new FileReader();reader.onload=e=>{const tx=db.transaction('videos','readwrite');tx.objectStore('videos').add({title:file.name,blob:e.target.result})};reader.readAsArrayBuffer(file)}
+function loadSavedVideos(){const tx=db.transaction('videos','readonly');tx.objectStore('videos').getAll().onsuccess=e=>{for(const r of e.target.result){const url=URL.createObjectURL(new Blob([r.blob]));playlist.push({title:r.title,src:url,type:'local'})};renderList();if(index===-1&&playlist.length)playIndex(0)}}
+function savePlaylistOrder(){localStorage.setItem('playlistOrder',JSON.stringify(playlist))}
+function loadPlaylistOrder(){const s=localStorage.getItem('playlistOrder');if(s){playlist=JSON.parse(s);renderList();if(index===-1&&playlist.length)playIndex(0)}}
 
-      function removeFromPlaylist(i) {
-        const item = playlist[i]
-        if (item.type === 'local') {
-          const tx = db.transaction('videos', 'readwrite')
-          const store = tx.objectStore('videos')
-          const getAllReq = store.getAll()
-          getAllReq.onsuccess = () => {
-            const records = getAllReq.result
-            for (const rec of records) {
-              const blobUrl = URL.createObjectURL(new Blob([rec.blob]))
-              if (blobUrl === item.src || rec.title === item.title) {
-                store.delete(rec.id)
-                break
-              }
-            }
-          }
-        }
-        playlist.splice(i, 1)
-        if (index === i) index = -1
-        savePlaylistOrder()
-        renderList(search.value)
-      }
+function saveBgSettings(){const base=document.getElementById('baseColor').value;const colors=[];document.querySelectorAll('.grad-color').forEach(el=>colors.push(el.value));const overlay=`linear-gradient(135deg, ${colors.map(c=>`${c}30`).join(', ')})`;localStorage.setItem('bgSettings',JSON.stringify({base,overlay,colors}));applyBg(base,overlay)}
 
-      function playIndex(i) {
-        if (i < 0 || i >= playlist.length) return
-        index = i
-        const item = playlist[index]
-        nowTitle.textContent = item.title
-        nowInfo.textContent = item.type === 'youtube' ? 'YouTube埋め込み (nocookie)' : item.type
-        const player = document.querySelector('.player')
-        if (item.type === 'youtube') {
-          let iframe = player.querySelector('iframe')
-          if (!iframe) {
-            iframe = document.createElement('iframe')
-            iframe.style.width = '100%'
-            iframe.style.height = '420px'
-            iframe.style.borderRadius = '8px'
-            iframe.setAttribute('frameborder', '0')
-            iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture')
-            iframe.setAttribute('allowfullscreen', '')
-            const v = player.querySelector('video')
-            if (v) player.replaceChild(iframe, v)
-            else player.appendChild(iframe)
-          }
-          iframe.src = item.src
-        } else {
-          let videoEl = player.querySelector('video')
-          if (!videoEl) {
-            videoEl = document.createElement('video')
-            videoEl.id = 'video'
-            videoEl.controls = true
-            videoEl.playsInline = true
-            videoEl.style.width = '100%'
-            videoEl.style.height = '420px'
-            const iframe = player.querySelector('iframe')
-            if (iframe) player.replaceChild(videoEl, iframe)
-            else player.appendChild(videoEl)
-          }
-          videoEl.src = item.src
-          videoEl.play().catch(() => {})
-        }
-        highlightCurrent()
-      }
+function loadBgSettings(){const saved=localStorage.getItem('bgSettings');if(saved){const {base,overlay,colors}=JSON.parse(saved);document.getElementById('baseColor').value=base;document.getElementById('gradCount').value=colors?colors.length:4;applyBg(base,overlay);updateGradInputs(colors||[])}else{updateGradInputs()}}
+function applyBg(base,overlay){document.body.style.setProperty('--bg',base);document.body.style.setProperty('--bg-overlay',overlay)}
 
-      function highlightCurrent() {
-        const nodes = document.querySelectorAll('.item')
-        nodes.forEach(n => n.style.background = '')
-        const cur = document.querySelector('.item[data-idx="' + index + '"]')
-        if (cur) cur.style.background = 'linear-gradient(90deg, rgba(30,144,255,.08), transparent)'
-      }
-      playBtn.addEventListener('click', () => {
-        const v = document.querySelector('.player video')
-        if (!v) return
-        if (v.paused) v.play().catch(() => {})
-        else v.pause()
-      })
-      prevBtn.addEventListener('click', () => {
-        if (playlist.length === 0) return
-        const i = (index - 1 + playlist.length) % playlist.length
-        playIndex(i)
-      })
-      nextBtn.addEventListener('click', () => {
-        if (playlist.length === 0) return
-        const i = (index + 1) % playlist.length
-        playIndex(i)
-      })
-      search.addEventListener('input', () => renderList(search.value))
-      clear.addEventListener('click', () => {
-        search.value = ''
-        renderList('')
-      })
-      document.addEventListener('keydown', e => {
-        if (e.key === ' ' && document.activeElement.tagName.toLowerCase() !== 'input') {
-          e.preventDefault()
-          const v = document.querySelector('.player video')
-          if (v) {
-            if (v.paused) v.play().catch(() => {});
-            else v.pause()
-          }
-        }
-      })
-      openDB()
-      renderList()
-      const input = document.getElementById('addUrl')
-      const list = document.getElementById('list')
-      urlInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') addUrlBtn.click()
-      })
-    </script>
-  </body>
+function updateGradInputs(savedColors=[]){const count=parseInt(document.getElementById('gradCount').value)||4;const container=document.getElementById('gradColors');container.innerHTML='';const colors=savedColors.length===count?savedColors:Array(count).fill().map(()=>`#${Math.floor(Math.random()*16777215).toString(16).padStart(6,'0')}`);for(let i=0;i<count;i++){const div=document.createElement('div');div.className='grad-item';div.innerHTML=`
+<input type="color" class="grad-color" value="${colors[i]}">
+<button class="btn-del-grad"><i class="fa-solid fa-trash-can"></i></button>`;div.querySelector('.btn-del-grad').onclick=()=>{if(count>1){document.getElementById('gradCount').value=count-1;updateGradInputs(colors.filter((_,idx)=>idx!==i))}};container.appendChild(div)}}
+
+document.getElementById('gradCount').onchange=()=>{const v=parseInt(this.value);if(v<1)this.value=1;if(v>8)this.value=8;updateGradInputs()}
+document.getElementById('saveBg').onclick=()=>{saveBgSettings();document.getElementById('customBg').classList.remove('show')}
+
+btnFile.onclick=()=>fileInput.click()
+fileInput.onchange=e=>addFileList(e.target.files)
+
+addUrlBtn.onclick=async()=>{const v=urlInput.value.trim();if(!v)return;if(v.includes('youtube.com')||v.includes('youtu.be')){const id=extractYouTubeID(v);if(id){const t=await fetchYouTubeTitle(id);playlist.push({title:t||'YT: '+id,src:`https://www.youtube-nocookie.com/embed/${id}`,type:'youtube',id});urlInput.value='';renderList();savePlaylistOrder();if(index===-1)playIndex(0);return}}playlist.push({title:getNameFromURL(v),src:v,type:'direct'});renderList();savePlaylistOrder();urlInput.value='';if(index===-1)playIndex(0)}
+
+function extractYouTubeID(u){try{const url=new URL(u);if(url.hostname.includes('youtu.be'))return url.pathname.slice(1);return url.searchParams.get('v')||url.pathname.split('/').pop()}catch{return null}}
+async function fetchYouTubeTitle(id){try{const res=await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${id}`);const d=await res.json();return d.title}catch{return null}}
+
+function renderList(filter=''){listEl.innerHTML='';const items=playlist.map((p,i)=>({p,i})).filter(x=>x.p.title.toLowerCase().includes(filter.toLowerCase()));if(!items.length){listEl.innerHTML='<div class="empty">空っぽ</div>';return}for(const it of items){const el=document.createElement('div');el.className='item';el.dataset.idx=it.i;el.draggable=true;el.innerHTML=`
+<div class="thumb">${it.p.type==='youtube'&&it.p.id?`<img src="https://img.youtube.com/vi/${it.p.id}/hqdefault.jpg">`:'<div style="height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#666;">'+(it.p.type==='local'?'LOCAL':'URL')+'</div>'}</div>
+<div class="item-info"><div class="item-title">${it.p.title}</div><div class="item-src">${it.p.src}</div></div>
+<button class="btn-del"><i class="fa-solid fa-trash"></i></button>`;el.onclick=()=>playIndex(Number(it.i));el.querySelector('.btn-del').onclick=e=>{e.stopPropagation();removeFromPlaylist(it.i)};listEl.appendChild(el)}highlightCurrent()}
+
+function getNameFromURL(u){try{const url=new URL(u);return decodeURIComponent(url.pathname.split('/').pop()||'')||u}catch{return u}}
+function removeFromPlaylist(i){playlist.splice(i,1);if(index===i)index=-1;savePlaylistOrder();renderList(search.value)}
+function playIndex(i){if(i<0||i>=playlist.length)return;index=i;const p=playlist[i];nowTitle.textContent=p.title;nowInfo.textContent=p.type;const wrap=document.getElementById('vidWrap');if(p.type==='youtube'){let iframe=wrap.querySelector('iframe');if(!iframe){iframe=document.createElement('iframe');iframe.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';iframe.allowFullscreen=true;wrap.innerHTML='';wrap.appendChild(iframe)}iframe.src=p.src}else{let v=wrap.querySelector('video');if(!v){v=document.createElement('video');v.id='video';v.controls=true;v.playsInline=true;wrap.innerHTML='';wrap.appendChild(v)}v.src=p.src;v.play().catch(()=>{})}highlightCurrent()}
+function highlightCurrent(){document.querySelectorAll('.item').forEach(el=>el.classList.remove('active'));const cur=document.querySelector(`.item[data-idx="${index}"]`);if(cur)cur.classList.add('active')}
+
+playBtn.onclick=()=>{const v=document.querySelector('video');if(!v)return;if(v.paused){v.play();playBtn.innerHTML='<i class="fa-solid fa-pause"></i>'}else{v.pause();playBtn.innerHTML='<i class="fa-solid fa-play"></i>'}}
+prevBtn.onclick=()=>{if(!playlist.length)return;playIndex((index-1+playlist.length)%playlist.length)}
+nextBtn.onclick=()=>{if(!playlist.length)return;playIndex((index+1)%playlist.length)}
+search.oninput=()=>renderList(search.value)
+clear.onclick=()=>{search.value='';renderList('')}
+urlInput.onkeydown=e=>{if(e.key==='Enter')addUrlBtn.click()}
+document.onkeydown=e=>{if(e.key===' '&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){e.preventDefault();playBtn.click()}}
+
+const openCustom=document.getElementById('openCustom')
+const customBg=document.getElementById('customBg')
+openCustom.onclick=()=>customBg.classList.toggle('show')
+
+openDB()
+renderList()
+</script>
+</body>
 </html>
