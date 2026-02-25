@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>destroy2</title>
+<style>
+  body { font-family: system-ui, sans-serif; padding: 20px; background:#111; color:#eee; }
+  textarea, input, button { font-size: 16px; padding: 8px; margin: 8px 0; }
+  button { background:#c00; color:white; border:none; padding:12px 24px; cursor:pointer; }
+  button:hover { background:#f00; }
+  #log { margin-top:20px; color:#0f0; font-family:monospace; white-space:pre-wrap; }
+  p.note { color:#ff0; font-weight:bold; }
+</style>
+</head>
+<body>
+
+<h2>Destroy History</h2>
+
+<p>URL（1行1つ 複数可 たくさん入れるとランダムで選ばれru）</p>
+<textarea id="urls" rows="10" cols="70" placeholder="https://example.com
+https://google.com
+https://youtube.com
+https://wikipedia.org
+..."></textarea>
+
+<p>一気に開く数1~10</p>
+<input type="number" id="count" min="1" max="10" value="5">
+
+<button id="start">開始（クリックで一気に開く）</button>
+<button id="stop" disabled>停止</button>
+
+<p class="note">重要：ブラウザのポップアップブロックを回避するため「開始」ボタンを押した直後にしか一気に開きません。ボタン押してからすぐブロック許可を求められたら「許可」してね。Chrome/Firefoxだと最初に1回許可すれば以降いけることが多い。</p>
+
+<div id="log"></div>
+
+<script>
+const log = document.getElementById('log');
+let isRunning = false;
+
+function addLog(msg) {
+  log.textContent = new Date().toLocaleTimeString() + ' ' + msg + '\n' + log.textContent;
+}
+
+function randomDelay(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function getRandomParam() {
+  return `t=${Date.now()}-${Math.floor(Math.random() * 999999)}`;
+}
+
+function appendQuery(url) {
+  const param = getRandomParam();
+  return url.includes('?') ? `${url}&${param}` : `${url}?${param}`;
+}
+
+function openTab(url) {
+  try {
+    const fullUrl = appendQuery(url.trim());
+    const w = window.open(fullUrl, '_blank');
+    if (w) {
+      const closeDelay = randomDelay(1200, 2200);
+      setTimeout(() => {
+        try { w.close(); } catch(e) {}
+      }, closeDelay);
+      addLog(`開いた → ${url} (約${closeDelay}msで閉じる)`);
+    } else {
+      addLog(`ブロック？ → ${url} (ポップアップ許可して！)`);
+    }
+  } catch(e) {
+    addLog(`エラー → ${url} ${e.message}`);
+  }
+}
+
+function burstOpen() {
+  if (!isRunning) return;
+
+  const raw = document.getElementById('urls').value.trim();
+  if (!raw) {
+    addLog('URL入れてくれ');
+    stopAll();
+    return;
+  }
+
+  const urls = raw.split('\n').map(u => u.trim()).filter(u => u.startsWith('http'));
+  if (urls.length === 0) {
+    addLog('有効なURLないよ');
+    stopAll();
+    return;
+  }
+
+  const count = Math.min(Math.max(1, Number(document.getElementById('count').value) || 5), 10);
+  addLog(`${count}個 一気に開くぞ`);
+
+  for (let i = 0; i < count; i++) {
+    const url = urls[Math.floor(Math.random() * urls.length)];
+    openTab(url);
+
+    if (i < count - 1) {
+      setTimeout(() => {}, randomDelay(40, 120));
+    }
+  }
+
+
+  const nextDelay = randomDelay(2500, 5000);
+  addLog(`次の一気まで約${Math.round(nextDelay/1000)}秒`);
+  setTimeout(burstOpen, nextDelay);
+}
+
+function startAll() {
+  if (isRunning) return;
+  isRunning = true;
+  document.getElementById('start').disabled = true;
+  document.getElementById('stop').disabled = false;
+  addLog('--- 開始 --- ');
+  burstOpen();
+}
+
+function stopAll() {
+  isRunning = false;
+  document.getElementById('start').disabled = false;
+  document.getElementById('stop').disabled = true;
+  addLog('--- 停止 ---');
+}
+
+document.getElementById('start').onclick = startAll;
+document.getElementById('stop').onclick = stopAll;
+</script>
+
+</body>
+</html>
