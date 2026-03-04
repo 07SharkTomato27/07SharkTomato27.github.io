@@ -20,55 +20,49 @@
         --muted: #72767d;
         --border: #292b2f;
       }
-
       @keyframes fadeIn {
         from {
           opacity: 0;
           transform: translateY(20px);
         }
-
         to {
           opacity: 1;
           transform: translateY(0);
         }
       }
-
       @keyframes slideInLeft {
         from {
           transform: translateX(-100%);
         }
-
         to {
           transform: translateX(0);
         }
       }
-
       @keyframes bounce {
-
         0%,
         100% {
           transform: translateY(0);
         }
-
         50% {
           transform: translateY(-8px);
         }
       }
-
       @keyframes pulse {
         0% {
           box-shadow: 0 0 0 0 rgba(88, 101, 242, 0.4);
         }
-
         70% {
           box-shadow: 0 0 0 10px rgba(88, 101, 242, 0);
         }
-
         100% {
           box-shadow: 0 0 0 0 rgba(88, 101, 242, 0);
         }
       }
-
+      @keyframes rainbow-animation {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
       body {
         margin: 0;
         background: var(--bg);
@@ -78,7 +72,6 @@
         overflow: hidden;
         display: flex;
       }
-
       #rules,
       #nameModal {
         position: fixed;
@@ -91,7 +84,6 @@
         z-index: 9999;
         animation: fadeIn 0.6s ease-out;
       }
-
       .modalBox,
       #rulesBox {
         background: var(--main);
@@ -104,7 +96,6 @@
         animation: bounce 0.6s ease-out;
         border: 1px solid rgba(88, 101, 242, 0.3);
       }
-
       .modalBox button,
       #rulesBox button {
         background: var(--accent);
@@ -115,26 +106,22 @@
         position: relative;
         overflow: hidden;
       }
-
       .modalBox button:hover,
       #rulesBox button:hover {
         background: var(--accent-hover);
         transform: translateY(-3px);
         box-shadow: 0 10px 20px rgba(88, 101, 242, 0.4);
       }
-
       .modalBox button:active,
       #rulesBox button:active {
         animation: pulse 0.6s;
       }
-
       .container {
         display: flex;
         width: 100%;
         height: 100vh;
         animation: slideInLeft 0.8s ease-out;
       }
-
       .sidebar {
         width: 240px;
         background: var(--sidebar);
@@ -142,7 +129,6 @@
         box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
         z-index: 10;
       }
-
       .server-name {
         color: #fff;
         font-weight: 700;
@@ -153,17 +139,14 @@
         transition: all 0.3s;
         cursor: pointer;
       }
-
       .server-name:hover {
         background: var(--accent);
         transform: translateX(8px);
       }
-
       .online-list {
         margin-top: 30px;
         padding: 0 16px;
       }
-
       .online-title {
         color: var(--online);
         font-size: 12px;
@@ -172,7 +155,6 @@
         letter-spacing: 1px;
         padding: 0 8px;
       }
-
       .online-item {
         display: flex;
         align-items: center;
@@ -183,24 +165,19 @@
         animation: fadeIn 0.5s ease-out forwards;
         opacity: 0;
       }
-
       .online-item:nth-child(1) {
         animation-delay: 0.1s;
       }
-
       .online-item:nth-child(2) {
         animation-delay: 0.2s;
       }
-
       .online-item:nth-child(3) {
         animation-delay: 0.3s;
       }
-
       .online-item:hover {
         background: rgba(67, 181, 129, 0.2);
         transform: translateX(4px);
       }
-
       .status-dot {
         width: 10px;
         height: 10px;
@@ -210,7 +187,6 @@
         box-shadow: 0 0 10px rgba(67, 181, 129, 0.8);
         animation: pulse 2s infinite;
       }
-
       .channel-list div {
         padding: 10px 20px;
         border-radius: 8px;
@@ -219,7 +195,6 @@
         position: relative;
         overflow: hidden;
       }
-
       .channel-list div::before {
         content: "";
         position: absolute;
@@ -230,24 +205,20 @@
         background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
         transition: 0.6s;
       }
-
       .channel-list div:hover::before {
         left: 100%;
       }
-
       .channel-list div:hover {
         background: var(--hover);
         color: #fff;
         transform: translateX(8px);
       }
-
       .main {
         flex: 1;
         display: flex;
         flex-direction: column;
         background: var(--main);
       }
-
       .header {
         height: 48px;
         background: rgba(0, 0, 0, 0.2);
@@ -258,14 +229,12 @@
         backdrop-filter: blur(10px);
         z-index: 5;
       }
-
       #chatBox {
         flex: 1;
         overflow-y: auto;
         padding: 20px;
         background: linear-gradient(to bottom, #36393f, #2f3136);
       }
-
       .message {
         margin-bottom: 20px;
         display: flex;
@@ -273,19 +242,15 @@
         transform: translateY(30px);
         animation: fadeIn 0.5s ease-out forwards;
       }
-
       .message:nth-child(1) {
         animation-delay: 0.1s;
       }
-
       .message:nth-child(2) {
         animation-delay: 0.2s;
       }
-
       .message:nth-child(3) {
         animation-delay: 0.3s;
       }
-
       .avatar {
         width: 40px;
         height: 40px;
@@ -300,40 +265,33 @@
         box-shadow: 0 0 15px rgba(88, 101, 242, 0.5);
         transition: all 0.3s;
       }
-
       .message:hover .avatar {
         transform: scale(1.1) rotate(5deg);
       }
-
       .username {
         font-weight: 600;
         color: #fff;
         cursor: pointer;
         transition: all 0.2s;
       }
-
       .username:hover {
         color: var(--accent);
         text-shadow: 0 0 8px rgba(88, 101, 242, 0.6);
       }
-
       .text a {
         color: #00aff4 !important;
         text-decoration: underline;
         transition: all 0.2s;
       }
-
       .text a:hover {
         color: #00d9ff !important;
         text-shadow: 0 0 10px rgba(0, 175, 244, 0.6);
       }
-
       .inputArea {
         padding: 16px;
         background: rgba(0, 0, 0, 0.3);
         backdrop-filter: blur(10px);
       }
-
       .inputWrapper {
         background: var(--input);
         border-radius: 12px;
@@ -341,12 +299,10 @@
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         transition: all 0.3s;
       }
-
       .inputWrapper:focus-within {
         box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.4);
         transform: scale(1.02);
       }
-
       #msg {
         width: 100%;
         background: transparent;
@@ -358,25 +314,20 @@
         resize: none;
         max-height: 150px;
       }
-
       #chatBox::-webkit-scrollbar {
         width: 10px;
       }
-
       #chatBox::-webkit-scrollbar-track {
         background: transparent;
       }
-
       #chatBox::-webkit-scrollbar-thumb {
         background: rgba(88, 101, 242, 0.5);
         border-radius: 10px;
         border: 2px solid var(--main);
       }
-
       #chatBox::-webkit-scrollbar-thumb:hover {
         background: var(--accent);
       }
-
       #clickCounterBtn {
         position: absolute;
         top: 12px;
@@ -393,16 +344,32 @@
         border: 1px solid rgba(88, 101, 242, 0.3);
         z-index: 100;
       }
-
       #clickCounterBtn:hover {
         background: var(--accent);
         transform: translateY(-2px);
         box-shadow: 0 4px 15px rgba(88, 101, 242, 0.4);
       }
-
       #clickCounterBtn:active {
         transform: translateY(0);
         animation: pulse 0.6s;
+      }
+      .msg-embed {
+        margin-top: 10px;
+      }
+      .msg-image,
+      .msg-video {
+        max-width: 420px;
+        height: auto;
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.6);
+      }
+      .rainbow-text {
+        font-weight: 600;
+        background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #00ffff, #0000ff, #8b00ff);
+        background-size: 700% 700%;
+        -webkit-background-clip: text;
+        color: transparent;
+        animation: rainbow-animation 3.5s linear infinite;
       }
     </style>
   </head>
@@ -417,7 +384,7 @@
     </div>
     <div class="container" style="display:none">
       <div class="sidebar">
-        <div class="server-name" id="changeName">WebChat ← クリックで名前変更</div>
+        <div class="server-name" id="changeName">WebChat ← クリックで名前変更＆色</div>
         <div class="online-list">
           <div class="online-title">オンライン — <span id="onlineCount">0</span>
           </div>
@@ -432,7 +399,7 @@
           <h2># 雑談</h2>
         </div>
         <div id="clickCounterBtn">
-          <span id="counterText">🔥 0</span>
+          <span id="counterText">0</span>
         </div>
         <div id="chatBox"></div>
         <div class="inputArea">
@@ -446,6 +413,27 @@
       <div class="modalBox">
         <h1>ニックネームを決めてね</h1>
         <input type="text" id="nameInput" placeholder="例：洗濯機" maxlength="16">
+        <div style="margin:20px 0;padding:15px;background:rgba(88,101,242,0.1);border-radius:12px;">
+          <h3 style="margin:0 0 15px 0;color:#fff;">メッセージの見た目</h3>
+          <div style="display:flex;flex-direction:column;gap:12px;align-items:flex-start;">
+            <div>
+              <span style="color:#b9bbbe;">メイン色</span><br>
+              <input type="color" id="userColor" value="#dcddde" style="width:80px;height:40px;border:none;border-radius:8px;cursor:pointer;">
+            </div>
+            <div>
+              <span style="color:#b9bbbe;">スタイル</span><br>
+              <select id="userStyle" style="background:var(--input);color:var(--text);border:1px solid var(--border);padding:8px;border-radius:8px;width:180px;">
+                <option value="normal">通常の色</option>
+                <option value="gradient">グラデーション</option>
+                <option value="rainbow">レインボーアニメ</option>
+              </select>
+            </div>
+            <div id="gradientSection" style="display:none;width:100%;">
+              <span style="color:#b9bbbe;">終端色</span><br>
+              <input type="color" id="gradientTo" value="#00ff99" style="width:80px;height:40px;border:none;border-radius:8px;cursor:pointer;">
+            </div>
+          </div>
+        </div>
         <button id="nameSubmit">決定</button>
       </div>
     </div>
@@ -456,6 +444,9 @@
         userId = "user_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
         localStorage.setItem("chatUserId", userId);
       }
+      let userTextColor = localStorage.getItem("chatTextColor") || "#dcddde";
+      let userTextStyle = localStorage.getItem("chatTextStyle") || "normal";
+      let userGradientTo = localStorage.getItem("chatGradientTo") || "#00ff99";
       const firebaseConfig = {
         apiKey: "AIzaSyAMBXkyezKK-9da0WEqYefi1bbkyublqxs",
         authDomain: "webchat-1e806.firebaseapp.com",
@@ -486,9 +477,12 @@
       const onlineUsersDiv = document.getElementById("onlineUsers");
       const onlineCountSpan = document.getElementById("onlineCount");
       const showNameModal = () => {
-      const counterRef = db.ref("clickCounter");
-      const counterText = document.getElementById("counterText");
         document.getElementById("nameInput").value = userName;
+        document.getElementById("userColor").value = userTextColor;
+        document.getElementById("userStyle").value = userTextStyle;
+        document.getElementById("gradientTo").value = userGradientTo;
+        const gs = document.getElementById("gradientSection");
+        gs.style.display = userTextStyle === "gradient" ? "block" : "none";
         nameModal.style.display = "flex";
       };
       const updateOnlineStatus = () => {
@@ -517,7 +511,15 @@
         incrementCounter();
         const oldName = userName;
         userName = document.getElementById("nameInput").value.trim() || "名無し";
+        userTextColor = document.getElementById("userColor").value || "#dcddde";
+        userTextStyle = document.getElementById("userStyle").value;
+        if (userTextStyle === "gradient") {
+          userGradientTo = document.getElementById("gradientTo").value || userTextColor;
+        }
         localStorage.setItem("chatName", userName);
+        localStorage.setItem("chatTextColor", userTextColor);
+        localStorage.setItem("chatTextStyle", userTextStyle);
+        localStorage.setItem("chatGradientTo", userGradientTo);
         nameModal.style.display = "none";
         updateOnlineStatus();
         if (oldName && oldName !== userName) {
@@ -532,11 +534,14 @@
         if (e.key === "Enter") document.getElementById("nameSubmit").click();
       };
       document.getElementById("changeName").onclick = showNameModal;
+      document.getElementById("userStyle").addEventListener("change", () => {
+        const gs = document.getElementById("gradientSection");
+        gs.style.display = document.getElementById("userStyle").value === "gradient" ? "block" : "none";
+      });
       msgInput.oninput = () => {
         msgInput.style.height = "auto";
         msgInput.style.height = msgInput.scrollHeight + "px";
       };
-      
       const now = new Date(Date.now() + 9*60*60*1000);
       const dateStr = now.toLocaleDateString("ja-JP", {year:"numeric",month:"numeric",day:"numeric"});
       const sendMessage = () => {
@@ -547,7 +552,10 @@
             t: text,
             uid: userId,
             time: firebase.database.ServerValue.TIMESTAMP,
-            date: dateStr
+            date: dateStr,
+            textColor: userTextColor,
+            textStyle: userTextStyle,
+            gradientTo: userTextStyle === "gradient" ? userGradientTo : null
           });
           msgInput.value = "";
           msgInput.style.height = "auto";
@@ -561,86 +569,114 @@
         }
       };
       messagesRef.on("child_added", s => {
-            const m = s.val();
-            const key = s.key;
-            const msgDiv = document.createElement("div");
-            msgDiv.className = "message";
-            msgDiv.dataset.key = key;
-            const avatar = document.createElement("div");
-            avatar.className = "avatar";
-            avatar.textContent = (m.u || "??").slice(0, 2).toUpperCase();
-            const content = document.createElement("div");
-            content.className = "content";
-            const header = document.createElement("div");
-            const nameSpan = document.createElement("span");
-            nameSpan.className = "username";
-            nameSpan.textContent = m.u || "名無し";
-            const timeSpan = document.createElement("span");
-            timeSpan.className = "timestamp";
-            timeSpan.textContent = m.date + " " + new Date(m.time).toLocaleTimeString("ja-JP", {hour:"2-digit", minute:"2-digit"});
-            header.append(nameSpan, timeSpan);
-            const textDiv = document.createElement("div");
-            textDiv.className = "text";
-             const textWithLinks = m.t
-            .replace(/\n/g, '<br>')
-            .replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?])/g, '<a href="$1" target="_blank" style="color:#00aff4;text-decoration:underline;">$1</a>');
-              textDiv.innerHTML = textWithLinks; content.append(header, textDiv); msgDiv.append(avatar, content); chatBox.appendChild(msgDiv); chatBox.scrollTop = chatBox.scrollHeight;
-              while (chatBox.children.length > 40) {
-                const oldest = chatBox.children[0];
-                messagesRef.child(oldest.dataset.key).remove();
-                oldest.remove();
-              }
-            });
-            usersRef.on("value", snap => {
-              const users = snap.val() || {};
-              const now = Date.now();
-              const active = {};
-              Object.keys(users).forEach(id => {
-                if (now - users[id].time < 30000) {
-                  active[id] = users[id];
-                }
-              });
-              onlineUsersDiv.innerHTML = "";
-              onlineCountSpan.textContent = Object.keys(active).length;
-              Object.keys(active).sort((a, b) => active[a].name.localeCompare(active[b].name)).forEach(id => {
-                const div = document.createElement("div");
-                div.className = "online-item";
-                div.innerHTML = `
-                
-						<div class="status-dot"></div>
-						<div class="online-name">${active[id].name}</div>`;
-                if (id === userId) div.querySelector(".status-dot").style.background = "#f04747";
-                onlineUsersDiv.appendChild(div);
-              });
-            });
-            window.addEventListener("beforeunload", () => {
-              usersRef.child(userId).remove();
-              clearInterval(heartbeatInterval);
-            });
-            const counterBtn = document.getElementById("clickCounterBtn");
-            const counterText = document.getElementById("counterText");
-            const counterRef = db.ref("clickCounter");
-            
-            counterBtn.addEventListener("click", () => {
-            incrementCounter();
-            });
-
-            counterRef.on("value", snap => {
-            counterText.textContent = `謎の回数→ ${snap.val() || 0}`;
-            });
-
-            function incrementCounter() {
-              counterRef.transaction(c => (c || 0) + 1, (error, committed, snapshot) => {
-                if (error) {
-              console.error("カウンター更新エラー:", error);
-            } else if (committed) {
-              console.log("カウント成功:", snapshot.val());
-            } else {
-            console.log("コミット失敗");
-                }
-             });
-            }
-            
+        const m = s.val();
+        const key = s.key;
+        const msgDiv = document.createElement("div");
+        msgDiv.className = "message";
+        msgDiv.dataset.key = key;
+        const avatar = document.createElement("div");
+        avatar.className = "avatar";
+        avatar.textContent = (m.u || "??").slice(0, 2).toUpperCase();
+        const content = document.createElement("div");
+        content.className = "content";
+        const header = document.createElement("div");
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "username";
+        nameSpan.textContent = m.u || "名無し";
+        const timeSpan = document.createElement("span");
+        timeSpan.className = "timestamp";
+        timeSpan.textContent = m.date + " " + new Date(m.time).toLocaleTimeString("ja-JP", {hour:"2-digit", minute:"2-digit"});
+        header.append(nameSpan, timeSpan);
+        const textDiv = document.createElement("div");
+        textDiv.className = "text";
+        const rawT = m.t || "";
+        let contentHTML = rawT.replace(/\n/g, "<br>").replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" style="color:#00aff4 !important;text-decoration:underline;">$1</a>');
+        let embedHTML = "";
+        let url = rawT.split(/[ ?&]/)[0];
+        if (/\.(gif|png|jpeg|jpg|webp|avif)$/i.test(url)) {
+          embedHTML = `<div class="msg-embed"><img src="${url}" class="msg-image"></div>`;
+          contentHTML = "";
+        } else if (/\.(mp4|webm|ogg|mp3)$/i.test(url)) {
+          embedHTML = `<div class="msg-embed"><video src="${url}" controls class="msg-video"></video></div>`;
+          contentHTML = "";
+        } else if (/(youtube\.com\/watch\?v=|youtu\.be\/|youtube-nocookie\.com\/embed\/)/i.test(rawT)) {
+          let id = "";
+          let base = "https://www.youtube.com/embed/";
+          if (rawT.includes("watch?v=")) id = rawT.split("watch?v=")[1].split("&")[0];
+          else if (rawT.includes("youtu.be/")) id = rawT.split("youtu.be/")[1].split("?")[0];
+          else if (rawT.includes("youtube-nocookie.com/embed/")) {
+            id = rawT.split("youtube-nocookie.com/embed/")[1].split("?")[0];
+            base = "https://www.youtube-nocookie.com/embed/";
+          }
+          if (id) {
+            embedHTML = `<div class="msg-embed"><iframe width="100%" height="315" src="${base}${id}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
+          }
+        }
+        const textStyle = m.textStyle || "normal";
+        const tColor = m.textColor || "#dcddde";
+        let inlineStyle = "";
+        if (textStyle === "normal") {
+          inlineStyle = `color:${tColor};`;
+        } else if (textStyle === "gradient") {
+          const gTo = m.gradientTo || "#ffffff";
+          inlineStyle = `background:linear-gradient(to right,${tColor},${gTo});-webkit-background-clip:text;color:transparent;`;
+        } else if (textStyle === "rainbow") {
+          textDiv.classList.add("rainbow-text");
+        }
+        textDiv.setAttribute("style", inlineStyle);
+        textDiv.innerHTML = contentHTML;
+        content.append(header, textDiv);
+        if (embedHTML) {
+          const embedDiv = document.createElement("div");
+          embedDiv.innerHTML = embedHTML;
+          content.appendChild(embedDiv);
+        }
+        msgDiv.append(avatar, content);
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        while (chatBox.children.length > 40) {
+          const oldest = chatBox.children[0];
+          messagesRef.child(oldest.dataset.key).remove();
+          oldest.remove();
+        }
+      });
+      usersRef.on("value", snap => {
+        const users = snap.val() || {};
+        const now = Date.now();
+        const active = {};
+        Object.keys(users).forEach(id => {
+          if (now - users[id].time < 30000) {
+            active[id] = users[id];
+          }
+        });
+        onlineUsersDiv.innerHTML = "";
+        onlineCountSpan.textContent = Object.keys(active).length;
+        Object.keys(active).sort((a, b) => active[a].name.localeCompare(active[b].name)).forEach(id => {
+          const div = document.createElement("div");
+          div.className = "online-item";
+          div.innerHTML = `
+<div class="status-dot"></div>
+<div class="online-name">${active[id].name}</div>`;
+          if (id === userId) div.querySelector(".status-dot").style.background = "#f04747";
+          onlineUsersDiv.appendChild(div);
+        });
+      });
+      window.addEventListener("beforeunload", () => {
+        usersRef.child(userId).remove();
+        clearInterval(heartbeatInterval);
+      });
+      const counterBtn = document.getElementById("clickCounterBtn");
+      const counterText = document.getElementById("counterText");
+      const counterRef = db.ref("clickCounter");
+      counterBtn.addEventListener("click", () => {
+        incrementCounter();
+      });
+      counterRef.on("value", snap => {
+        counterText.textContent = `謎の回数→ ${snap.val() || 0}`;
+      });
+      function incrementCounter() {
+        counterRef.transaction(c => (c || 0) + 1);
+      }
     </script>
   </body>
 </html>
