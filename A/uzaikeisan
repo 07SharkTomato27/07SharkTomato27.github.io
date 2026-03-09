@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ja">
+	<head>
+		<meta charset="UTF-8">
+		<title>計算</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<style>
+			body {
+				font-family: system-ui, sans-serif;
+				background: #111;
+				color: #eee;
+				text-align: center;
+				margin: 0;
+				padding: 20px;
+				transition: background 1s
+			}
+
+			h1 {
+				font-size: 1.8rem;
+				margin: 0.5em 0
+			}
+
+			#question {
+				font-size: 3rem;
+				margin: 1em 0;
+				font-weight: bold
+			}
+
+			#answer {
+				width: 120px;
+				font-size: 2rem;
+				padding: 8px;
+				text-align: center
+			}
+
+			button {
+				font-size: 1.2rem;
+				padding: 10px 24px;
+				margin: 8px;
+				border: none;
+				border-radius: 8px;
+				cursor: pointer
+			}
+
+			#ok {
+				background: #28a745;
+				color: white
+			}
+
+			#ng {
+				background: #dc3545;
+				color: white
+			}
+
+			#next {
+				background: #0d6efd;
+				color: white
+			}
+
+			#msg {
+				font-size: 1.8rem;
+				margin: 1.5em 0;
+				min-height: 2.5em
+			}
+
+			#count {
+				font-size: 1.1rem;
+				color: #aaa
+			}
+
+			.death {
+				background: #f00 !important;
+			}
+
+			.death * {
+				display: none !important;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>計算</h1>
+		<div id="question"></div>
+		<input type="number" id="answer" placeholder="?" step="1">
+		<button id="ok">OK</button>
+		<button id="ng" style="display:none">違うよ</button>
+		<div id="msg"></div>
+		<div id="count">間違い回数: 0</div>
+		<button id="next" style="display:none">次の問題</button>
+		<script>
+			const body = document.body
+			const q = document.getElementById('question')
+			const ansInput = document.getElementById('answer')
+			const okBtn = document.getElementById('ok')
+			const ngBtn = document.getElementById('ng')
+			const msg = document.getElementById('msg')
+			const countEl = document.getElementById('count')
+			const nextBtn = document.getElementById('next')
+			let mistake = 0
+			let deathTimer = null
+			const missMsgs = ["下手くそｗ", "雑魚いなｗ", "頭悪すぎｗ", "お勉強やりなおしだね 笑", "バカだね はいろんぱ😂", "あなたのかいとう ０点です 次はもっといい回答できるといいね😂", "下手くそ はいろんぱ！！😂", "ｿﾚｯﾃｱﾅﾀﾉｶﾝｿｳﾃﾞｽﾖﾈ　ﾊｲ!ﾛﾝﾊﾟ", "あれどうしたの もうそれで終わり？ 笑", "まさかここまでばかだとおもわなかった！笑😂😂", "😂😂😂😂笑"]
+
+			function rand(min, max) {
+				return Math.floor(Math.random() * (max - min + 1)) + min
+			}
+
+			function newProblem() {
+				if (deathTimer) {
+					clearTimeout(deathTimer)
+					deathTimer = null
+				}
+				body.classList.remove('death')
+				document.title = "計算"
+				ansInput.value = ''
+				ansInput.focus()
+				msg.textContent = ''
+				okBtn.style.display = 'inline-block'
+				ngBtn.style.display = 'none'
+				nextBtn.style.display = 'none'
+				const type = rand(1, 10)
+				let a, b, op, correct
+				if (type <= 4) {
+					a = rand(100, 9999)
+					b = rand(100, 9999)
+					op = '+'
+					correct = a + b
+				} else if (type <= 7) {
+					a = rand(100, 9999)
+					b = rand(100, 9999)
+					op = '-'
+					if (a < b) {
+						[a, b] = [b, a]
+					}
+					correct = a - b
+				} else if (type <= 9) {
+					a = rand(2, 99)
+					b = rand(2, 99)
+					op = '×'
+					correct = a * b
+				} else {
+					b = rand(2, 99)
+					correct = rand(3, 999)
+					a = correct * b
+					op = '÷'
+				}
+				q.textContent = `${a} ${op} ${b} = `
+				window.currentAnswer = correct
+			}
+
+			function check() {
+				const user = Number(ansInput.value)
+				if (isNaN(user)) return
+				if (user === window.currentAnswer) {
+					msg.textContent = '正解だね、そうに決まってる'
+					msg.style.color = '#0f0'
+					okBtn.style.display = 'none'
+					nextBtn.style.display = 'inline-block'
+				} else {
+					mistake++
+					countEl.textContent = `間違い回数: ${mistake}`
+					if (mistake >= 11) {
+						okBtn.disabled = true
+						ansInput.disabled = true
+						nextBtn.style.display = 'none'
+						deathTimer = setTimeout(() => {
+							body.classList.add('death')
+							document.title = "DEATH"
+						}, 5000)
+						return
+					}
+					msg.textContent = missMsgs[mistake - 1] || 'また間違えたね'
+					msg.style.color = '#ff9800'
+					okBtn.style.display = 'none'
+					ngBtn.style.display = 'inline-block'
+					ngBtn.disabled = true
+					nextBtn.style.display = 'inline-block'
+				}
+			}
+			okBtn.onclick = check
+			ngBtn.onclick = check
+			nextBtn.onclick = newProblem
+			ansInput.onkeydown = e => {
+				if (e.key === 'Enter') check()
+			}
+			newProblem()
+		</script>
+	</body>
+</html>
+</html>
