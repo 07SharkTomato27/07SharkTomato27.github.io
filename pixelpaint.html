@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>PIXEL PAINT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        body{font-family:'Press Start 2P',system-ui}
+        canvas{image-rendering:pixelated;box-shadow:0 0 30px rgba(0,255,0,0.3);border:8px solid #111}
+        #canvas-container{background:repeating-linear-gradient(45deg,#4a4a4a,#4a4a4a 10px,#3a3a3a 10px,#3a3a3a 20px)}
+        .tool-btn{transition:all 0.1s ease}
+        .tool-btn.active{transform:scale(1.15);box-shadow:0 0 15px #0f0}
+        .modal{animation:modalPop 0.3s ease}
+        @keyframes modalPop{0%{transform:scale(0.8);opacity:0}100%{transform:scale(1);opacity:1}}
+        .reset-btn{animation:resetPulse 2s infinite}
+    </style>
+</head>
+<body class="bg-zinc-950 text-white overflow-hidden">
+    <div class="flex flex-col h-screen">
+        <div class="bg-black border-b-4 border-green-500 p-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-green-500 text-black flex items-center justify-center text-xl font-bold rotate-12">🟦</div>
+                <h1 class="text-2xl tracking-widest">PIXEL PAINT</h1>
+                <span class="text-xs bg-green-500 text-black px-1 py-0 rounded-full">ONLINE</span>
+            </div>
+            
+            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-2xl border-4 border-green-500">
+                
+                <div class="flex items-center gap-1">
+                    <button onclick="setTool('pencil')" id="btn-pencil" class="tool-btn active w-12 h-12 bg-zinc-800 hover:bg-green-500 hover:text-black flex items-center justify-center text-3xl rounded-xl">✏️</button>
+                    <button onclick="setTool('gradient')" id="btn-gradient" class="tool-btn w-12 h-12 bg-zinc-800 hover:bg-green-500 hover:text-black flex items-center justify-center text-3xl rounded-xl">🌈</button>
+                    <button onclick="setTool('noise')" id="btn-noise" class="tool-btn w-12 h-12 bg-zinc-800 hover:bg-green-500 hover:text-black flex items-center justify-center text-3xl rounded-xl">🌫️</button>
+                    <div class="flex flex-col items-center -space-y-1">
+                        <span class="text-[10px] text-green-400">ブラシ</span>
+                        <div class="flex items-center gap-1 bg-zinc-800 px-2 py-px rounded-xl">
+                            <button onclick="changeBrushSize(-1)" class="text-xl px-2 hover:bg-red-500 rounded-xl">-</button>
+                            <span id="brush-size" class="font-mono text-xl w-8 text-center">1</span>
+                            <button onclick="changeBrushSize(1)" class="text-xl px-2 hover:bg-green-500 rounded-xl">+</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 消しゴム -->
+                <button onclick="setTool('eraser')" id="btn-eraser" class="tool-btn w-12 h-12 bg-zinc-800 hover:bg-green-500 hover:text-black flex items-center justify-center text-3xl rounded-xl">🧼</button>
+                
+                <div class="w-px h-10 bg-green-500 mx-2"></div>
+                
+                <!-- 塗りつぶし＆選択 -->
+                <button onclick="setTool('fill')" id="btn-fill" class="tool-btn w-12 h-12 bg-zinc-800 hover:bg-green-500 hover:text-black flex items-center justify-center text-3xl rounded-xl">🪣</button>
+                <button onclick="setTool('select')" id="btn-select" class="tool-btn w-12 h-12 bg-zinc-800 hover:bg-green-500 hover:text-black flex items-center justify-center text-3xl rounded-xl">⬚</button>
+                
+                <div class="w-px h-10 bg-green-500 mx-2"></div>
+                
+                <!-- 色選択エリア -->
+                <div class="flex items-center gap-3">
+                    <div class="flex flex-col items-center">
+                        <input type="color" id="color-picker" value="#00ff00" class="w-12 h-12 bg-transparent border-4 border-green-500 rounded-xl cursor-pointer">
+                        <span class="text-[10px] text-green-400">色1</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <input type="color" id="gradient-color2" value="#ff00ff" class="w-12 h-12 bg-transparent border-4 border-purple-500 rounded-xl cursor-pointer">
+                        <span class="text-[10px] text-purple-400">色2</span>
+                    </div>
+                    <div id="color-palette" class="flex items-center gap-1"></div>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <button onclick="changeZoom(-0.5)" class="w-10 h-10 bg-zinc-900 hover:bg-red-500 text-2xl rounded-xl flex items-center justify-center">－</button>
+                <div class="flex items-center gap-1 font-mono">
+                    <span id="zoom-level" class="text-2xl text-green-400">2</span><span class="text-xs">x</span>
+                </div>
+                <button onclick="changeZoom(0.5)" class="w-10 h-10 bg-zinc-900 hover:bg-green-500 text-2xl rounded-xl flex items-center justify-center">＋</button>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div id="status" class="text-xs font-mono bg-zinc-900 px-4 py-2 rounded-2xl flex items-center gap-2">
+                    <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                    Firebase接続中
+                </div>
+                <div id="online-count" class="flex items-center gap-1 bg-green-900 text-green-400 px-4 py-2 rounded-2xl text-xs font-mono">
+                    👥 <span id="online-num">1</span>
+                </div>
+            </div>
+        </div>
+        
+        <div id="canvas-container" class="flex-1 flex items-center justify-center p-4 overflow-auto relative">
+            <canvas id="canvas" width="500" height="500" class="cursor-crosshair"></canvas>
+            <div id="selection-hint" class="hidden absolute pointer-events-none text-green-400 text-xs font-mono bg-black/70 px-4 py-2 rounded-xl top-8 left-1/2 -translate-x-1/2">
+                範囲選択中… ドラッグして選択
+            </div>
+        </div>
+        
+        <div class="bg-black border-t-4 border-green-500 p-3 flex items-center justify-between text-sm">
+            <button onclick="showCopyLibrary()" class="ml-20 bg-green-500 text-black px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:scale-105">
+                📋 コピー庫
+            </button>
+            
+            <button onclick="startResetSequence()" class="reset-btn absolute bottom-61 left-228 text-[10px] bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded border-2 border-red-400 font-mono tracking-widest">
+                リセット
+            </button>
+            
+            <div class="flex-1"></div>
+            
+            <div id="current-tool" class="text-xs bg-zinc-900 px-6 py-3 rounded-3xl flex items-center gap-3">
+                <span>現在のツール：</span>
+                <span id="tool-name" class="font-bold text-green-400">ペン</span>
+            </div>
+            
+            <div onclick="toggleHelp()" class="text-2xl cursor-pointer">❔</div>
+        </div>
+    </div>
+
+    <div id="reset-modal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-50">
+        <div class="modal bg-zinc-900 border-8 border-red-500 rounded-3xl p-8 max-w-xs w-full mx-4 text-center">
+            <div id="reset-text" class="text-xl font-bold mb-8 leading-tight"></div>
+            <div class="flex gap-4">
+                <button onclick="cancelReset()" class="flex-1 py-6 text-xl bg-zinc-800 hover:bg-zinc-700 rounded-2xl">やめる</button>
+                <button onclick="nextResetStep()" class="flex-1 py-6 text-xl bg-red-600 hover:bg-red-700 rounded-2xl">はい</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="help-modal" onclick="if(event.target.id==='help-modal')toggleHelp()" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-50">
+        <div class="modal bg-zinc-900 border-4 border-green-400 rounded-3xl p-8 max-w-md w-full mx-4 text-sm">
+            <h2 class="text-xl mb-4">🎮 操作説明</h2>
+            <ul class="space-y-4">
+                <li>🖱️ PC：ドラッグで描画 / Ctrl+Vで貼り付け</li>
+                <li>📱 スマホ：タッチ完全対応</li>
+                <li>🌈 グラデ：色1と色2を選んでドラッグ</li>
+                <li>🌫️ ノイズ：色を選んで明るさランダム</li>
+                <li>⬚ 範囲選択→ドラッグで移動</li>
+                <li>📋 コピー庫：自動保存・プレビュー・ペースト・PNG保存・読み込み</li>
+                <li>🖱️ 貼り付け：クリックで好きな位置</li>
+                <li>🔥 ブラシサイズ：＋－で自由調整（ペン・グラデ・ノイズ・消しゴム共通）</li>
+                <li>👥 オンライン人数リアルタイム</li>
+                <li>🎨 使った色は自動で下に履歴表示</li>
+            </ul>
+            <button onclick="toggleHelp()" class="mt-8 w-full py-4 bg-green-400 text-black font-bold rounded-2xl">閉じる</button>
+        </div>
+    </div>
+
+    <div id="library-modal" onclick="if(event.target.id==='library-modal')hideCopyLibrary()" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-50">
+        <div class="modal bg-zinc-900 border-4 border-green-400 rounded-3xl p-8 max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl">📋 コピー庫</h2>
+                <div class="flex items-center gap-4">
+                    <button onclick="importCopyFile()" class="bg-green-500 hover:bg-green-400 text-black px-6 py-3 rounded-2xl text-sm font-bold">📤 PNG読み込み</button>
+                    <button onclick="hideCopyLibrary()" class="text-3xl">✕</button>
+                </div>
+            </div>
+            <div id="library-content" class="flex-1 overflow-auto grid grid-cols-3 gap-4"></div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbnA7AZ4yhluL9hDrhejrepGGSojRDW0E",
+            authDomain: "paint-ba7d1.firebaseapp.com",
+            databaseURL: "https://paint-ba7d1-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "paint-ba7d1",
+            storageBucket: "paint-ba7d1.firebasestorage.app",
+            messagingSenderId: "149349590",
+            appId: "1:149349590:web:72aef1e06f45f3eaad1577"
+        };
+        let app, db, canvasRef;
+        let grid = [];
+        let imageData;
+        let ctx;
+        let defaultColor = "#808080";
+        let currentColor = "#00ff00";
+        let gradientColor2 = "#ff00ff";
+        let currentTool = "pencil";
+        let zoomLevel = 2;
+        let isDrawing = false;
+        let lastPixelX = null;
+        let lastPixelY = null;
+        let selectStartX = null;
+        let selectStartY = null;
+        let selectEndX = null;
+        let selectEndY = null;
+        let copiedData = null;
+        let myDeltas = new Map();
+        let resetStep = 0;
+        const resetMessages = ["ホントにリセットするの？","ホントにホントにリセットするの？","ホントに本当にリセットしちゃうんですか？","いいんだねリセットしちゃうからね"];
+        let colorHistory = [];
+        let brushSize = 1;
+        let strokeStartX = 0;
+        let strokeStartY = 0;
+        let selectionData = null;
+        let isDraggingMove = false;
+        let moveStartX = 0;
+        let moveStartY = 0;
+        let moveOffsetX = 0;
+        let moveOffsetY = 0;
+        let savedCopies = [];
+        let pasteMode = false;
+        let pendingPasteData = null;
+        function initFirebase(){
+            app = firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+            canvasRef = db.ref("canvas/pixels");
+            canvasRef.once("value").then((snapshot)=>{
+                const data = snapshot.val() || {};
+                Object.keys(data).forEach(key=>{
+                    const [x,y] = key.split("_").map(Number);
+                    if(x>=0&&x<500&&y>=0&&y<500){
+                        grid[y][x]=data[key];
+                        updateImageDataPixel(x,y,data[key]);
+                    }
+                });
+                render();
+            });
+            canvasRef.on("child_added",handleRemoteChange);
+            canvasRef.on("child_changed",handleRemoteChange);
+            canvasRef.on("child_removed",(snap)=>{
+                const [x,y]=snap.key.split("_").map(Number);
+                if(x>=0&&x<500&&y>=0&&y<500){
+                    grid[y][x]=defaultColor;
+                    updateImageDataPixel(x,y,defaultColor);
+                    render();
+                }
+            });
+            const onlineRef = db.ref("online");
+            const userId = "user_"+Math.random().toString(36).slice(2);
+            const myRef = onlineRef.child(userId);
+            myRef.onDisconnect().remove();
+            myRef.set({lastSeen:firebase.database.ServerValue.TIMESTAMP});
+            onlineRef.on("value",(snap)=>{
+                document.getElementById("online-num").textContent = snap.numChildren() || 1;
+            });
+            return true;
+        }
+        function handleRemoteChange(snap){
+            const key = snap.key;
+            const val = snap.val();
+            const [x,y] = key.split("_").map(Number);
+            if(x<0||x>=500||y<0||y>=500)return;
+            const newColor = val===null?defaultColor:val;
+            grid[y][x]=newColor;
+            updateImageDataPixel(x,y,newColor);
+            render();
+        }
+        function initCanvas(){
+            const canvas = document.getElementById("canvas");
+            ctx = canvas.getContext("2d",{alpha:false});
+            grid = Array.from({length:500},()=>Array(500).fill(defaultColor));
+            imageData = ctx.createImageData(500,500);
+            for(let y=0;y<500;y++){
+                for(let x=0;x<500;x++){
+                    updateImageDataPixel(x,y,defaultColor);
+                }
+            }
+            render();
+            canvas.addEventListener("pointerdown",handlePointerDown);
+            canvas.addEventListener("pointermove",handlePointerMove);
+            canvas.addEventListener("pointerup",handlePointerUp);
+            canvas.addEventListener("pointerleave",handlePointerUp);
+            document.addEventListener("keydown",(e)=>{
+                if(e.ctrlKey&&e.key==="v"&&copiedData){
+                    e.preventDefault();
+                    pasteAt(250,250);
+                }
+            });
+            document.getElementById("color-picker").addEventListener("input",(e)=>{
+                currentColor = e.target.value;
+                addColorToHistory(currentColor);
+            });
+            document.getElementById("gradient-color2").addEventListener("input",(e)=>{
+                gradientColor2 = e.target.value;
+            });
+            const container = document.getElementById("canvas-container");
+            container.addEventListener("wheel",(e)=>{
+                e.preventDefault();
+                changeZoom(e.deltaY<0?0.5:-0.5);
+            });
+            applyZoom();
+        }
+        function updateImageDataPixel(x,y,hex){
+            const idx = (y*500+x)*4;
+            const r = parseInt(hex.slice(1,3),16);
+            const g = parseInt(hex.slice(3,5),16);
+            const b = parseInt(hex.slice(5,7),16);
+            imageData.data[idx]=r;
+            imageData.data[idx+1]=g;
+            imageData.data[idx+2]=b;
+            imageData.data[idx+3]=255;
+        }
+        function setPixel(x,y,color){
+            if(x<0||x>=500||y<0||y>=500)return;
+            if(grid[y][x]===color)return;
+            grid[y][x]=color;
+            updateImageDataPixel(x,y,color);
+            const key = `${x}_${y}`;
+            const fbValue = (color===defaultColor)?null:color;
+            myDeltas.set(key,fbValue);
+            render();
+        }
+        function fillBrush(cx,cy,color){
+            const half = Math.floor(brushSize/2);
+            for(let dy=-half;dy<=half;dy++){
+                for(let dx=-half;dx<=half;dx++){
+                    setPixel(cx+dx,cy+dy,color);
+                }
+            }
+        }
+        function lerpColor(c1,c2,t){
+            const r1=parseInt(c1.slice(1,3),16),g1=parseInt(c1.slice(3,5),16),b1=parseInt(c1.slice(5,7),16);
+            const r2=parseInt(c2.slice(1,3),16),g2=parseInt(c2.slice(3,5),16),b2=parseInt(c2.slice(5,7),16);
+            const r=Math.round(r1+(r2-r1)*t);
+            const g=Math.round(g1+(g2-g1)*t);
+            const b=Math.round(b1+(b2-b1)*t);
+            return "#"+[r,g,b].map(v=>v.toString(16).padStart(2,"0")).join("");
+        }
+        function getNoisyColor(hex){
+            let r=parseInt(hex.slice(1,3),16);
+            let g=parseInt(hex.slice(3,5),16);
+            let b=parseInt(hex.slice(5,7),16);
+            const v=Math.floor(Math.random()*61)-30;
+            r=Math.max(0,Math.min(255,r+v));
+            g=Math.max(0,Math.min(255,g+v));
+            b=Math.max(0,Math.min(255,b+v));
+            return "#"+[r,g,b].map(v=>v.toString(16).padStart(2,"0")).join("");
+        }
+        function drawThickLine(x0,y0,x1,y1,getColorFn){
+            let dx=Math.abs(x1-x0);
+            let dy=Math.abs(y1-y0);
+            let sx=x0<x1?1:-1;
+            let sy=y0<y1?1:-1;
+            let err=dx-dy;
+            let x=x0;
+            let y=y0;
+            while(true){
+                fillBrush(x,y,getColorFn(x,y));
+                if(x===x1&&y===y1)break;
+                const e2=2*err;
+                if(e2>-dy){
+                    err-=dy;
+                    x+=sx;
+                }
+                if(e2<dx){
+                    err+=dx;
+                    y+=sy;
+                }
+            }
+        }
+        function render(){
+            ctx.putImageData(imageData,0,0);
+            if(selectStartX!==null&&selectEndX!==null&&!isDraggingMove){
+                const minX=Math.min(selectStartX,selectEndX);
+                const minY=Math.min(selectStartY,selectEndY);
+                const w=Math.abs(selectEndX-selectStartX);
+                const h=Math.abs(selectEndY-selectStartY);
+                ctx.save();
+                ctx.strokeStyle="#00ff00";
+                ctx.lineWidth=3;
+                ctx.setLineDash([8,8]);
+                ctx.shadowColor="#00ff00";
+                ctx.shadowBlur=10;
+                ctx.strokeRect(minX,minY,w,h);
+                ctx.restore();
+            }
+            if(selectionData&&isDraggingMove){
+                ctx.save();
+                for(let dy=0;dy<selectionData.h;dy++){
+                    for(let dx=0;dx<selectionData.w;dx++){
+                        const color=selectionData.pixels[dy][dx];
+                        if(color!==defaultColor){
+                            ctx.fillStyle=color;
+                            ctx.fillRect(selectionData.minX+dx+moveOffsetX,selectionData.minY+dy+moveOffsetY,1,1);
+                        }
+                    }
+                }
+                ctx.restore();
+            }
+        }
+        function getPixelCoords(e){
+            const canvas=document.getElementById("canvas");
+            const rect=canvas.getBoundingClientRect();
+            const scaleX=500/rect.width;
+            const scaleY=500/rect.height;
+            const mouseX=e.clientX-rect.left;
+            const mouseY=e.clientY-rect.top;
+            const pixelX=Math.floor(mouseX*scaleX);
+            const pixelY=Math.floor(mouseY*scaleY);
+            return {x:pixelX,y:pixelY};
+        }
+        function handlePointerDown(e){
+            const {x,y}=getPixelCoords(e);
+            if(pasteMode&&pendingPasteData){
+                pasteAt(x,y);
+                pasteMode=false;
+                pendingPasteData=null;
+                const hint=document.getElementById("selection-hint");
+                hint.textContent="貼り付け完了！";
+                hint.classList.remove("hidden");
+                setTimeout(()=>{hint.classList.add("hidden");},800);
+                return;
+            }
+            isDrawing=true;
+            if(currentTool==="select"){
+                if(selectionData&&x>=selectionData.minX&&x<selectionData.minX+selectionData.w&&y>=selectionData.minY&&y<selectionData.minY+selectionData.h){
+                    isDraggingMove=true;
+                    moveStartX=x;
+                    moveStartY=y;
+                    moveOffsetX=0;
+                    moveOffsetY=0;
+                    clearOriginalSelection();
+                    return;
+                }
+                selectStartX=x;
+                selectStartY=y;
+                selectEndX=x;
+                selectEndY=y;
+                document.getElementById("selection-hint").classList.remove("hidden");
+                return;
+            }
+            lastPixelX=x;
+            lastPixelY=y;
+            strokeStartX=x;
+            strokeStartY=y;
+            if(currentTool==="pencil"){
+                fillBrush(x,y,currentColor);
+            }else if(currentTool==="gradient"){
+                const fn=(px,py)=>{
+                    const dist=Math.hypot(px-strokeStartX,py-strokeStartY);
+                    const t=Math.min(1,dist/250);
+                    return lerpColor(currentColor,gradientColor2,t);
+                };
+                fillBrush(x,y,fn(x,y));
+            }else if(currentTool==="noise"){
+                const fn=(px,py)=>getNoisyColor(currentColor);
+                fillBrush(x,y,fn(x,y));
+            }else if(currentTool==="eraser"){
+                fillBrush(x,y,defaultColor);
+            }else if(currentTool==="fill"){
+                floodFill(x,y,currentColor);
+            }
+        }
+        function handlePointerMove(e){
+            if(!isDrawing)return;
+            const {x,y}=getPixelCoords(e);
+            if(currentTool==="select"){
+                if(isDraggingMove){
+                    moveOffsetX=x-moveStartX;
+                    moveOffsetY=y-moveStartY;
+                    render();
+                    return;
+                }
+                selectEndX=x;
+                selectEndY=y;
+                render();
+                return;
+            }
+            if(currentTool==="pencil"||currentTool==="gradient"||currentTool==="noise"||currentTool==="eraser"){
+                let getColorFn;
+                if(currentTool==="pencil")getColorFn=(px,py)=>currentColor;
+                else if(currentTool==="gradient")getColorFn=(px,py)=>{
+                    const dist=Math.hypot(px-strokeStartX,py-strokeStartY);
+                    const t=Math.min(1,dist/250);
+                    return lerpColor(currentColor,gradientColor2,t);
+                };
+                else if(currentTool==="noise")getColorFn=(px,py)=>getNoisyColor(currentColor);
+                else if(currentTool==="eraser")getColorFn=(px,py)=>defaultColor;
+                drawThickLine(lastPixelX,lastPixelY,x,y,getColorFn);
+                lastPixelX=x;
+                lastPixelY=y;
+            }
+        }
+        function handlePointerUp(e){
+            if(!isDrawing)return;
+            isDrawing=false;
+            const {x,y}=getPixelCoords(e);
+            if(currentTool==="select"){
+                if(isDraggingMove){
+                    isDraggingMove=false;
+                    applyMove();
+                    return;
+                }
+                if(Math.abs(selectEndX-selectStartX)>0&&Math.abs(selectEndY-selectStartY)>0){
+                    copySelection();
+                }
+                selectStartX=null;
+                document.getElementById("selection-hint").classList.add("hidden");
+                render();
+                return;
+            }
+            lastPixelX=null;
+            lastPixelY=null;
+        }
+        function clearOriginalSelection(){
+            if(!selectionData)return;
+            for(let dy=0;dy<selectionData.h;dy++){
+                for(let dx=0;dx<selectionData.w;dx++){
+                    const px=selectionData.minX+dx;
+                    const py=selectionData.minY+dy;
+                    if(px>=0&&px<500&&py>=0&&py<500){
+                        setPixel(px,py,defaultColor);
+                    }
+                }
+            }
+            render();
+        }
+        function applyMove(){
+            if(!selectionData)return;
+            const newMinX=selectionData.minX+moveOffsetX;
+            const newMinY=selectionData.minY+moveOffsetY;
+            for(let dy=0;dy<selectionData.h;dy++){
+                for(let dx=0;dx<selectionData.w;dx++){
+                    const x=newMinX+dx;
+                    const y=newMinY+dy;
+                    if(x>=0&&x<500&&y>=0&&y<500){
+                        setPixel(x,y,selectionData.pixels[dy][dx]);
+                    }
+                }
+            }
+            selectionData=null;
+            render();
+        }
+        function floodFill(startX,startY,newColor){
+            const oldColor=grid[startY][startX];
+            if(oldColor===newColor)return;
+            const queue=[[startX,startY]];
+            const visited=new Set();
+            while(queue.length>0){
+                const [x,y]=queue.shift();
+                const key=`${x},${y}`;
+                if(visited.has(key)||x<0||x>=500||y<0||y>=500||grid[y][x]!==oldColor)continue;
+                visited.add(key);
+                setPixel(x,y,newColor);
+                queue.push([x-1,y],[x+1,y],[x,y-1],[x,y+1]);
+            }
+        }
+        function copySelection(){
+            const minX=Math.min(selectStartX,selectEndX);
+            const minY=Math.min(selectStartY,selectEndY);
+            const maxX=Math.max(selectStartX,selectEndX);
+            const maxY=Math.max(selectStartY,selectEndY);
+            const w=maxX-minX+1;
+            const h=maxY-minY+1;
+            if(w<=0||h<=0)return;
+            const pixels=Array.from({length:h},(_,dy)=>Array.from({length:w},(_,dx)=>grid[minY+dy][minX+dx]));
+            copiedData={width:w,height:h,pixels:pixels};
+            selectionData={minX:minX,minY:minY,w:w,h:h,pixels:pixels};
+            saveToLibrary(copiedData);
+            pendingPasteData=copiedData;
+            pasteMode=true;
+            const hint=document.getElementById("selection-hint");
+            hint.textContent="コピー完了！ クリックして貼り付け位置を選んで";
+            hint.classList.remove("hidden");
+        }
+        function pasteAt(px,py){
+            if(!pendingPasteData)return;
+            const data=pendingPasteData;
+            for(let dy=0;dy<data.height;dy++){
+                for(let dx=0;dx<data.width;dx++){
+                    const x=px+dx;
+                    const y=py+dy;
+                    if(x>=0&&x<500&&y>=0&&y<500){
+                        setPixel(x,y,data.pixels[dy][dx]);
+                    }
+                }
+            }
+            render();
+        }
+        function setTool(tool){
+            currentTool=tool;
+            document.querySelectorAll(".tool-btn").forEach(b=>b.classList.remove("active"));
+            if(tool==="pencil")document.getElementById("btn-pencil").classList.add("active");
+            if(tool==="gradient")document.getElementById("btn-gradient").classList.add("active");
+            if(tool==="noise")document.getElementById("btn-noise").classList.add("active");
+            if(tool==="eraser")document.getElementById("btn-eraser").classList.add("active");
+            if(tool==="fill")document.getElementById("btn-fill").classList.add("active");
+            if(tool==="select")document.getElementById("btn-select").classList.add("active");
+            document.getElementById("tool-name").textContent={pencil:"ペン",gradient:"グラデ",noise:"ノイズ",eraser:"消しゴム",fill:"塗りつぶし",select:"範囲選択"}[tool];
+            if(tool==="select"){
+                document.getElementById("selection-hint").classList.remove("hidden");
+            }else{
+                document.getElementById("selection-hint").classList.add("hidden");
+            }
+        }
+        function changeBrushSize(delta){
+            brushSize=Math.max(1,Math.min(12,brushSize+delta));
+            document.getElementById("brush-size").textContent=brushSize;
+        }
+        function changeZoom(delta){
+            zoomLevel=Math.max(1,Math.min(10,zoomLevel+delta));
+            applyZoom();
+        }
+        function applyZoom(){
+            const canvas=document.getElementById("canvas");
+            const size=500*zoomLevel;
+            canvas.style.width=`${size}px`;
+            canvas.style.height=`${size}px`;
+            document.getElementById("zoom-level").textContent=zoomLevel;
+        }
+        function startResetSequence(){
+            resetStep=0;
+            document.getElementById("reset-modal").classList.remove("hidden");
+            document.getElementById("reset-text").innerHTML=`${resetMessages[0]}<br><span class="text-red-400 text-4xl block mt-4">⚠️</span>`;
+        }
+        function nextResetStep(){
+            resetStep++;
+            if(resetStep>=resetMessages.length){
+                executeFullReset();
+                return;
+            }
+            document.getElementById("reset-text").innerHTML=`${resetMessages[resetStep]}<br><span class="text-red-400 text-4xl block mt-4">⚠️</span>`;
+        }
+        function cancelReset(){
+            resetStep=0;
+            document.getElementById("reset-modal").classList.add("hidden");
+        }
+        function executeFullReset(){
+            for(let y=0;y<500;y++){
+                for(let x=0;x<500;x++){
+                    grid[y][x]=defaultColor;
+                    updateImageDataPixel(x,y,defaultColor);
+                }
+            }
+            myDeltas.clear();
+            render();
+            if(canvasRef)canvasRef.set(null);
+            document.getElementById("reset-modal").classList.add("hidden");
+            resetStep=0;
+            const boom=document.createElement("div");
+            boom.style.cssText="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:100px;animation:boom 1s forwards;";
+            boom.textContent="💥";
+            document.body.appendChild(boom);
+            setTimeout(()=>{boom.remove();},1200);
+        }
+        function toggleHelp(){
+            const modal=document.getElementById("help-modal");
+            modal.classList.toggle("hidden");
+        }
+        function loadColorHistory(){
+            colorHistory=JSON.parse(localStorage.getItem("pixelColorHistory")||"[]");
+            if(colorHistory.length===0){
+                colorHistory=["#00ff00","#ff00ff","#00ffff","#ffff00"];
+            }
+            renderColorPalette();
+        }
+        function addColorToHistory(hex){
+            if(!hex||hex===defaultColor)return;
+            colorHistory=colorHistory.filter(c=>c!==hex);
+            colorHistory.unshift(hex);
+            if(colorHistory.length>16)colorHistory.pop();
+            localStorage.setItem("pixelColorHistory",JSON.stringify(colorHistory));
+            renderColorPalette();
+        }
+        function renderColorPalette(){
+            const pal=document.getElementById("color-palette");
+            pal.innerHTML="";
+            colorHistory.forEach(color=>{
+                const sw=document.createElement("div");
+                sw.style.cssText=`width:26px;height:26px;background-color:${color};border:2px solid #111;border-radius:6px;cursor:pointer;`;
+                sw.onclick=()=>{
+                    currentColor=color;
+                    document.getElementById("color-picker").value=color;
+                };
+                pal.appendChild(sw);
+            });
+        }
+        function loadSavedCopies(){
+            savedCopies=JSON.parse(localStorage.getItem("pixelSavedCopies")||"[]");
+        }
+        function saveToLibrary(data){
+            const copy={
+                id:Date.now(),
+                name:`コピー${savedCopies.length+1}`,
+                width:data.width,
+                height:data.height,
+                pixels:data.pixels
+            };
+            savedCopies.unshift(copy);
+            localStorage.setItem("pixelSavedCopies",JSON.stringify(savedCopies));
+        }
+        function showCopyLibrary(){
+            const modal=document.getElementById("library-modal");
+            const content=document.getElementById("library-content");
+            content.innerHTML="";
+            if(savedCopies.length===0){
+                content.innerHTML=`<div class="col-span-3 text-center py-12 text-green-400">まだコピーがありません<br>範囲選択で自動保存されます</div>`;
+                modal.classList.remove("hidden");
+                return;
+            }
+            savedCopies.forEach((copy,i)=>{
+                const item=document.createElement("div");
+                item.className="bg-zinc-800 border border-green-400 rounded-2xl p-3 flex flex-col";
+                
+                const previewCanvas=document.createElement("canvas");
+                const previewSize=80;
+                previewCanvas.width=previewSize;
+                previewCanvas.height=previewSize;
+                previewCanvas.className="mx-auto mb-2 border border-green-400 rounded-xl";
+                const pctx=previewCanvas.getContext("2d");
+                pctx.fillStyle="#222222";
+                pctx.fillRect(0,0,previewSize,previewSize);
+                const scale=Math.min((previewSize-8)/copy.width,(previewSize-8)/copy.height);
+                const offsetX=(previewSize-copy.width*scale)/2;
+                const offsetY=(previewSize-copy.height*scale)/2;
+                for(let dy=0;dy<copy.height;dy++){
+                    for(let dx=0;dx<copy.width;dx++){
+                        const col=copy.pixels[dy][dx];
+                        if(col!==defaultColor){
+                            pctx.fillStyle=col;
+                            pctx.fillRect(Math.floor(offsetX+dx*scale),Math.floor(offsetY+dy*scale),Math.ceil(scale),Math.ceil(scale));
+                        }
+                    }
+                }
+                
+                const nameInput=document.createElement("input");
+                nameInput.type="text";
+                nameInput.value=copy.name;
+                nameInput.className="w-full bg-black text-green-400 text-xs p-1 rounded text-center mb-2";
+                nameInput.onchange=()=>{
+                    savedCopies[i].name=nameInput.value;
+                    localStorage.setItem("pixelSavedCopies",JSON.stringify(savedCopies));
+                };
+                
+                const btnRow=document.createElement("div");
+                btnRow.className="grid grid-cols-3 gap-2";
+                
+                const pasteBtn=document.createElement("button");
+                pasteBtn.textContent="ペースト";
+                pasteBtn.className="py-2 text-xs bg-green-400 text-black rounded-xl";
+                pasteBtn.onclick=()=>{
+                    pendingPasteData=copy;
+                    pasteMode=true;
+                    hideCopyLibrary();
+                    const hint=document.getElementById("selection-hint");
+                    hint.textContent="クリックして貼り付け位置を選んで";
+                    hint.classList.remove("hidden");
+                };
+                
+                const downloadBtn=document.createElement("button");
+                downloadBtn.textContent="↓PNG";
+                downloadBtn.className="py-2 text-xs bg-blue-500 text-white rounded-xl";
+                downloadBtn.onclick=()=>{
+                    const tempCanvas=document.createElement("canvas");
+                    tempCanvas.width=copy.width;
+                    tempCanvas.height=copy.height;
+                    const tctx=tempCanvas.getContext("2d");
+                    for(let dy=0;dy<copy.height;dy++){
+                        for(let dx=0;dx<copy.width;dx++){
+                            tctx.fillStyle=copy.pixels[dy][dx];
+                            tctx.fillRect(dx,dy,1,1);
+                        }
+                    }
+                    const link=document.createElement("a");
+                    link.download=copy.name+".png";
+                    link.href=tempCanvas.toDataURL("image/png");
+                    link.click();
+                };
+                
+                const delBtn=document.createElement("button");
+                delBtn.textContent="削除";
+                delBtn.className="py-2 text-xs bg-red-600 text-white rounded-xl";
+                delBtn.onclick=()=>{
+                    if(confirm("このコピーを削除しますか？")){
+                        savedCopies.splice(i,1);
+                        localStorage.setItem("pixelSavedCopies",JSON.stringify(savedCopies));
+                        showCopyLibrary();
+                    }
+                };
+                
+                btnRow.append(pasteBtn,downloadBtn,delBtn);
+                item.append(previewCanvas,nameInput,btnRow);
+                content.appendChild(item);
+            });
+            modal.classList.remove("hidden");
+        }
+        function hideCopyLibrary(){
+            document.getElementById("library-modal").classList.add("hidden");
+        }
+        function importCopyFile(){
+            const input=document.createElement("input");
+            input.type="file";
+            input.accept="image/png";
+            input.onchange=(e)=>{
+                const file=e.target.files[0];
+                if(!file)return;
+                const img=new Image();
+                img.onload=()=>{
+                    const max=500;
+                    const w=Math.min(max,img.width);
+                    const h=Math.min(max,img.height);
+                    const tempCanvas=document.createElement("canvas");
+                    tempCanvas.width=w;
+                    tempCanvas.height=h;
+                    const tctx=tempCanvas.getContext("2d");
+                    tctx.drawImage(img,0,0,w,h);
+                    const data=tctx.getImageData(0,0,w,h);
+                    const pixels=Array.from({length:h},()=>Array(w).fill(defaultColor));
+                    for(let y=0;y<h;y++){
+                        for(let x=0;x<w;x++){
+                            const i=(y*w+x)*4;
+                            const r=data.data[i];
+                            const g=data.data[i+1];
+                            const b=data.data[i+2];
+                            const hex=`#${r.toString(16).padStart(2,"0")}${g.toString(16).padStart(2,"0")}${b.toString(16).padStart(2,"0")}`;
+                            pixels[y][x]=hex;
+                        }
+                    }
+                    const newCopy={
+                        id:Date.now(),
+                        name:`インポート${savedCopies.length+1}`,
+                        width:w,
+                        height:h,
+                        pixels:pixels
+                    };
+                    savedCopies.unshift(newCopy);
+                    localStorage.setItem("pixelSavedCopies",JSON.stringify(savedCopies));
+                    showCopyLibrary();
+                };
+                img.src=URL.createObjectURL(file);
+            };
+            input.click();
+        }
+        function startBatchSync(){
+            setInterval(()=>{
+                if(myDeltas.size===0||!canvasRef)return;
+                const updates={};
+                myDeltas.forEach((value,key)=>{updates[key]=value;});
+                canvasRef.update(updates).then(()=>{myDeltas.clear();});
+            },5000);
+        }
+        window.onload=function(){
+            initCanvas();
+            initFirebase();
+            startBatchSync();
+            loadColorHistory();
+            loadSavedCopies();
+        };
+    </script>
+</body>
+</html>
