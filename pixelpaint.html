@@ -29,8 +29,8 @@
                 <span class="text-xs bg-green-500 text-black px-1 py-0 rounded-full">ONLINE</span>
             </div>
             
-            <!-- ツールバー（モバイル対応：横スクロール可能に変更） -->
-            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-2xl border-4 border-green-500 overflow-x-auto toolbar-scroll max-w-[calc(100vw-180px)]">
+            <!-- ツールバー -->
+            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded-2xl border-4 border-green-500 overflow-x-auto toolbar-scroll max-w-[calc(100vw-160px)]">
                 <div class="flex items-center gap-1 flex-shrink-0">
                     <button onclick="setTool('pencil')" id="btn-pencil" class="tool-btn active w-12 h-12 bg-zinc-800 hover:bg-green-500 hover:text-black flex items-center justify-center text-3xl rounded-xl">✏️</button>
                     <button onclick="setTool('gradient')" id="btn-gradient" class="tool-btn w-12 h-12 bg-zinc-800 hover:bg-green-500 hover:text-black flex items-center justify-center text-3xl rounded-xl">🌈</button>
@@ -45,18 +45,16 @@
                     </div>
                 </div>
                 
-                <!-- 消しゴム -->
                 <button onclick="setTool('eraser')" id="btn-eraser" class="tool-btn w-12 h-12 bg-zinc-800 hover:bg-green-500 hover:text-black flex items-center justify-center text-3xl rounded-xl flex-shrink-0">🧼</button>
                 
                 <div class="w-px h-10 bg-green-500 mx-2 flex-shrink-0"></div>
                 
-                <!-- 塗りつぶし＆選択 -->
                 <button onclick="setTool('fill')" id="btn-fill" class="tool-btn w-12 h-12 bg-zinc-800 hover:bg-green-500 hover:text-black flex items-center justify-center text-3xl rounded-xl flex-shrink-0">🪣</button>
                 <button onclick="setTool('select')" id="btn-select" class="tool-btn w-12 h-12 bg-zinc-800 hover:bg-green-500 hover:text-black flex items-center justify-center text-3xl rounded-xl flex-shrink-0">⬚</button>
+                <button onclick="toggleGrid()" id="btn-grid" class="tool-btn w-12 h-12 bg-zinc-800 hover:bg-green-500 hover:text-black flex items-center justify-center text-3xl rounded-xl flex-shrink-0">▦</button>
                 
                 <div class="w-px h-10 bg-green-500 mx-2 flex-shrink-0"></div>
                 
-                <!-- 色選択エリア -->
                 <div class="flex items-center gap-3 flex-shrink-0">
                     <div class="flex flex-col items-center">
                         <input type="color" id="color-picker" value="#00ff00" class="w-12 h-12 bg-transparent border-4 border-green-500 rounded-xl cursor-pointer">
@@ -73,7 +71,7 @@
             <div class="flex items-center gap-3 flex-shrink-0">
                 <button onclick="changeZoom(-0.5)" class="w-10 h-10 bg-zinc-900 hover:bg-red-500 text-2xl rounded-xl flex items-center justify-center">－</button>
                 <div class="flex items-center gap-1 font-mono">
-                    <span id="zoom-level" class="text-2xl text-green-400">1</span><span class="text-xs">x</span>
+                    <span id="zoom-level" class="text-2xl text-green-400">2</span><span class="text-xs">x</span>
                 </div>
                 <button onclick="changeZoom(0.5)" class="w-10 h-10 bg-zinc-900 hover:bg-green-500 text-2xl rounded-xl flex items-center justify-center">＋</button>
             </div>
@@ -90,18 +88,23 @@
         </div>
         
         <div id="canvas-container" class="flex-1 flex items-center justify-center p-4 overflow-auto relative">
-            <canvas id="canvas" width="500" height="500" class="cursor-crosshair"></canvas>
+            <canvas id="canvas" width="300" height="300" class="cursor-crosshair"></canvas>
             <div id="selection-hint" class="hidden absolute pointer-events-none text-green-400 text-xs font-mono bg-black/70 px-4 py-2 rounded-xl top-8 left-1/2 -translate-x-1/2">
                 範囲選択中… ドラッグして選択
             </div>
         </div>
         
         <div class="bg-black border-t-4 border-green-500 p-3 flex items-center justify-between text-sm">
-            <button onclick="showCopyLibrary()" class="ml-20 bg-green-500 text-black px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:scale-105">
-                📋 コピー庫
-            </button>
+            <div class="flex items-center gap-3">
+                <button onclick="downloadCanvas()" class="bg-blue-500 text-black px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:scale-105">
+                    📥 キャンバス保存
+                </button>
+                <button onclick="showCopyLibrary()" class="bg-green-500 text-black px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:scale-105">
+                    📋 コピー庫
+                </button>
+            </div>
             
-            <button onclick="startResetSequence()" class="reset-btn absolute bottom-61 left-228 text-[10px] bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded border-2 border-red-400 font-mono tracking-widest">
+            <button onclick="startResetSequence()" class="reset-btn text-[10px] bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded border-2 border-red-400 font-mono tracking-widest">
                 リセット
             </button>
             
@@ -132,12 +135,13 @@
         <div class="modal bg-zinc-900 border-4 border-green-400 rounded-3xl p-8 max-w-md w-full mx-4 text-sm">
             <h2 class="text-xl mb-4">🎮 操作説明</h2>
             <ul class="space-y-4">
-                <li>🖱️ PC：ドラッグで描画 / Ctrl+Vで貼り付け</li>
-                <li>📱 スマホ：タッチ完全対応（ibisPaint風）</li>
+                <li>🖱️ ドラッグで描画</li>
                 <li>🌈 グラデ：色1と色2を選んでドラッグ</li>
                 <li>🌫️ ノイズ：色を選んで明るさランダム</li>
                 <li>⬚ 範囲選択→ドラッグで移動</li>
                 <li>📋 コピー庫：自動保存・プレビュー・ペースト・PNG保存・読み込み</li>
+                <li>📥 キャンバス全体をPNGで保存</li>
+                <li>▦ グリッド表示ON/OFF</li>
                 <li>🖱️ 貼り付け：クリックで好きな位置</li>
                 <li>🔥 ブラシサイズ：＋－で自由調整</li>
                 <li>👥 オンライン人数リアルタイム</li>
@@ -161,17 +165,17 @@
         </div>
     </div>
 
-    <!-- 読み込み中オーバーレイ（新しく追加） -->
+    <!-- 読み込み中オーバーレイ -->
     <div id="loading-overlay" class="fixed inset-0 bg-black/90 flex items-center justify-center z-[100]">
         <div class="text-center">
             <div class="text-6xl mb-6 animate-pulse">📡</div>
             <div class="text-green-400 font-mono text-2xl tracking-widest">PIXEL PAINT ロード中…</div>
             <div class="text-xs text-zinc-400 mt-3">Firebaseからキャンバスデータを取得しています</div>
-            <div class="text-[10px] text-zinc-500 mt-8">モバイルでもサクサク動くよう最適化しました</div>
         </div>
     </div>
 
     <script>
+        const CANVAS_SIZE = 300;
         const firebaseConfig = {
             apiKey: "AIzaSyDbnA7AZ4yhluL9hDrhejrepGGSojRDW0E",
             authDomain: "paint-ba7d1.firebaseapp.com",
@@ -214,24 +218,23 @@
         let savedCopies = [];
         let pasteMode = false;
         let pendingPasteData = null;
+        let showGrid = false;
 
         function initFirebase(){
             app = firebase.initializeApp(firebaseConfig);
             db = firebase.database();
             canvasRef = db.ref("canvas/pixels");
             
-            // 初回全データ取得（読み込み完了後にローディングを非表示）
             canvasRef.once("value").then((snapshot)=>{
                 const data = snapshot.val() || {};
                 Object.keys(data).forEach(key=>{
                     const [x,y] = key.split("_").map(Number);
-                    if(x>=0&&x<500&&y>=0&&y<500){
+                    if(x>=0&&x<CANVAS_SIZE&&y>=0&&y<CANVAS_SIZE){
                         grid[y][x]=data[key];
                         updateImageDataPixel(x,y,data[key]);
                     }
                 });
                 render();
-                // 読み込み完了 → オーバーレイ非表示
                 document.getElementById("loading-overlay").classList.add("hidden");
             }).catch(()=>{
                 document.getElementById("loading-overlay").classList.add("hidden");
@@ -241,7 +244,7 @@
             canvasRef.on("child_changed",handleRemoteChange);
             canvasRef.on("child_removed",(snap)=>{
                 const [x,y]=snap.key.split("_").map(Number);
-                if(x>=0&&x<500&&y>=0&&y<500){
+                if(x>=0&&x<CANVAS_SIZE&&y>=0&&y<CANVAS_SIZE){
                     grid[y][x]=defaultColor;
                     updateImageDataPixel(x,y,defaultColor);
                     render();
@@ -262,7 +265,7 @@
             const key = snap.key;
             const val = snap.val();
             const [x,y] = key.split("_").map(Number);
-            if(x<0||x>=500||y<0||y>=500)return;
+            if(x<0||x>=CANVAS_SIZE||y<0||y>=CANVAS_SIZE)return;
             const newColor = val===null?defaultColor:val;
             grid[y][x]=newColor;
             updateImageDataPixel(x,y,newColor);
@@ -273,11 +276,9 @@
             const canvas = document.getElementById("canvas");
             ctx = canvas.getContext("2d",{alpha:false});
             
-            // === 軽量化：初期化を高速化（250000回ループを排除）===
-            grid = Array.from({length:500},()=>Array(500).fill(defaultColor));
-            imageData = ctx.createImageData(500,500);
+            grid = Array.from({length:CANVAS_SIZE},()=>Array(CANVAS_SIZE).fill(defaultColor));
+            imageData = ctx.createImageData(CANVAS_SIZE,CANVAS_SIZE);
             
-            // ImageDataを一括でデフォルト色に塗りつぶし（超高速）
             const dr = parseInt(defaultColor.slice(1,3),16);
             const dg = parseInt(defaultColor.slice(3,5),16);
             const db = parseInt(defaultColor.slice(5,7),16);
@@ -290,20 +291,13 @@
             
             render();
 
-            // === モバイル完全対応：タッチ操作をibisPaint並みに改善 ===
-            // touch-action: none（CSSで設定済み）＋preventDefaultでスクロール完全防止
-            canvas.addEventListener("pointerdown", (e) => {
-                e.preventDefault();
-                handlePointerDown(e);
-            });
-            canvas.addEventListener("pointermove", (e) => {
-                if (isDrawing) e.preventDefault();
-                handlePointerMove(e);
-            });
+            // タッチ完全対応（iPhone横スクロール防止）
+            canvas.addEventListener("pointerdown", handlePointerDown, { passive: false });
+            canvas.addEventListener("pointermove", handlePointerMove, { passive: false });
             canvas.addEventListener("pointerup", handlePointerUp);
             canvas.addEventListener("pointerleave", handlePointerUp);
 
-            // スマホ検出で初期ズームを1倍に（小さい画面対応）
+            // モバイルは初期ズーム1倍
             if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768) {
                 zoomLevel = 1;
             }
@@ -312,7 +306,7 @@
             document.addEventListener("keydown",(e)=>{
                 if(e.ctrlKey&&e.key==="v"&&copiedData){
                     e.preventDefault();
-                    pasteAt(250,250);
+                    pasteAt(Math.floor(CANVAS_SIZE/2),Math.floor(CANVAS_SIZE/2));
                 }
             });
             document.getElementById("color-picker").addEventListener("input",(e)=>{
@@ -325,12 +319,12 @@
             const container = document.getElementById("canvas-container");
             container.addEventListener("wheel",(e)=>{
                 e.preventDefault();
-                changeZoom(e.deltaY<0?0.5:-0.5);
+                changeZoom(e.deltaY<0?0.5:-0.5, e.clientX, e.clientY);
             });
         }
 
         function updateImageDataPixel(x,y,hex){
-            const idx = (y*500+x)*4;
+            const idx = (y*CANVAS_SIZE+x)*4;
             const r = parseInt(hex.slice(1,3),16);
             const g = parseInt(hex.slice(3,5),16);
             const b = parseInt(hex.slice(5,7),16);
@@ -341,7 +335,7 @@
         }
 
         function setPixel(x,y,color){
-            if(x<0||x>=500||y<0||y>=500)return;
+            if(x<0||x>=CANVAS_SIZE||y<0||y>=CANVAS_SIZE)return;
             if(grid[y][x]===color)return;
             grid[y][x]=color;
             updateImageDataPixel(x,y,color);
@@ -405,6 +399,25 @@
 
         function render(){
             ctx.putImageData(imageData,0,0);
+            
+            // グリッド表示
+            if(showGrid){
+                ctx.strokeStyle = "rgba(255,255,255,0.15)";
+                ctx.lineWidth = 1;
+                for(let x=1;x<CANVAS_SIZE;x++){
+                    ctx.beginPath();
+                    ctx.moveTo(x,0);
+                    ctx.lineTo(x,CANVAS_SIZE);
+                    ctx.stroke();
+                }
+                for(let y=1;y<CANVAS_SIZE;y++){
+                    ctx.beginPath();
+                    ctx.moveTo(0,y);
+                    ctx.lineTo(CANVAS_SIZE,y);
+                    ctx.stroke();
+                }
+            }
+            
             if(selectStartX!==null&&selectEndX!==null&&!isDraggingMove){
                 const minX=Math.min(selectStartX,selectEndX);
                 const minY=Math.min(selectStartY,selectEndY);
@@ -437,8 +450,8 @@
         function getPixelCoords(e){
             const canvas=document.getElementById("canvas");
             const rect=canvas.getBoundingClientRect();
-            const scaleX=500/rect.width;
-            const scaleY=500/rect.height;
+            const scaleX=CANVAS_SIZE/rect.width;
+            const scaleY=CANVAS_SIZE/rect.height;
             const mouseX=e.clientX-rect.left;
             const mouseY=e.clientY-rect.top;
             const pixelX=Math.floor(mouseX*scaleX);
@@ -447,6 +460,7 @@
         }
 
         function handlePointerDown(e){
+            e.preventDefault();
             const {x,y}=getPixelCoords(e);
             if(pasteMode&&pendingPasteData){
                 pasteAt(x,y);
@@ -501,6 +515,7 @@
 
         function handlePointerMove(e){
             if(!isDrawing)return;
+            e.preventDefault();
             const {x,y}=getPixelCoords(e);
             if(currentTool==="select"){
                 if(isDraggingMove){
@@ -558,7 +573,7 @@
                 for(let dx=0;dx<selectionData.w;dx++){
                     const px=selectionData.minX+dx;
                     const py=selectionData.minY+dy;
-                    if(px>=0&&px<500&&py>=0&&py<500){
+                    if(px>=0&&px<CANVAS_SIZE&&py>=0&&py<CANVAS_SIZE){
                         setPixel(px,py,defaultColor);
                     }
                 }
@@ -574,7 +589,7 @@
                 for(let dx=0;dx<selectionData.w;dx++){
                     const x=newMinX+dx;
                     const y=newMinY+dy;
-                    if(x>=0&&x<500&&y>=0&&y<500){
+                    if(x>=0&&x<CANVAS_SIZE&&y>=0&&y<CANVAS_SIZE){
                         setPixel(x,y,selectionData.pixels[dy][dx]);
                     }
                 }
@@ -591,7 +606,7 @@
             while(queue.length>0){
                 const [x,y]=queue.shift();
                 const key=`${x},${y}`;
-                if(visited.has(key)||x<0||x>=500||y<0||y>=500||grid[y][x]!==oldColor)continue;
+                if(visited.has(key)||x<0||x>=CANVAS_SIZE||y<0||y>=CANVAS_SIZE||grid[y][x]!==oldColor)continue;
                 visited.add(key);
                 setPixel(x,y,newColor);
                 queue.push([x-1,y],[x+1,y],[x,y-1],[x,y+1]);
@@ -624,7 +639,7 @@
                 for(let dx=0;dx<data.width;dx++){
                     const x=px+dx;
                     const y=py+dy;
-                    if(x>=0&&x<500&&y>=0&&y<500){
+                    if(x>=0&&x<CANVAS_SIZE&&y>=0&&y<CANVAS_SIZE){
                         setPixel(x,y,data.pixels[dy][dx]);
                     }
                 }
@@ -649,19 +664,50 @@
             }
         }
 
+        function toggleGrid(){
+            showGrid = !showGrid;
+            const btn = document.getElementById("btn-grid");
+            if(showGrid) btn.classList.add("active");
+            else btn.classList.remove("active");
+            render();
+        }
+
         function changeBrushSize(delta){
             brushSize=Math.max(1,Math.min(12,brushSize+delta));
             document.getElementById("brush-size").textContent=brushSize;
         }
 
-        function changeZoom(delta){
-            zoomLevel=Math.max(1,Math.min(10,zoomLevel+delta));
-            applyZoom();
+        function changeZoom(delta, clientX = null, clientY = null){
+            const oldZoom = zoomLevel;
+            zoomLevel = Math.max(1, Math.min(100, zoomLevel + delta));
+            
+            const canvas = document.getElementById("canvas");
+            const container = document.getElementById("canvas-container");
+            
+            if(clientX !== null && clientY !== null){
+                // マウス位置を中心にズーム
+                const containerRect = container.getBoundingClientRect();
+                const mouseContainerX = clientX - containerRect.left;
+                const mouseContainerY = clientY - containerRect.top;
+                
+                const logicalX = (mouseContainerX + container.scrollLeft) / oldZoom;
+                const logicalY = (mouseContainerY + container.scrollTop) / oldZoom;
+                
+                applyZoom();
+                
+                const newScrollLeft = logicalX * zoomLevel - mouseContainerX;
+                const newScrollTop = logicalY * zoomLevel - mouseContainerY;
+                
+                container.scrollLeft = Math.max(0, Math.min(container.scrollWidth - container.clientWidth, newScrollLeft));
+                container.scrollTop = Math.max(0, Math.min(container.scrollHeight - container.clientHeight, newScrollTop));
+            } else {
+                applyZoom();
+            }
         }
 
         function applyZoom(){
             const canvas=document.getElementById("canvas");
-            const size=500*zoomLevel;
+            const size=CANVAS_SIZE*zoomLevel;
             canvas.style.width=`${size}px`;
             canvas.style.height=`${size}px`;
             document.getElementById("zoom-level").textContent=zoomLevel;
@@ -687,13 +733,12 @@
             document.getElementById("reset-modal").classList.add("hidden");
         }
 
-        // === 軽量化：リセットを爆速化（250000回レンダリングを1回に削減）===
         function executeFullReset(){
             const defaultR = parseInt(defaultColor.slice(1,3),16);
             const defaultG = parseInt(defaultColor.slice(3,5),16);
             const defaultB = parseInt(defaultColor.slice(5,7),16);
             
-            grid = Array.from({length:500},()=>Array(500).fill(defaultColor));
+            grid = Array.from({length:CANVAS_SIZE},()=>Array(CANVAS_SIZE).fill(defaultColor));
             
             for(let i=0; i<imageData.data.length; i+=4){
                 imageData.data[i]   = defaultR;
@@ -868,7 +913,6 @@
             document.getElementById("library-modal").classList.add("hidden");
         }
 
-        // === PNG読み込み制限：500×500超は完全に拒否 ===
         function importCopyFile(){
             const input=document.createElement("input");
             input.type="file";
@@ -878,8 +922,8 @@
                 if(!file)return;
                 const img=new Image();
                 img.onload=()=>{
-                    if(img.width > 500 || img.height > 500){
-                        alert("500×500を超える画像はインポートできません。\n\n500×500以内のPNGファイルのみ対応しています。");
+                    if(img.width > CANVAS_SIZE || img.height > CANVAS_SIZE){
+                        alert("300×300を超える画像はインポートできません。\n\n300×300以内のPNGファイルのみ対応しています。");
                         return;
                     }
                     const w = img.width;
@@ -915,6 +959,19 @@
                 img.src=URL.createObjectURL(file);
             };
             input.click();
+        }
+
+        // キャンバス全体ダウンロード
+        function downloadCanvas(){
+            const tempCanvas = document.createElement("canvas");
+            tempCanvas.width = CANVAS_SIZE;
+            tempCanvas.height = CANVAS_SIZE;
+            const tctx = tempCanvas.getContext("2d");
+            tctx.putImageData(imageData, 0, 0);
+            const link = document.createElement("a");
+            link.download = "pixelpaint_canvas.png";
+            link.href = tempCanvas.toDataURL("image/png");
+            link.click();
         }
 
         function startBatchSync(){
