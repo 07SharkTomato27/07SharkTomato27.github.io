@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8">
+    <title>ランダム言葉ジェネレーター</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 20px;
+        line-height: 1.5
+      }
+
+      h1 {
+        text-align: center
+      }
+
+      h2 {
+        margin: 20px 0 10px
+      }
+
+      button {
+        margin: 2px 4px;
+        padding: 6px 12px;
+        cursor: pointer
+      }
+
+      input {
+        padding: 6px
+      }
+
+      #groups-list>div {
+        border: 1px solid #ccc;
+        padding: 12px;
+        margin-bottom: 16px
+      }
+
+      #template-slots {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px
+      }
+
+      .slot {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid #999;
+        padding: 6px 10px;
+        background: #fafafa
+      }
+
+      #history {
+        list-style: none;
+        padding: 0
+      }
+
+      #history li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px;
+        margin-bottom: 8px;
+        border: 1px solid #ddd;
+        background: #fff
+      }
+    </style>
+  </head>
+  <body>
+    <h1>ランダム言葉ジェネレーター</h1>
+    <section>
+      <h2>1. グループ管理</h2>
+      <input id="new-group-name" type="text" placeholder="グループ名を入力">
+      <button id="add-group-btn">グループ追加</button>
+      <div id="groups-list"></div>
+    </section>
+    <section>
+      <h2>2. 順番（テンプレート）</h2>
+      <button id="add-slot-btn">スロット追加</button>
+      <div id="template-slots"></div>
+    </section>
+    <section>
+      <h2>3. 生成</h2>
+      <button id="generate-btn" style="font-size:22px;padding:15px 30px">生成する</button>
+      <ul id="history"></ul>
+    </section>
+    <script>
+      let groups = []
+      let template = []
+      let nextId = 1
+
+      function loadData() {
+        const saved = localStorage.getItem('randomPhraseGen')
+        if (saved) {
+          const data = JSON.parse(saved)
+          groups = data.groups || []
+          template = data.template || []
+          nextId = data.nextId || 1
+        } else {
+          groups = [{
+            id: 1,
+            name: '助詞',
+            words: ['と', 'へ', 'を', 'の', 'が', 'は']
+          }, {
+            id: 2,
+            name: '人名',
+            words: ['お前', '俺', 'ｱnﾀ', 'ｽﾊﾟﾑﾄﾝ']
+          }, {
+            id: 3,
+            name: '行動',
+            words: ['やりましょう！', '来ました', 'サイ  コロス  テーキ  ころす', '絶対にありません', '確信しています']
+          }]
+          template = [2, 1, 3]
+          nextId = 4
+        }
+      }
+
+      function saveData() {
+        const data = {
+          groups: groups,
+          template: template,
+          nextId: nextId
+        }
+        localStorage.setItem('randomPhraseGen', JSON.stringify(data))
+      }
+
+      function renderGroups() {
+        const container = document.getElementById('groups-list')
+        container.innerHTML = ''
+        groups.forEach((group, gindex) => {
+          const card = document.createElement('div')
+          const nameInput = document.createElement('input')
+          nameInput.type = 'text'
+          nameInput.value = group.name
+          nameInput.onchange = function() {
+            group.name = this.value.trim() || '無名'
+            saveData()
+            renderTemplate()
+          }
+          card.appendChild(nameInput)
+          const delGroupBtn = document.createElement('button')
+          delGroupBtn.textContent = 'グループ削除'
+          delGroupBtn.onclick = function() {
+            if (confirm('このグループを削除しますか？テンプレートからも消えます')) {
+              const gid = group.id
+              groups.splice(gindex, 1)
+              template = template.filter(id => id !== gid)
+              saveData()
+              renderGroups()
+              renderTemplate()
+            }
+          }
+          card.appendChild(delGroupBtn)
+          const wordsDiv = document.createElement('div')
+          wordsDiv.style.marginTop = '12px'
+          group.words.forEach((word, windex) => {
+            const wdiv = document.createElement('div')
+            wdiv.style.display = 'inline-flex'
+            wdiv.style.alignItems = 'center'
+            wdiv.style.margin = '3px 6px 3px 0'
+            wdiv.style.padding = '4px 8px'
+            wdiv.style.border = '1px solid #bbb'
+            const wsp = document.createElement('span')
+            wsp.textContent = word
+            const wdel = document.createElement('button')
+            wdel.textContent = '×'
+            wdel.style.marginLeft = '6px'
+            wdel.onclick = function() {
+              group.words.splice(windex, 1)
+              saveData()
+              renderGroups()
+            }
+            wdiv.appendChild(wsp)
+            wdiv.appendChild(wdel)
+            wordsDiv.appendChild(wdiv)
+          })
+          card.appendChild(wordsDiv)
+          const addWordInput = document.createElement('input')
+          addWordInput.type = 'text'
+          addWordInput.placeholder = '言葉を追加'
+          const addWordBtn = document.createElement('button')
+          addWordBtn.textContent = '追加'
+          addWordBtn.onclick = function() {
+            const val = addWordInput.value.trim()
+            if (val) {
+              group.words.push(val)
+              addWordInput.value = ''
+              saveData()
+              renderGroups()
+            }
+          }
+          card.appendChild(addWordInput)
+          card.appendChild(addWordBtn)
+          container.appendChild(card)
+        })
+        if (groups.length === 0) {
+          const p = document.createElement('p')
+          p.textContent = 'グループがありません。追加してください。'
+          container.appendChild(p)
+        }
+      }
+
+      function renderTemplate() {
+        const container = document.getElementById('template-slots')
+        container.innerHTML = ''
+        template.forEach((gid, index) => {
+          const slot = document.createElement('div')
+          slot.className = 'slot'
+          const sel = document.createElement('select')
+          groups.forEach(g => {
+            const opt = document.createElement('option')
+            opt.value = g.id
+            opt.textContent = g.name
+            if (g.id === gid) opt.selected = true
+            sel.appendChild(opt)
+          })
+          sel.onchange = function() {
+            template[index] = parseInt(this.value)
+            saveData()
+          }
+          slot.appendChild(sel)
+          const controls = document.createElement('div')
+          if (index > 0) {
+            const upBtn = document.createElement('button')
+            upBtn.textContent = '↑'
+            upBtn.onclick = function() {
+              const temp = template[index - 1]
+              template[index - 1] = template[index]
+              template[index] = temp
+              saveData()
+              renderTemplate()
+            }
+            controls.appendChild(upBtn)
+          }
+          if (index < template.length - 1) {
+            const downBtn = document.createElement('button')
+            downBtn.textContent = '↓'
+            downBtn.onclick = function() {
+              const temp = template[index + 1]
+              template[index + 1] = template[index]
+              template[index] = temp
+              saveData()
+              renderTemplate()
+            }
+            controls.appendChild(downBtn)
+          }
+          const remBtn = document.createElement('button')
+          remBtn.textContent = '×'
+          remBtn.onclick = function() {
+            template.splice(index, 1)
+            saveData()
+            renderTemplate()
+          }
+          controls.appendChild(remBtn)
+          slot.appendChild(controls)
+          container.appendChild(slot)
+        })
+        if (template.length === 0) {
+          const p = document.createElement('p')
+          p.textContent = 'スロットを追加して順番を決めてください'
+          container.appendChild(p)
+        }
+      }
+
+      function generatePhrase() {
+        if (template.length === 0) {
+          alert('テンプレートにスロットを追加してください')
+          return
+        }
+        const parts = []
+        for (let i = 0; i < template.length; i++) {
+          const gid = template[i]
+          const group = groups.find(g => g.id === gid)
+          if (!group || group.words.length === 0) {
+            parts.push('[空]')
+            continue
+          }
+          const randIndex = Math.floor(Math.random() * group.words.length)
+          parts.push(group.words[randIndex])
+        }
+        const phrase = parts.join('')
+        const historyList = document.getElementById('history')
+        const li = document.createElement('li')
+        const span = document.createElement('span')
+        span.textContent = phrase
+        span.style.fontSize = '1.3em'
+        const copyBtn = document.createElement('button')
+        copyBtn.textContent = 'コピー'
+        copyBtn.onclick = function() {
+          navigator.clipboard.writeText(phrase).then(() => {
+            copyBtn.textContent = 'コピー完了'
+            setTimeout(() => {
+              copyBtn.textContent = 'コピー'
+            }, 1200)
+          })
+        }
+        li.appendChild(span)
+        li.appendChild(copyBtn)
+        historyList.insertBefore(li, historyList.firstChild)
+      }
+      window.onload = function() {
+        loadData()
+        renderGroups()
+        renderTemplate()
+        document.getElementById('add-group-btn').onclick = function() {
+          let name = document.getElementById('new-group-name').value.trim()
+          if (!name) name = 'グループ' + nextId
+          groups.push({
+            id: nextId++,
+            name: name,
+            words: []
+          })
+          document.getElementById('new-group-name').value = ''
+          saveData()
+          renderGroups()
+          renderTemplate()
+        }
+        document.getElementById('add-slot-btn').onclick = function() {
+          if (groups.length === 0) {
+            alert('まずグループを1つ以上追加してください')
+            return
+          }
+          template.push(groups[groups.length - 1].id)
+          saveData()
+          renderTemplate()
+        }
+        document.getElementById('generate-btn').onclick = generatePhrase
+      }
+    </script>
+  </body>
+</html>
