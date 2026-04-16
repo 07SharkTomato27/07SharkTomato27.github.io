@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>なぜ[[見て]] る　deathか?</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #CCCCCC;
+        font-family: 'Courier New', monospace;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        color: #222
+      }
+
+      .content {
+        text-align: center;
+        z-index: 10
+      }
+
+      h1 {
+        font-size: 2.8rem;
+        margin-bottom: 10px;
+        text-shadow: 3px 3px 0 #ff0
+      }
+
+      #ad {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 500px;
+        height: 430px;
+        background: #fff;
+        border: 8px solid #000;
+        box-shadow: 0 0 0 10px #000DFF, 0 0 0 14px #040042;
+        padding: 25px 20px;
+        text-align: center;
+        display: none;
+        z-index: 1000;
+        overflow: visible
+      }
+
+      #close-btn {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        width: 52px;
+        height: 52px;
+        background: red;
+        color: #fff;
+        border: 5px solid #000;
+        font-size: 38px;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 5px 5px 0 #000;
+        z-index: 1001;
+        transition: none
+      }
+
+      #ad-link {
+        display: inline-block;
+        margin: 20px 0;
+        padding: 16px 45px;
+        background: #FFF200;
+        color: #000;
+        text-decoration: none;
+        font-size: 1.35rem;
+        font-weight: 700;
+        border: 6px solid #000;
+        box-shadow: 7px 7px 0 #FF00FF
+      }
+
+      #ad-link:hover {
+        background: #ff0;
+        transform: scale(1.1)
+      }
+
+      #shatter-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1002
+      }
+    </style>
+  </head>
+  <body>
+    <div class="content">
+      <h1>[[接続中...]]</h1>
+      <p>[[お待ち]] くだ !!</p>
+    </div>
+    <div id="ad">
+      <button id="close-btn">×</button>
+      <h2 style="font-size:2.1rem;color:#F527EB;text-shadow:3px 3px 0 #ff0;margin:0 0 15px 0">[[リンクは削除されました。]]</h2>
+      <p style="font-size:1.15rem;line-height:1.45;text-align:left;padding:0 15px">[[リンクは削除されました。]]! <br>ｱnﾀ　ひょとし　て… <br>
+        <br>[[リンクは削除されました。]]が [欲] くて <br>
+        <br>たまら　ない <br>
+        <br>death ね? <br>[[リンクは削除されました]]。 <br>ｱnﾀに[[シークレットリンク]]を あげ る [[代わり に]] <br>ｱnﾀの [[ハート型のアレ]] と[[交換]] レませn　か？ <br>
+        <br>[[リンクは黄色のアレ]] <br>
+      </p>
+      <a id="ad-link" href="https://07sharktomato27.github.io/" target="_blank">https://07sharktomato27.github.io/</a>
+      <p style="color:red;margin-top:20px;font-size:1rem">×!!</p>
+    </div>
+    <canvas id="shatter-canvas"></canvas>
+    <script>
+      const ad = document.getElementById('ad');
+      const closeBtn = document.getElementById('close-btn');
+      const canvas = document.getElementById('shatter-canvas');
+      const ctx = canvas.getContext('2d');
+      let particles = [];
+      let isShattered = false;
+      setTimeout(() => {
+        ad.style.display = 'block';
+        resizeCanvas();
+      }, 5000);
+
+      function resizeCanvas() {
+        canvas.width = ad.offsetWidth;
+        canvas.height = ad.offsetHeight;
+      }
+      class Shard {
+        constructor(x, y, vx, vy, size, rotSpeed, color) {
+          this.x = x;
+          this.y = y;
+          this.vx = vx;
+          this.vy = vy;
+          this.size = size;
+          this.rotation = Math.random() * Math.PI * 2;
+          this.rotationSpeed = rotSpeed;
+          this.color = color;
+          this.gravity = 0.28;
+          this.life = 280;
+        }
+        update() {
+          this.vy += this.gravity;
+          this.x += this.vx;
+          this.y += this.vy;
+          this.rotation += this.rotationSpeed;
+          this.vx *= 0.975;
+          this.life--;
+        }
+        draw() {
+          ctx.save();
+          ctx.translate(this.x, this.y);
+          ctx.rotate(this.rotation);
+          ctx.fillStyle = this.color;
+          ctx.globalAlpha = Math.max(0, this.life / 280);
+          ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size * 0.6);
+          ctx.restore();
+        }
+      }
+
+      function shatterAt(impactX, impactY) {
+        if (isShattered) return;
+        isShattered = true;
+        const colors = ['#ffffff', '#eeeeee', '#cccccc', '#ffeeee', '#ffffcc'];
+        for (let i = 0; i < 180; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 4.5 + Math.random() * 13;
+          const vx = Math.cos(angle) * speed;
+          const vy = Math.sin(angle) * speed - (8 + Math.random() * 8);
+          const size = 8 + Math.random() * 23;
+          const rotSpeed = (Math.random() - 0.5) * 0.6;
+          const color = colors[Math.floor(Math.random() * colors.length)];
+          particles.push(new Shard(impactX + (Math.random() - 0.5) * 80, impactY + (Math.random() - 0.5) * 55, vx, vy, size, rotSpeed, color));
+        }
+        ad.style.transition = 'opacity 1.2s ease-out';
+        ad.style.opacity = '1';
+      }
+      closeBtn.addEventListener('click', (e) => {
+        e.stopImmediatePropagation();
+        if (!isShattered) {
+          window.open('https://07sharktomato27.github.io/A/pl2', '_blank');
+        }
+        const rect = ad.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+        shatterAt(clickX, clickY);
+      });
+
+      function spamtonEscape(e) {
+        const rect = closeBtn.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const distX = e.clientX - centerX;
+        const distY = e.clientY - centerY;
+        const distance = Math.hypot(distX, distY);
+        if (distance < 95 && distance > 5) {
+          const force = Math.min(7.8, 195 / (distance + 10));
+          let newLeft = closeBtn.offsetLeft + distX * -force;
+          let newTop = closeBtn.offsetTop + distY * -force;
+          const oldLeft = closeBtn.offsetLeft;
+          const oldTop = closeBtn.offsetTop;
+          if (!isShattered) {
+            const padding = 12;
+            const maxLeft = ad.clientWidth - closeBtn.clientWidth - padding;
+            const maxTop = ad.clientHeight - closeBtn.clientHeight - padding;
+            newLeft = Math.max(padding, Math.min(newLeft, maxLeft));
+            newTop = Math.max(padding, Math.min(newTop, maxTop));
+          }
+          closeBtn.style.left = newLeft + 'px';
+          closeBtn.style.top = newTop + 'px';
+          const moved = Math.hypot(newLeft - oldLeft, newTop - oldTop);
+          if (moved < 9 && distance < 43) {
+            const impactX = newLeft + closeBtn.clientWidth / 2;
+            const impactY = newTop + closeBtn.clientHeight / 2;
+            shatterAt(impactX, impactY);
+            closeBtn.style.left = (newLeft + distX * -4.2) + 'px';
+            closeBtn.style.top = (newTop + distY * -3.8) + 'px';
+          }
+        }
+      }
+      ad.addEventListener('mousemove', spamtonEscape);
+      closeBtn.addEventListener('mouseenter', () => {
+        if (isShattered) return;
+        const randX = (Math.random() - 0.5) * 130;
+        const randY = (Math.random() - 0.5) * 95;
+        let newLeft = closeBtn.offsetLeft + randX;
+        let newTop = closeBtn.offsetTop + randY;
+        const padding = 12;
+        const maxL = ad.clientWidth - closeBtn.clientWidth - padding;
+        const maxT = ad.clientHeight - closeBtn.clientHeight - padding;
+        closeBtn.style.left = Math.max(padding, Math.min(newLeft, maxL)) + 'px';
+        closeBtn.style.top = Math.max(padding, Math.min(newTop, maxT)) + 'px';
+      });
+
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.update();
+          p.draw();
+          if (p.life <= 0) particles.splice(i, 1);
+        }
+        requestAnimationFrame(animate);
+      }
+      window.addEventListener('resize', resizeCanvas);
+      animate();
+    </script>
+  </body>
+</html>
