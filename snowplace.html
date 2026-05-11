@@ -3,21 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>a</title>
+    <title>Snow place</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
         html, body {
             height: 100%;
             width: 100%;
             overflow: hidden;
             background: #000;
         }
-
         video {
             position: fixed;
             top: 50%;
@@ -29,6 +27,8 @@
             transform: translate(-50%, -50%);
             object-fit: cover;
             z-index: 1;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
         }
     </style>
 </head>
@@ -37,11 +37,5 @@
         <source src="a.mp4" type="video/mp4">
         てめぇのブラウザは動画タグに対応してない
     </video>
-
-    <script>
-        document.querySelector('video').addEventListener('error', function() {
-            console.error('エラー');
-        });
-    </script>
 </body>
 </html>
